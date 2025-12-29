@@ -1,44 +1,62 @@
 from loguru import logger
-from db.models import User,Card,Profile,Verse,Rarity
+from db.models import User, Profile
 
-from datetime import datetime,timedelta,timezone
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-RARITIES={
-        1:"Обычная",
-        2:"Редкая",
-        3:"Мифическая",
-        4:"Легендарная",
-        5:"Хроно"
-    }
+# Соответствие идентификатора редкости и читаемого названия
+RARITIES = {
+    1: "Обычная",
+    2: "Редкая",
+    3: "Мифическая",
+    4: "Легендарная",
+    5: "Хроно",
+}
 
 async def create_or_update_user(id: int,
-                        username: str | None,name: str,
-                        describe:str, 
-                        session:AsyncSession):
+                                username: str | None,
+                                name: str,
+                                describe: str,
+                                session: AsyncSession):
+    """Создаёт пользователя, если нет, иначе обновляет поля.
+
+    Лёгкое упрощение: используем одну метку времени `now` для полей.
+    """
+    now = datetime.now(timezone.utc)
     try:
         user = await session.scalar(select(User).filter_by(id=id))
-        if not user:
-            user = User(id=id,
-                        username=username,
-                        name=name,
-                        last_open=datetime.now(timezone.utc)-timedelta(hours=3),
-                        joined=datetime.now(timezone.utc)
-                    )
-            user.profile = Profile(user_id=id,describe=describe)
+        if user is None:
+            user = User(
+                id=id,
+                username=username,
+                name=name,
+                # локальная корректировка времени:
+                last_open=now - timedelta(hours=3),
+                joined=now,
+            )
+            user.profile = Profile(user_id=id, describe=describe)
             session.add(user)
+            action = "создан"
         else:
             user.username = username
             user.name = name
+            action = "обновлён"
+
         await session.commit()
-    except Exception as _ex:
-        logger.error(_ex)
+        logger.info(f"Пользователь id={id} {action} username={username}")
+        return user
+    except Exception as exc:
+        # Логируем исключение с трассировкой на русском
+        logger.exception(f"Ошибка при сохранении пользователя id={id}: {exc}")
 
 
-async def get_user_place_on_top(session:AsyncSession,user:User):
+async def get_user_place_on_top(session: AsyncSession, user: User):
+    """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
     stmt = select(func.count(User.id)).where(User.yens > user.yens)
     result = await session.execute(stmt)
     count_higher = result.scalar()
-    
-    return count_higher + 1 if count_higher is not None else 0
+
+    place = (count_higher or 0) + 1
+    logger.info(f"Пользователь id={getattr(user, 'id', None)} занимает место: {place}")
+    return place

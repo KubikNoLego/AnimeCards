@@ -11,12 +11,18 @@ from configR import config
 from app.handlers import setup_routers
 from app.middlewares import DBSessionMiddleware
 
+
+# Настройка логирования: записывать в файл `log.txt`, ротация при 10 МБ
+logger.remove()
+logger.add("log.txt", rotation="10 MB", encoding="utf-8", level="INFO")
+
 bot = Bot(config.BOT_TOKEN.get_secret_value(),default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
 
 _engine = create_async_engine(config.DB_URL.get_secret_value())
 _sessionmaker = async_sessionmaker(_engine,expire_on_commit=False)
+# Middleware проксирует сессию БД в обработчики сообщений
 dp.message.middleware(DBSessionMiddleware(_sessionmaker))
 dp.include_router(router=setup_routers())
 @dp.startup()

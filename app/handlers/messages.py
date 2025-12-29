@@ -19,15 +19,24 @@ router = Router()
 
 @router.message(F.text == "🌐 Открыть карту", Private())
 async def _(message: Message, session: AsyncSession):
+    logger.info(f"Обработка запроса открытия карты от user_id={message.from_user.id}")
     user = await session.scalar(
             select(User)
             .filter_by(id=message.from_user.id)
             .with_for_update())
     if user.last_open + timedelta(hours=3) <= datetime.now(timezone.utc):
         card = await random_card(session,user.guarant)
+        if card is None:
+            logger.error(f"Не удалось выбрать карту для user_id={message.from_user.id}")
+            await message.reply("Произошла ошибка при выборе карты. Попробуйте позже.")
+            return
         text = await card_formatter(card)
-        await message.answer_photo(FSInputFile(path=f"app/icons/{card.icon}"),
-                                caption=text)
+        # Если иконки нет или файл не найден, отправляем только подпись
+        if not card.icon:
+            logger.warning(f"У карты id={getattr(card,'id',None)} нет иконки, отправляю только текст")
+            await message.answer(text)
+        else:
+            await message.answer_photo(FSInputFile(path=f"app/icons/{card.icon}"), caption=text)
         if card not in user.inventory: user.inventory.append(card)
         match user.guarant:
             case _ if user.guarant <= 0: user.guarant = 100
@@ -35,6 +44,7 @@ async def _(message: Message, session: AsyncSession):
         user.last_open = datetime.now(timezone.utc)
         user.yens += card.value
         await session.commit()
+        logger.info(f"Пользователь id={user.id} получил карту id={getattr(card,'id',None)}; yens={user.yens} guarant={user.guarant}")
         if user.start:
             tutorial = await profile_tutorial()
             await message.answer(tutorial)
@@ -44,13 +54,15 @@ async def _(message: Message, session: AsyncSession):
     
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):
-        
+    logger.info(f"Обработка профиля (ProfileFilter) от user_id={message.from_user.id})")
     is_reply = message.reply_to_message
     match is_reply:
         case None:
             user = await session.scalar(select(User).filter_by(
                                                     id=message.from_user.id))
             if user:
+                if not user.profile:
+                    logger.warning(f"У пользователя id={user.id} отсутствует профиль")
                 place_on_top = await get_user_place_on_top(session,user)
                 text = await profile_creator(user.profile,place_on_top)
                 profile_photo = await user_photo_link(message)
@@ -70,6 +82,8 @@ async def _(message: Message, session: AsyncSession):
             user = await session.scalar(select(User).filter_by(
                                     id=message.reply_to_message.from_user.id))
             if user:
+                if not user.profile:
+                    logger.warning(f"У пользователя id={user.id} отсутствует профиль (reply target)")
                 place_on_top = await get_user_place_on_top(session,user)
                 text = await profile_creator(user.profile,place_on_top)
                 profile_photo = await user_photo_link(message)

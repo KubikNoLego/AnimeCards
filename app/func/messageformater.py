@@ -7,25 +7,22 @@ from loguru import logger
 
 @logger.catch
 async def start_message_generator(start:bool):
-    with open("app/messages.json","r") as f:
-        messages = json.load(f)
-    
-    if start:
-        return messages["first_start"]
-    return  messages["start"]
+    # Возвращает стартовое сообщение в зависимости от флага
+    messages = _load_messages()
+    key = "first_start" if start else "start"
+    logger.info(f"Возвращаю стартовое сообщение: {key}")
+    return messages[key]
 
 @logger.catch
 async def profile_tutorial():
-    with open("app/messages.json","r") as f:
-        messages = json.load(f)
-    
+    messages = _load_messages()
+    logger.info("Возвращаю сообщение-руководство для профиля (шаг 1)")
     return messages["profile_tutorial"]
 
 @logger.catch
 async def profile_step2_tutorial():
-    with open("app/messages.json","r") as f:
-        messages = json.load(f)
-    
+    messages = _load_messages()
+    logger.info("Возвращаю сообщение-руководство для профиля (шаг 2)")
     return messages["profile_tutorial2"]
 
 @logger.catch
@@ -40,34 +37,47 @@ async def card_formatter(card:Card):
 
 @logger.catch
 async def nottime(openc:datetime):
-    with open("app/messages.json", "r", encoding="utf-8") as f:
-        messages = json.load(f)
-    
+    messages = _load_messages()
+
+    # Целевое время — открытие + 3 часа (локальная корректировка)
     target_time = openc + timedelta(hours=3)
-    
+
     time_left = target_time - datetime.now(timezone.utc)
-    
     total_seconds = int(time_left.total_seconds())
-    
+
     if total_seconds < 0:
         formatted_time = "00:00"
     else:
         hours = total_seconds // 3600
         minutes = (total_seconds % 3600) // 60
         formatted_time = f"{hours:02d}:{minutes:02d}"
+
+    logger.info(f"Осталось до следующего открытия: {formatted_time}")
     return messages["nottime"] % formatted_time
 
 @logger.catch
 async def profile_creator(profile:Profile,place_on_top:int):
-    with open("app/messages.json", "r", encoding="utf-8") as f:
-        messages = json.load(f)
-    return messages["profile"] % (escape(profile.owner.name),profile.yens,place_on_top,
-                                len(profile.owner.inventory),
-                                profile.owner.joined.strftime("%d.%m.%Y"),
-                                escape(profile.describe))
+    messages = _load_messages()
+
+    owner = profile.owner
+    logger.info(f"Генерирую профиль для пользователя id={getattr(owner, 'id', None)}")
+    return messages["profile"] % (
+        escape(owner.name),
+        profile.yens,
+        place_on_top,
+        len(owner.inventory),
+        owner.joined.strftime("%d.%m.%Y"),
+        escape(profile.describe),
+    )
 
 @logger.catch
 async def not_user(name: str):
-    with open("app/messages.json", "r", encoding="utf-8") as f:
-        messages = json.load(f)
+    messages = _load_messages()
+    logger.warning(f"Запрос для несуществующего пользователя: {name}")
     return messages["not_user"] % escape(name)
+
+
+def _load_messages() -> dict:
+    """Helper: загружает JSON с сообщениями (кодировка utf-8)."""
+    with open("app/messages.json", "r", encoding="utf-8") as f:
+        return json.load(f)

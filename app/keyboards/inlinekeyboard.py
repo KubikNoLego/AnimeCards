@@ -22,24 +22,24 @@ async def pagination_keyboard(
     buttons = []
     
     if prev_100_active:
-        buttons.append()
+        buttons.append(("««", Pagination(p=current_page, a=1).pack()))
     
     if prev_10_active:
-        buttons.append(("‹", callback_data=Pagination(p=current_page,a=2).pack()))
+        buttons.append(("‹", Pagination(p=current_page, a=2).pack()))
     
     if prev_1_active:       
-        buttons.append(("←", callback_data=Pagination(p=current_page,a=3).pack()))
+        buttons.append(("←", Pagination(p=current_page, a=3).pack()))
 
-    buttons.append((f"{current_page}/{total_pages}", f"pass"))
+    buttons.append((f"{current_page}/{total_pages}", "pass"))
     
     if next_1_active:
-        buttons.append(("→", callback_data=Pagination(p=current_page,a=4).pack()))
+        buttons.append(("→", Pagination(p=current_page, a=4).pack()))
     
     if next_10_active:
-        buttons.append(("›", callback_data=Pagination(p=current_page,a=5).pack()))
+        buttons.append(("›", Pagination(p=current_page, a=5).pack()))
     
     if next_100_active:
-        buttons.append(("»»", callback_data=Pagination(p=current_page,a=6).pack()))
+        buttons.append(("»»", Pagination(p=current_page, a=6).pack()))
     
     for text, callback_data in buttons:
         builder.button(text=text, callback_data=callback_data)

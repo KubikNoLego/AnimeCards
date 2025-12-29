@@ -1,6 +1,6 @@
 ﻿from datetime import datetime
-from sqlalchemy.orm import DeclarativeBase,Mapped,mapped_column,relationship
-from sqlalchemy import BigInteger,VARCHAR,DateTime,ForeignKey,Column,Integer
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import BigInteger, VARCHAR, DateTime, ForeignKey, Integer
 
 class Base(DeclarativeBase):
     def __repr__(self) -> str:
@@ -17,8 +17,9 @@ class Base(DeclarativeBase):
 class UserCards(Base):
     __tablename__ = 'usercards'
 
-    user_id = Column("user_id",BigInteger,ForeignKey("users.id",ondelete="CASCADE"),primary_key=True)
-    card_id = Column("card_id",Integer,ForeignKey("cards.id",ondelete="CASCADE"),primary_key=True)
+    # Ассоциативная таблица для связи многие-ко-многим между User и Card
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    card_id: Mapped[int] = mapped_column(Integer, ForeignKey("cards.id", ondelete="CASCADE"), primary_key=True)
 
 class User(Base):
     __tablename__ = "users"
@@ -30,11 +31,14 @@ class User(Base):
     username: Mapped[str | None] = mapped_column(VARCHAR(32),default=None)
     name: Mapped[str]
     
-    last_open: Mapped[datetime] = mapped_column(DateTime(True),nullable=False)
-    joined: Mapped[datetime] = mapped_column(DateTime(True),nullable=False)
+    # Храним UTC-времена с timezone=True
+    last_open: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    joined: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    inventory: Mapped[list["Card"]] = relationship("Card",back_populates="owners",secondary="usercards",lazy="selectin")
-    profile: Mapped["Profile"] = relationship("Profile",back_populates="owner",lazy="selectin")
+    # Инвентарь — карточки пользователя (many-to-many)
+    inventory: Mapped[list["Card"]] = relationship("Card", back_populates="owners", secondary="usercards", lazy="selectin")
+    # Профиль — 1 к 1 связь
+    profile: Mapped["Profile"] = relationship("Profile", back_populates="owner", lazy="selectin")
 
     start: Mapped[bool] = mapped_column(default=True)
 
@@ -47,33 +51,32 @@ class Card(Base):
     value: Mapped[int] = mapped_column(default=1,nullable=False)
 
     name: Mapped[str] = mapped_column(nullable=False)
-    icon: Mapped[str] = mapped_column(nullable=True)
+    icon: Mapped[str | None] = mapped_column(nullable=True)
 
-    rarity: Mapped["Rarity"] = relationship(back_populates="cards", lazy="selectin") 
-    verse: Mapped["Verse"] = relationship(back_populates="cards",lazy="selectin")
+    # Связи к объектам Rarity и Verse
+    rarity: Mapped["Rarity"] = relationship("Rarity", back_populates="cards", lazy="selectin")
+    verse: Mapped["Verse"] = relationship("Verse", back_populates="cards", lazy="selectin")
 
     shiny: Mapped[bool] = mapped_column(default=False)
     can_drop: Mapped[bool] = mapped_column(default=True)
 
-    owners: Mapped[list["User"]] = relationship("User",back_populates="inventory",secondary="usercards",lazy="selectin")
+    owners: Mapped[list["User"]] = relationship("User", back_populates="inventory", secondary="usercards", lazy="selectin")
 
 class Rarity(Base):
     __tablename__ = "rarities"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True, nullable=False)
 
-    name: Mapped[str] = mapped_column(unique=True)
-
-    cards: Mapped[list["Card"]] = relationship(back_populates="rarity",lazy="selectin")
+    cards: Mapped[list["Card"]] = relationship("Card", back_populates="rarity", lazy="selectin")
 
 class Verse(Base):
     __tablename__ = "verses"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True, nullable=False)
 
-    name: Mapped[str] = mapped_column(unique=True)
-
-    cards: Mapped[list["Card"]] = relationship(back_populates="verse",lazy="selectin")
+    cards: Mapped[list["Card"]] = relationship("Card", back_populates="verse", lazy="selectin")
 
 class Profile(Base):
     __tablename__ = "profiles"
