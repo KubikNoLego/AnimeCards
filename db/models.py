@@ -26,7 +26,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(BigInteger,primary_key=True)
     yens: Mapped[int] = mapped_column(default=0)
-    guarant: Mapped[int] = mapped_column(default=100)
+    pity: Mapped[int] = mapped_column(default=100)
 
     username: Mapped[str | None] = mapped_column(VARCHAR(32),default=None)
     name: Mapped[str]

@@ -53,7 +53,7 @@ python main.py
 - **users**
   - `id` (BigInteger, PK) — id пользователя Telegram
   - `yens` (int) — внутренняя валюта
-  - `guarant` (int) — гарантия / запас
+  - `pity` (int) — счётчик гарантированного выпадения хроно-карточек (самые редкие в боте)
   - `username` (varchar) — никнейм
   - `name` (str) — отображаемое имя
   - `last_open` (datetime) — время последнего открытия
