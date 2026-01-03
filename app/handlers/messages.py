@@ -6,12 +6,9 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.filters.ProfileFilter import ProfileFilter
-from app.filters.Private import Private
-from app.func.messageformater import (card_formatter, not_user,
-                                    nottime,profile_creator, profile_step2_tutorial, profile_tutorial)
-from app.func.random_card import random_card
-from app.func.userphoto import user_photo_link
+from app.filters import ProfileFilter, Private
+from app.func import (card_formatter, not_user, nottime, profile_creator,
+                    profile_step2_tutorial, profile_tutorial, random_card, user_photo_link)
 from db.models import User
 from db.requests import get_user_place_on_top
 
@@ -32,16 +29,16 @@ async def _(message: Message, session: AsyncSession):
         last_open = last_open.replace(tzinfo=timezone.utc)
 
     if last_open + timedelta(hours=3) <= datetime.now(timezone.utc):
-        card = await random_card(session, user.guarant)
+        card = await random_card(session, user.pity)
         text = await card_formatter(card)
         await message.answer_photo(FSInputFile(path=f"app/icons/{card.icon}"), caption=text)
         if card not in user.inventory:
             user.inventory.append(card)
-        match user.guarant:
-            case _ if user.guarant <= 0:
-                user.guarant = 100
+        match user.pity:
+            case _ if user.pity <= 0:
+                user.pity = 100
             case _:
-                user.guarant -= 1
+                user.pity -= 1
         user.last_open = datetime.now(timezone.utc)
         user.yens += card.value
         await session.commit()
