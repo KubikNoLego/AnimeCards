@@ -246,7 +246,19 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
                 # Если нет карт, соответствующих фильтрам
                 messages = _load_messages()
                 filter_no_results_message = messages["filter_no_results"]
-                await callback.message.edit_text(text=filter_no_results_message)
+
+                # Создаем клавиатуру с кнопкой возврата к сортировке
+                builder = InlineKeyboardBuilder()
+                builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory")
+                builder.adjust(1)
+
+                # Очищаем данные FSM
+                await state.clear()
+
+                await callback.message.edit_text(
+                    text=filter_no_results_message,
+                    reply_markup=builder.as_markup()
+                )
                 return
 
             # Преобразование номера страницы (1-based) в индекс массива (0-based)
