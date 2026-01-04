@@ -7,6 +7,22 @@ class Pagination(CallbackData, prefix="p"):
     """Данные обратного вызова для кнопок пагинации."""
     p: int
 
+class VerseFilterPagination(CallbackData, prefix="vfpg"):
+    """Данные обратного вызова для кнопок пагинации фильтра по вселенной."""
+    p: int
+
+class VerseFilter(CallbackData, prefix="vf"):
+    """Данные обратного вызова для кнопок фильтра по вселенной."""
+    verse_name: str
+
+class RarityFilterPagination(CallbackData, prefix="rfpg"):
+    """Данные обратного вызова для кнопок пагинации фильтра по редкости."""
+    p: int
+
+class RarityFilter(CallbackData, prefix="rf"):
+    """Данные обратного вызова для кнопок фильтра по редкости."""
+    rarity_name: str
+
 async def main_kb():
     """Создать главную клавиатуру ответов.
 
@@ -64,7 +80,51 @@ async def pagination_keyboard(current_page: int, total_pages: int):
     for text, callback_data in buttons:
         builder.button(text=text, callback_data=callback_data)
 
-    builder.adjust(len(buttons))
+    builder.button(text="✂️ Сортировка", callback_data="sort_inventory")
+    builder.adjust(len(buttons),1)
+
+    return builder.as_markup()
+
+async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
+    """Создать инлайн-клавиатуру пагинации для фильтра по редкости.
+
+    Args:
+        current_page: Текущий номер страницы
+        rarities: Список редкостей
+    Returns:
+        InlineKeyboardMarkup с кнопками пагинации
+    """
+    builder = InlineKeyboardBuilder()
+
+    rarities_names: list
+    pages = (len(rarities) + 3) // 4
+    start_index = (current_page - 1) * 4
+    end_index = start_index + 4
+    rarities_names = [rarity.name for rarity in rarities[start_index:end_index]]
+
+    for rarity_name in rarities_names:
+        builder.button(text=rarity_name, callback_data=RarityFilter(rarity_name=rarity_name).pack())
+
+    empty_buttons_needed = 4 - len(rarities_names)
+    for _ in range(empty_buttons_needed):
+        builder.button(text=" ", callback_data="pass")
+
+    prev_1_active = current_page > 1
+    next_1_active = current_page < len(rarities)
+
+    if prev_1_active:
+        builder.button(text="←", callback_data=RarityFilterPagination(p=current_page-1).pack())
+    builder.button(text=f"{current_page}/{pages}", callback_data="pass")
+    if next_1_active:
+        builder.button(text="→", callback_data=RarityFilterPagination(p=current_page+1).pack())
+    builder.button(text="◀️ Назад", callback_data="sort_inventory")
+
+    if prev_1_active and next_1_active:
+        builder.adjust(2, 2, 3, 1)
+    elif prev_1_active or next_1_active:
+        builder.adjust(2, 2, 2, 1)
+    else:
+        builder.adjust(2, 2, 1, 1)
 
     return builder.as_markup()
 
@@ -72,5 +132,49 @@ async def pagination_keyboard(current_page: int, total_pages: int):
 async def profile_keyboard():
     builder = InlineKeyboardBuilder()
     builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1).pack())
+
+    return builder.as_markup()
+
+async def verse_filter_pagination_keyboard(current_page: int, verses: list):
+    """Создать инлайн-клавиатуру пагинации для фильтра по вселенной.
+
+    Args:
+        current_page: Текущий номер страницы
+        verses: Список вселенных
+    Returns:
+        InlineKeyboardMarkup с кнопками пагинации
+    """
+    builder = InlineKeyboardBuilder()
+
+    verses_names: list
+    pages = (len(verses) + 3) // 4
+    start_index = (current_page - 1) * 4
+    end_index = start_index + 4
+    verses_names = [verse.name for verse in verses[start_index:end_index]]
+
+    for verse_name in verses_names:
+        builder.button(text=verse_name, callback_data=VerseFilter(verse_name=verse_name).pack())
+
+    empty_buttons_needed = 4 - len(verses_names)
+    for _ in range(empty_buttons_needed):
+        builder.button(text=" ", callback_data="pass")
+
+
+    prev_1_active = current_page > 1
+    next_1_active = current_page < len(verses)
+
+    if prev_1_active:
+        builder.button(text="←", callback_data=VerseFilterPagination(p=current_page-1).pack())
+    builder.button(text=f"{current_page}/{pages}", callback_data="pass")
+    if next_1_active:
+        builder.button(text="→", callback_data=VerseFilterPagination(p=current_page+1).pack())
+    builder.button(text="◀️ Назад",callback_data="sort_inventory")
+
+    if prev_1_active and next_1_active:
+        builder.adjust(2, 2, 3, 1)
+    elif prev_1_active or next_1_active:
+        builder.adjust(2, 2, 2, 1)
+    else:
+        builder.adjust(2, 2, 1, 1)
 
     return builder.as_markup()

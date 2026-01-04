@@ -8,10 +8,11 @@ from sqlalchemy import select
 
 from app.filters import ProfileFilter, Private
 from app.func import (card_formatter, not_user, nottime, profile_creator,
-                    profile_step2_tutorial, profile_tutorial, random_card, user_photo_link)
-from app.keyboards.utils import pagination_keyboard, profile_keyboard
-from db.models import User
+                    profile_step2_tutorial, profile_tutorial, random_card, user_photo_link, _load_messages)
+from app.keyboards.utils import profile_keyboard, verse_filter_pagination_keyboard
+from db.models import User, Verse
 from db.requests import get_user_place_on_top
+from sqlalchemy import select
 
 router = Router()
 

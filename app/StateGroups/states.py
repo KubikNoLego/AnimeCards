@@ -1,7 +1,5 @@
 from aiogram.fsm.state import State, StatesGroup
 
 class CardViewStates(StatesGroup):
-    verse_id: int = State()
-    rarity_id: int = State()
-
-    curent_page: int = State()
+    selected_verse_name: str = State()
+    selected_rarity_name:str = State()
