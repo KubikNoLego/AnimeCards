@@ -10,5 +10,5 @@ wheels/
 .venv
 .env
 database.db
-.gitignore
 log.txt
+app/func/create_card.py

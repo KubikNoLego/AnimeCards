@@ -137,23 +137,28 @@ async def nottime(openc: datetime):
     Returns:
         Formatted message with time remaining
     """
-    messages = _load_messages()
+    try:
+        messages = _load_messages()
 
-    # Целевое время — открытие + 3 часа (локальная корректировка)
-    target_time = openc + timedelta(hours=3)
+        # Целевое время — открытие + 3 часа (локальная корректировка)
+        target_time = openc + timedelta(hours=3)
 
-    time_left = target_time - datetime.now(timezone.utc)
-    total_seconds = int(time_left.total_seconds())
+        time_left = target_time - datetime.now(timezone.utc)
+        total_seconds = int(time_left.total_seconds())
 
-    if total_seconds < 0:
-        formatted_time = "00:00"
-    else:
-        hours = total_seconds // 3600
-        minutes = (total_seconds % 3600) // 60
-        formatted_time = f"{hours:02d}:{minutes:02d}"
+        if total_seconds < 0:
+            formatted_time = "00:00"
+        else:
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            formatted_time = f"{hours:02d}:{minutes:02d}"
 
-    logger.info(f"Осталось до следующего открытия: {formatted_time}")
-    return messages["nottime"] % formatted_time
+        logger.info(f"Осталось до следующего открытия: {formatted_time}")
+        return messages["nottime"] % formatted_time
+    except Exception as e:
+        logger.error(f"Ошибка при генерации сообщения о времени: {e}")
+        # Возвращаем сообщение по умолчанию, если что-то пошло не так
+        return "<i>⏳ До следующего открытия осталось немного времени</i>"
 
 @logger.catch
 async def profile_creator(profile: Profile, place_on_top: int):

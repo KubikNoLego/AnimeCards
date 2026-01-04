@@ -5,8 +5,7 @@ from pydantic_settings import BaseSettings,SettingsConfigDict
 
 class Config(BaseSettings):
     BOT_TOKEN: SecretStr
-    # По умолчанию используем локальную SQLite для удобной разработки
-    DB_URL: SecretStr = SecretStr("sqlite+aiosqlite:///./database.db")
+    DB_URL: SecretStr
 
     model_config = SettingsConfigDict(
         env_file=join(dirname(__file__),".env"),
