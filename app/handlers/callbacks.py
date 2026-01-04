@@ -3,8 +3,6 @@ from aiogram.types import CallbackQuery, FSInputFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.filters import Private
-
 from loguru import logger
 from db.models import User
 from app.func.utils import _load_messages
