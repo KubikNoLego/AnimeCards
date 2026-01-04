@@ -97,15 +97,15 @@ async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
     builder = InlineKeyboardBuilder()
 
     rarities_names: list
-    pages = (len(rarities) + 3) // 4
-    start_index = (current_page - 1) * 4
-    end_index = start_index + 4
+    pages = (len(rarities) + 5) // 6
+    start_index = (current_page - 1) * 6
+    end_index = start_index + 6
     rarities_names = [rarity.name for rarity in rarities[start_index:end_index]]
 
     for rarity_name in rarities_names:
         builder.button(text=rarity_name, callback_data=RarityFilter(rarity_name=rarity_name).pack())
 
-    empty_buttons_needed = 4 - len(rarities_names)
+    empty_buttons_needed = 6 - len(rarities_names)
     for _ in range(empty_buttons_needed):
         builder.button(text=" ", callback_data="pass")
 
@@ -120,11 +120,11 @@ async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
     builder.button(text="◀️ Назад", callback_data="sort_inventory")
 
     if prev_1_active and next_1_active:
-        builder.adjust(2, 2, 3, 1)
+        builder.adjust(3, 3, 3, 1)
     elif prev_1_active or next_1_active:
-        builder.adjust(2, 2, 2, 1)
+        builder.adjust(3, 3, 2, 1)
     else:
-        builder.adjust(2, 2, 1, 1)
+        builder.adjust(3, 3, 1, 1)
 
     return builder.as_markup()
 
