@@ -22,8 +22,9 @@ dp = Dispatcher()
 
 _engine = create_async_engine(config.DB_URL.get_secret_value())
 _sessionmaker = async_sessionmaker(_engine,expire_on_commit=False)
-# Middleware проксирует сессию БД в обработчики сообщений
+# Middleware проксирует сессию БД в обработчики сообщений и callback'и
 dp.message.middleware(DBSessionMiddleware(_sessionmaker))
+dp.callback_query.middleware(DBSessionMiddleware(_sessionmaker))
 dp.include_router(router=setup_routers())
 @dp.startup()
 async def on_startup():

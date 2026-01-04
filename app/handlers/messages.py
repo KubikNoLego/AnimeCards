@@ -9,6 +9,7 @@ from sqlalchemy import select
 from app.filters import ProfileFilter, Private
 from app.func import (card_formatter, not_user, nottime, profile_creator,
                     profile_step2_tutorial, profile_tutorial, random_card, user_photo_link)
+from app.keyboards.utils import pagination_keyboard, profile_keyboard
 from db.models import User
 from db.requests import get_user_place_on_top
 
@@ -63,11 +64,12 @@ async def _(message: Message, session: AsyncSession):
                 place_on_top = await get_user_place_on_top(session,user)
                 text = await profile_creator(user.profile,place_on_top)
                 profile_photo = await user_photo_link(message)
+                keyboard = await profile_keyboard()
                 if profile_photo:
-                    await message.reply_photo(photo=profile_photo,caption=text)
+                    await message.reply_photo(photo=profile_photo,caption=text,reply_markup=keyboard)
                 else:
-                    await message.reply(text)
-                if user.start and message.text == "👤 Профиль":
+                    await message.reply(text,reply_markup=keyboard)
+                if user.start:
                     tutorial = await profile_step2_tutorial()
                     await message.answer(tutorial)
                     user.start = False

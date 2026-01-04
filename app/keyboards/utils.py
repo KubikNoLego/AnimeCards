@@ -4,15 +4,14 @@ from aiogram.filters.callback_data import CallbackData
 from random import randint
 
 class Pagination(CallbackData, prefix="p"):
-    """Callback data for pagination buttons."""
+    """Данные обратного вызова для кнопок пагинации."""
     p: int
-    a: int
 
 async def main_kb():
-    """Create main reply keyboard.
+    """Создать главную клавиатуру ответов.
 
     Returns:
-        ReplyKeyboardMarkup with main buttons
+        ReplyKeyboardMarkup с основными кнопками
     """
     buttons = ["🌐 Открыть карту", "👤 Профиль"]
     builder = ReplyKeyboardBuilder()
@@ -22,14 +21,14 @@ async def main_kb():
     return builder.as_markup(resize_keyboard=True, input_field="Привет!" if randint(1, 1000) == 777 else "...")
 
 async def pagination_keyboard(current_page: int, total_pages: int):
-    """Create pagination inline keyboard.
+    """Создать инлайн-клавиатуру пагинации.
 
     Args:
-        current_page: Current page number
-        total_pages: Total number of pages
+        current_page: Текущий номер страницы
+        total_pages: Общее количество страниц
 
     Returns:
-        InlineKeyboardMarkup with pagination buttons
+        InlineKeyboardMarkup с кнопками пагинации
     """
     builder = InlineKeyboardBuilder()
 
@@ -43,28 +42,35 @@ async def pagination_keyboard(current_page: int, total_pages: int):
     buttons = []
 
     if prev_100_active:
-        buttons.append(("««", Pagination(p=current_page, a=1).pack()))
+        buttons.append(("««", Pagination(p=current_page-100).pack()))
 
     if prev_10_active:
-        buttons.append(("‹", Pagination(p=current_page, a=2).pack()))
+        buttons.append(("‹", Pagination(p=current_page-10).pack()))
 
     if prev_1_active:
-        buttons.append(("←", Pagination(p=current_page, a=3).pack()))
+        buttons.append(("←", Pagination(p=current_page-1).pack()))
 
     buttons.append((f"{current_page}/{total_pages}", "pass"))
 
     if next_1_active:
-        buttons.append(("→", Pagination(p=current_page, a=4).pack()))
+        buttons.append(("→", Pagination(p=current_page+1).pack()))
 
     if next_10_active:
-        buttons.append(("›", Pagination(p=current_page, a=5).pack()))
+        buttons.append(("›", Pagination(p=current_page+10).pack()))
 
     if next_100_active:
-        buttons.append(("»»", Pagination(p=current_page, a=6).pack()))
+        buttons.append(("»»", Pagination(p=current_page+100).pack()))
 
     for text, callback_data in buttons:
         builder.button(text=text, callback_data=callback_data)
 
     builder.adjust(len(buttons))
+
+    return builder.as_markup()
+
+
+async def profile_keyboard():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1).pack())
 
     return builder.as_markup()

@@ -11,20 +11,20 @@ from loguru import logger
 
 from db.models import Card, Profile, User
 
-# Constants for random card generation
+# Константы для генерации случайных карт
 RARITIES = [1, 2, 3, 4, 5]
 CHANCES = [55, 27, 12, 4.5, 1]
 SHINY_CHANCE = 0.05
 
 async def random_card(session: AsyncSession, pity: int):
-    """Generate a random card based on pity system.
+    """Генерировать случайную карту на основе системы жалости.
 
     Args:
-        session: Async database session
-        pity: Pity counter (higher means better chances)
+        session: Асинхронная сессия базы данных
+        pity: Счетчик жалости (чем выше, тем лучше шансы)
 
     Returns:
-        Randomly selected Card object
+        Случайно выбранный объект Card
     """
     # Выбор редкости: если есть `pity` — используем веса, иначе выдаём самую обычную редкость (1)
     random_rarity = random.choices(RARITIES, CHANCES, k=1)[0] if pity > 0 else 1
@@ -46,13 +46,13 @@ async def random_card(session: AsyncSession, pity: int):
     return chosen
 
 async def user_photo_link(message: Message) -> Optional[str]:
-    """Get user profile photo file_id.
+    """Получить file_id фото профиля пользователя.
 
     Args:
-        message: Telegram message object
+        message: Объект сообщения Telegram
 
     Returns:
-        File ID of user's profile photo, or None if no photo exists
+        File ID фото профиля пользователя или None, если фото не существует
     """
     try:
         # Определяем чей профиль запрашивать: reply target имеет приоритет
@@ -76,19 +76,19 @@ async def user_photo_link(message: Message) -> Optional[str]:
     return None
 
 def _load_messages() -> dict:
-    """Helper: загружает JSON с сообщениями (кодировка utf-8)."""
+    """Вспомогательная функция: загружает JSON с сообщениями (кодировка utf-8)."""
     with open("app/messages.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
 @logger.catch
 async def start_message_generator(start: bool):
-    """Generate start message based on user status.
+    """Генерировать стартовое сообщение на основе статуса пользователя.
 
     Args:
-        start: True if first start, False if returning user
+        start: True если первый запуск, False если возвращающийся пользователь
 
     Returns:
-        Formatted start message
+        Форматированное стартовое сообщение
     """
     messages = _load_messages()
     key = "first_start" if start else "start"
@@ -97,27 +97,27 @@ async def start_message_generator(start: bool):
 
 @logger.catch
 async def profile_tutorial():
-    """Get profile tutorial message (step 1)."""
+    """Получить сообщение-руководство для профиля (шаг 1)."""
     messages = _load_messages()
     logger.info("Возвращаю сообщение-руководство для профиля (шаг 1)")
     return messages["profile_tutorial"]
 
 @logger.catch
 async def profile_step2_tutorial():
-    """Get profile tutorial message (step 2)."""
+    """Получить сообщение-руководство для профиля (шаг 2)."""
     messages = _load_messages()
     logger.info("Возвращаю сообщение-руководство для профиля (шаг 2)")
     return messages["profile_tutorial2"]
 
 @logger.catch
 async def card_formatter(card: Card):
-    """Format card information for display.
+    """Форматировать информацию о карте для отображения.
 
     Args:
-        card: Card object to format
+        card: Объект Card для форматирования
 
     Returns:
-        Formatted card information string
+        Форматированная строка с информацией о карте
     """
     return f"""
 📄 <b>{card.name}</b>
@@ -129,13 +129,13 @@ async def card_formatter(card: Card):
 
 @logger.catch
 async def nottime(openc: datetime):
-    """Generate "not time yet" message with countdown.
+    """Генерировать сообщение "еще не время" с обратным отсчетом.
 
     Args:
-        openc: Last opening time
+        openc: Время последнего открытия
 
     Returns:
-        Formatted message with time remaining
+        Форматированное сообщение с оставшимся временем
     """
     try:
         messages = _load_messages()
@@ -162,14 +162,14 @@ async def nottime(openc: datetime):
 
 @logger.catch
 async def profile_creator(profile: Profile, place_on_top: int):
-    """Create user profile display.
+    """Создать отображение профиля пользователя.
 
     Args:
-        profile: User profile object
-        place_on_top: User's ranking position
+        profile: Объект профиля пользователя
+        place_on_top: Позиция пользователя в рейтинге
 
     Returns:
-        Formatted profile information
+        Форматированная информация о профиле
     """
     messages = _load_messages()
 
@@ -186,13 +186,13 @@ async def profile_creator(profile: Profile, place_on_top: int):
 
 @logger.catch
 async def not_user(name: str):
-    """Generate "user not found" message.
+    """Генерировать сообщение "пользователь не найден".
 
     Args:
-        name: Username that wasn't found
+        name: Имя пользователя, которое не было найдено
 
     Returns:
-        Formatted error message
+        Форматированное сообщение об ошибке
     """
     messages = _load_messages()
     logger.warning(f"Запрос для несуществующего пользователя: {name}")
