@@ -3,6 +3,8 @@ import asyncio
 from aiogram import Bot,Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
+from aiogram.fsm.storage.redis import RedisStorage
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession,async_sessionmaker
 from loguru import logger
 
@@ -17,7 +19,7 @@ logger.remove()
 logger.add("log.txt", rotation="10 MB", encoding="utf-8", level="INFO")
 
 bot = Bot(config.BOT_TOKEN.get_secret_value(),default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-dp = Dispatcher()
+dp = Dispatcher(storage=RedisStorage.from_url(config.REDIS_URL.get_secret_value()))
 
 
 _engine = create_async_engine(config.DB_URL.get_secret_value())
