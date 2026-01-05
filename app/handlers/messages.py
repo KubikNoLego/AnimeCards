@@ -33,7 +33,7 @@ async def _(message: Message, session: AsyncSession):
     if last_open + timedelta(hours=3) <= datetime.now(timezone.utc):
         card = await random_card(session, user.pity)
         text = await card_formatter(card)
-        await message.answer_photo(FSInputFile(path=f"app/{card.icon}"), caption=text)
+        await message.answer_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
         if card not in user.inventory:
             user.inventory.append(card)
         match user.pity:

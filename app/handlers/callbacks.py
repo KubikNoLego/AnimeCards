@@ -300,7 +300,7 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
         logger.info(f"Редактирование сообщения с картой {card.name} с иконкой")
         try:
             await callback.message.edit_media(
-                media=InputMediaPhoto(media=FSInputFile(path=f"app/{card.icon}")),
+                media=InputMediaPhoto(media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}")),
                 reply_markup=keyboard
             )
             await callback.message.edit_caption(
@@ -310,7 +310,7 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
         except Exception as e:
             logger.warning(f"Не удалось отредактировать сообщение, отправляю новое: {e}")
             await callback.message.answer_photo(
-                FSInputFile(path=f"app/{card.icon}"),
+                FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
                 caption=card_info,
                 reply_markup=keyboard
             )
