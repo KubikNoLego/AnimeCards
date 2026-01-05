@@ -11,7 +11,7 @@ from app.func import (card_formatter, not_user, nottime, profile_creator,
                     profile_step2_tutorial, profile_tutorial, random_card, user_photo_link, _load_messages)
 from app.keyboards.utils import profile_keyboard, verse_filter_pagination_keyboard
 from db.models import User, Verse
-from db.requests import get_user_place_on_top
+from db.requests import get_user_place_on_top, get_top_players_by_balance
 from sqlalchemy import select
 
 router = Router()
@@ -53,6 +53,19 @@ async def _(message: Message, session: AsyncSession):
             text = "<i>⏳ До следующего открытия осталось немного времени</i>"
         await message.reply(text)
     
+@router.message(F.text == "🏆 Топ игроков", Private())
+async def _(message: Message, session: AsyncSession):
+    from app.func.utils import top_players_formatter
+
+    user = await session.scalar(select(User).filter_by(id=message.from_user.id))
+    if user:
+        top_players = await get_top_players_by_balance(session)
+        text = await top_players_formatter(top_players, user.id)
+        await message.answer(text)
+    else:
+        text = await not_user(message.from_user.full_name)
+        await message.reply(text)
+
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):
 

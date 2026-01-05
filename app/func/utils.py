@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
 from db.models import Card, Profile, User
+from db.requests import get_user_collections_count
 
 # Константы для генерации случайных карт
 RARITIES = [1, 2, 3, 4, 5]
@@ -177,13 +178,7 @@ async def profile_creator(profile: Profile, place_on_top: int, session: AsyncSes
     owner = profile.owner
     logger.info(f"Генерирую профиль для пользователя id={getattr(owner, 'id', None)}")
 
-    # Get collections count
-    collections_count = 0
-    if hasattr(owner, 'collections'):
-        try:
-            collections_count = await owner.collections(session)
-        except Exception as e:
-            logger.error(f"Ошибка при получении коллекций для пользователя {owner.id}: {e}")
+    collections_count = await get_user_collections_count(session, owner)
 
     return messages["profile"] % (
         escape(owner.name),
@@ -208,3 +203,32 @@ async def not_user(name: str):
     messages = _load_messages()
     logger.warning(f"Запрос для несуществующего пользователя: {name}")
     return messages["not_user"] % escape(name)
+
+@logger.catch
+async def top_players_formatter(top_players: list, current_user_id: int):
+    """Форматировать список топ игроков по балансу.
+
+    Args:
+        top_players: Список пользователей (топ по балансу)
+        current_user_id: ID текущего пользователя для выделения
+
+    Returns:
+        Форматированная строка с топом игроков
+    """
+    messages = _load_messages()
+
+    if not top_players:
+        return "<i>🏆 Топ игроков пока пуст.</i>"
+
+    header = "<b>🏆 Топ игроков по балансу</b>\n\n"
+    players_text = []
+
+    for i, player in enumerate(top_players, 1):
+        place_emoji = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+        highlight = "<b><i>" if player.id == current_user_id else ""
+        end_highlight = "</i></b>" if player.id == current_user_id else ""
+
+        player_info = f"{place_emoji} {highlight}{escape(player.name)} — {player.yens} ¥{end_highlight}"
+        players_text.append(player_info)
+
+    return header + "\n".join(players_text)

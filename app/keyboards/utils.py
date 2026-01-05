@@ -29,10 +29,10 @@ async def main_kb():
     Returns:
         ReplyKeyboardMarkup с основными кнопками
     """
-    buttons = ["🌐 Открыть карту", "👤 Профиль"]
+    buttons = ["🌐 Открыть карту", "👤 Профиль", "🏆 Топ игроков"]
     builder = ReplyKeyboardBuilder()
     [builder.button(text=item) for item in buttons]
-    builder.adjust(2)
+    builder.adjust(2, 1)
 
     return builder.as_markup(resize_keyboard=True, input_field="Привет!" if randint(1, 1000) == 777 else "...")
 
