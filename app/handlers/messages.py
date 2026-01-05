@@ -55,7 +55,7 @@ async def _(message: Message, session: AsyncSession):
     
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):
-    
+
     is_reply = message.reply_to_message
     match is_reply:
         case None:
@@ -63,7 +63,7 @@ async def _(message: Message, session: AsyncSession):
                                                     id=message.from_user.id))
             if user:
                 place_on_top = await get_user_place_on_top(session,user)
-                text = await profile_creator(user.profile,place_on_top)
+                text = await profile_creator(user.profile,place_on_top, session)
                 profile_photo = await user_photo_link(message)
                 keyboard = await profile_keyboard()
                 if profile_photo:
@@ -83,7 +83,7 @@ async def _(message: Message, session: AsyncSession):
                                     id=message.reply_to_message.from_user.id))
             if user:
                 place_on_top = await get_user_place_on_top(session,user)
-                text = await profile_creator(user.profile,place_on_top)
+                text = await profile_creator(user.profile,place_on_top, session)
                 profile_photo = await user_photo_link(message)
                 if profile_photo:
                     await message.reply_photo(photo=profile_photo,caption=text)

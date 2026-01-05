@@ -24,7 +24,6 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
 
         # Создаем клавиатуру для выбора способа сортировки
         builder = InlineKeyboardBuilder()
-
         # Получаем текущие выбранные значения из FSM
         data = await state.get_data()
         selected_verse_name = data.get('selected_verse_name', None)

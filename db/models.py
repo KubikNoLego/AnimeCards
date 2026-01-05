@@ -43,6 +43,18 @@ class User(Base):
 
     start: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    async def collections(self, session) -> int:
+        collections = 0
+        verses = []
+        cards_id = []
+        for card in self.inventory:
+            verses.append(card.verse)
+            cards_id.append(card.id)
+        verses = list(set(verses))
+        for verse in verses:
+            if all(card.id in cards_id for card in verse.cards):
+                collections+=1
+        return collections
 class Card(Base):
     __tablename__ = "cards"
 

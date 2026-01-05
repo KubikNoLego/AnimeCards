@@ -161,12 +161,13 @@ async def nottime(openc: datetime):
         return "<i>⏳ До следующего открытия осталось немного времени</i>"
 
 @logger.catch
-async def profile_creator(profile: Profile, place_on_top: int):
+async def profile_creator(profile: Profile, place_on_top: int, session: AsyncSession):
     """Создать отображение профиля пользователя.
 
     Args:
         profile: Объект профиля пользователя
         place_on_top: Позиция пользователя в рейтинге
+        session: Асинхронная сессия базы данных
 
     Returns:
         Форматированная информация о профиле
@@ -175,11 +176,21 @@ async def profile_creator(profile: Profile, place_on_top: int):
 
     owner = profile.owner
     logger.info(f"Генерирую профиль для пользователя id={getattr(owner, 'id', None)}")
+
+    # Get collections count
+    collections_count = 0
+    if hasattr(owner, 'collections'):
+        try:
+            collections_count = await owner.collections(session)
+        except Exception as e:
+            logger.error(f"Ошибка при получении коллекций для пользователя {owner.id}: {e}")
+
     return messages["profile"] % (
         escape(owner.name),
         profile.yens,
         place_on_top,
         len(owner.inventory),
+        collections_count,
         owner.joined.strftime("%d.%m.%Y"),
         escape(profile.describe),
     )
