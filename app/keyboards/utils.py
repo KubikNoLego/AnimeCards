@@ -129,9 +129,15 @@ async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
     return builder.as_markup()
 
 
-async def profile_keyboard():
+async def profile_keyboard(has_describe: bool):
     builder = InlineKeyboardBuilder()
+
     builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1).pack())
+    builder.button(text="🖋️ Сменить подпись",callback_data="change_describe")
+    if has_describe:
+        builder.button(text="❌ Удалить подпись",callback_data="delete_describe")
+
+    builder.adjust(1)
 
     return builder.as_markup()
 

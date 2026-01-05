@@ -1,11 +1,15 @@
 from datetime import datetime, timedelta, timezone
+from html import escape
 from aiogram import Router,F
 from aiogram.types import Message,FSInputFile
+from aiogram.fsm.context import FSMContext
+
 
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.StateGroups import ChangeDescribe
 from app.filters import ProfileFilter, Private
 from app.func import (card_formatter, not_user, nottime, profile_creator,
                     profile_step2_tutorial, profile_tutorial, random_card, user_photo_link, _load_messages)
@@ -15,6 +19,19 @@ from db.requests import get_user_place_on_top, get_top_players_by_balance
 from sqlalchemy import select
 
 router = Router()
+
+
+@router.message(ChangeDescribe.text)
+async def _(message:Message, session: AsyncSession, state: FSMContext):
+    messages = _load_messages()
+    if len(message.text) > 70:
+        await message.answer(messages["describe_too_long"] % len(message.text))
+    else:
+        user = await session.scalar(select(User).filter_by(id=message.from_user.id))
+        user.profile.describe = escape(message.text)
+        await session.commit()
+        await message.answer(messages["describe_updated_success"] % escape(message.text))
+        await state.clear()
 
 @router.message(F.text == "🌐 Открыть карту", Private())
 async def _(message: Message, session: AsyncSession):
@@ -78,7 +95,7 @@ async def _(message: Message, session: AsyncSession):
                 place_on_top = await get_user_place_on_top(session,user)
                 text = await profile_creator(user.profile,place_on_top, session)
                 profile_photo = await user_photo_link(message)
-                keyboard = await profile_keyboard()
+                keyboard = await profile_keyboard(user.profile.describe != "")
                 if profile_photo:
                     await message.reply_photo(photo=profile_photo,caption=text,reply_markup=keyboard)
                 else:

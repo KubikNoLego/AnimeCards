@@ -187,7 +187,7 @@ async def profile_creator(profile: Profile, place_on_top: int, session: AsyncSes
         len(owner.inventory),
         collections_count,
         owner.joined.strftime("%d.%m.%Y"),
-        escape(profile.describe),
+        f"«{escape(profile.describe)}»" if profile.describe != "" else "",
     )
 
 @logger.catch

@@ -9,9 +9,24 @@ from loguru import logger
 from db.models import User, Verse, Rarity
 from app.func.utils import _load_messages
 from app.keyboards.utils import Pagination, VerseFilterPagination, VerseFilter, RarityFilterPagination, RarityFilter, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
-from app.StateGroups.states import CardViewStates
+from app.StateGroups.states import ChangeDescribe
 
 router = Router()
+
+
+@router.callback_query(F.data == "delete_describe")
+async def delete_describe_user(callback: CallbackQuery,session : AsyncSession, state:FSMContext):
+    messages = _load_messages()
+    await callback.message.answer(messages["describe_updated_empty"])
+    user = await session.scalar(select(User).filter_by(id=callback.from_user.id))
+    user.profile.describe = ""
+    await session.commit()
+
+@router.callback_query(F.data == "change_describe")
+async def change_describe_user(callback: CallbackQuery, session: AsyncSession, state:FSMContext):
+    await state.set_state(ChangeDescribe.text)
+    messages = _load_messages()
+    await callback.message.answer(messages['change_describe_prompt'])
 
 @router.callback_query(F.data == "sort_inventory")
 async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
