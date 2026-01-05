@@ -1,4 +1,5 @@
 import asyncio
+from datetime import timedelta
 
 from aiogram import Bot,Dispatcher
 from aiogram.enums import ParseMode
@@ -19,7 +20,7 @@ logger.remove()
 logger.add("log.txt", rotation="10 MB", encoding="utf-8", level="INFO")
 
 bot = Bot(config.BOT_TOKEN.get_secret_value(),default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-dp = Dispatcher(storage=RedisStorage.from_url(config.REDIS_URL.get_secret_value()))
+dp = Dispatcher(storage=RedisStorage.from_url(config.REDIS_URL.get_secret_value(), state_ttl=timedelta(days=7)))
 
 
 _engine = create_async_engine(config.DB_URL.get_secret_value())

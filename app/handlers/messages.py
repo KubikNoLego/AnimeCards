@@ -31,7 +31,7 @@ async def _(message:Message, session: AsyncSession, state: FSMContext):
         user.profile.describe = escape(message.text)
         await session.commit()
         await message.answer(messages["describe_updated_success"] % escape(message.text))
-        await state.clear()
+        await state.set_state(None)
 
 @router.message(F.text == "🌐 Открыть карту", Private())
 async def _(message: Message, session: AsyncSession):
