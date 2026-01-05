@@ -9,8 +9,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
-from db.models import Card, Profile, User
-from db.requests import get_user_collections_count
+from db.models import Card, Profile, User, Verse
+from db.requests import RedisRequests, get_user_collections_count
+import redis.asyncio as redis
 
 # Константы для генерации случайных карт
 RARITIES = [1, 2, 3, 4, 5]
@@ -22,13 +23,13 @@ async def random_card(session: AsyncSession, pity: int):
 
     Args:
         session: Асинхронная сессия базы данных
-        pity: Счетчик жалости (чем выше, тем лучше шансы)
+        pity: Счетчик жалости (чем выше, тем меньше шансы)
 
     Returns:
         Случайно выбранный объект Card
     """
-    # Выбор редкости: если есть `pity` — используем веса, иначе выдаём самую обычную редкость (1)
-    random_rarity = random.choices(RARITIES, CHANCES, k=1)[0] if pity > 0 else 1
+    # Выбор редкости: если есть `pity` — используем веса, иначе выдаём самую дорогую редкость (5)
+    random_rarity = random.choices(RARITIES, CHANCES, k=1)[0] if pity > 0 else 5
     # Определяем, выпала ли shiny-версия
     is_shiny = random.random() < SHINY_CHANCE
 
@@ -42,6 +43,31 @@ async def random_card(session: AsyncSession, pity: int):
         )
     )
     cards = cards_result.all()
+
+    if not cards:
+        logger.error(f"Нет доступных карт для генерации: rarity={random_rarity}, shiny={is_shiny}")
+        raise ValueError(f"Нет доступных карт с редкостью {random_rarity} и shiny={is_shiny}")
+
+    daily_verse = await RedisRequests.daily_verse()
+
+    if daily_verse:
+        boosted_cards = []
+        normal_cards = []
+
+        for card in cards:
+            if card.verse.id == daily_verse:
+                boosted_cards.append(card)
+            else:
+                normal_cards.append(card)
+
+        # Увеличиваем шанс на 25% для карт из ежедневной вселенной
+        if boosted_cards:
+            # Добавляем карты из ежедневной вселенной с увеличенным весом
+            # Каждая карта добавляется 1.25 раза (оригинал + 25% шанс)
+            weighted_cards = boosted_cards * 5 + normal_cards  # 5 раз по 25% = 125% шанс
+            logger.info(f"Увеличен шанс для ежедневной вселенной: {len(boosted_cards)} карт с весом 1.25")
+            cards = weighted_cards
+
     chosen = random.choice(cards)
     logger.info(f"Выдана карта id={getattr(chosen, 'id', None)} name={getattr(chosen, 'name', None)} shiny={chosen.shiny}")
     return chosen
@@ -232,3 +258,52 @@ async def top_players_formatter(top_players: list, current_user_id: int):
         players_text.append(player_info)
 
     return header + "\n".join(players_text)
+
+async def check_and_update_daily_verse(session: AsyncSession):
+    """Проверять и обновлять вселенную дня при смене дня.
+
+    Использует TTL в Redis (24 часа) вместо хранения даты.
+    Если ключ существует - вселенная актуальна.
+    Если ключ не существует или истек - выбираем новую вселенную.
+
+    Args:
+        session: Асинхронная сессия базы данных
+
+    Returns:
+        True, если вселенная была обновлена, False в противном случае
+    """
+    try:
+        redis_client = redis.from_url(config.REDIS_URL.get_secret_value())
+
+        # Проверяем, существует ли текущая вселенная в Redis
+        verse_data_json = await redis_client.get("daily_verse")
+
+        if verse_data_json:
+            # Вселенная существует и актуальна (TTL еще не истек)
+            logger.info("Вселенная дня уже актуальна")
+            return False
+
+        # Выбираем случайную вселенную
+        result = await session.execute(select(Verse))
+        verses = result.scalars().all()
+
+        if not verses:
+            logger.warning("В базе данных нет вселенных")
+            return False
+
+        new_verse = random.choice(verses)
+
+        # Сохраняем новую вселенную в Redis с TTL 24 часа
+        verse_data = {
+            "id": new_verse.id,
+            "name": new_verse.name
+        }
+
+        # Устанавливаем TTL на 24 часа (24*60*60 секунд)
+        await redis_client.set("daily_verse", json.dumps(verse_data), ex=24*60*60)
+        logger.info(f"Вселенная дня успешно обновлена на: {new_verse.name}")
+        return True
+
+    except Exception as exc:
+        logger.exception(f"Ошибка при проверке и обновлении вселенной дня: {exc}")
+        return False

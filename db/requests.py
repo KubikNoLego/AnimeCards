@@ -1,4 +1,6 @@
+import random
 from loguru import logger
+from redis.asyncio import Redis
 from db.models import Card, User, Profile, Verse
 
 from datetime import datetime, timedelta, timezone
@@ -119,3 +121,33 @@ async def get_top_players_by_balance(session: AsyncSession, limit: int = 10) -> 
     except Exception as exc:
         logger.exception(f"Ошибка при получении топ игроков по балансу: {exc}")
         return []
+
+async def get_random_verse(session: AsyncSession) -> Verse:
+    """Возвращает случайную вселенную (verse) из базы данных.
+
+    Args:
+        session: Асинхронная сессия базы данных
+
+    Returns:
+        Случайный объект Verse или None в случае ошибки
+    """
+    try:
+        verses = await session.scalars(select(Verse))
+        verses = verses.all()
+        if verses:
+            random_verse = random.choice(verses)
+            logger.info(f"Получена случайная вселенная: {random_verse.id}")
+            return random_verse
+        logger.warning("Нет доступных вселенных в базе данных")
+        return None
+    except Exception as exc:
+        logger.exception(f"Ошибка при получении случайной вселенной: {exc}")
+        return None
+
+
+class RedisRequests:
+    async def daily_verse() -> int:
+        session = Redis()
+        verse = await session.get('verse') or None
+        await session.aclose()
+        return verse
