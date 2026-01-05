@@ -11,4 +11,4 @@ wheels/
 .env
 database.db
 log.txt
-app/func/create_card.py
+create_cards.py

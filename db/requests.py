@@ -5,15 +5,6 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Соответствие идентификатора редкости и читаемого названия
-RARITIES = {
-    1: "Обычная",
-    2: "Редкая",
-    3: "Мифическая",
-    4: "Легендарная",
-    5: "Хроно",
-}
-
 async def create_or_update_user(id: int,
                                 username: str | None,
                                 name: str,
