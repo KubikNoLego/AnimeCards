@@ -15,7 +15,7 @@ from db import Base,Verse
 from configR import config
 from app.handlers import setup_routers
 from app.middlewares import DBSessionMiddleware
-from db.requests import get_random_verse
+from db.requests import get_random_verse, get_daily_shop_items
 
 
 # Настройка логирования: записывать в файл `log.txt`, ротация при 10 МБ
@@ -36,28 +36,59 @@ async def _daily_updates():
         try:
             logger.info("Запуск проверки ежедневных обновлений")
             session = Redis()
-            current_date = datetime.now(timezone.utc).date()
-            last_date_str = await session.get("last_update")
-            if last_date_str:
-                last_date = datetime.strptime(last_date_str.decode("utf-8"),"%Y-%m-%d").date()
-            else:
-                last_date = current_date - timedelta(days=1)
 
-            if current_date > last_date:
-                logger.info("Начало обновления ежедневной вселенной")
+            # Проверяем, существует ли текущая вселенная в Redis
+            verse_data_json = await session.get("daily_verse")
+
+            if verse_data_json:
+                # Вселенная существует и актуальна (TTL еще не истек)
+                logger.info("Ежедневная вселенная уже актуальна")
+            else:
+                # Выбираем новую вселенную
                 async with _sessionmaker() as db_session:
                     new_verse: Verse = await get_random_verse(db_session)
 
                     if new_verse:
-                        await session.set("verse",new_verse.id)
-                        await session.set("last_update", current_date.isoformat())
+                        # Сохраняем только ID вселенной в Redis с TTL 24 часа
+                        await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
                         logger.info(f"Ежедневная вселенная обновлена. ID: {new_verse.id}")
                     else:
                         logger.warning("Не удалось получить новую вселенную для ежедневного обновления")
+
             await session.aclose()
         except Exception as e:
             logger.error(f"Ошибка в _daily_updates: {str(e)}", exc_info=True)
-        await asyncio.sleep(3600)
+        await asyncio.sleep(600)  # Уменьшаем задержку до 10 минут для более быстрого обновления
+
+async def _daily_shop_updates():
+    while True:
+        try:
+            logger.info("Запуск проверки ежедневных обновлений магазина")
+            session = Redis()
+
+            # Проверяем, существуют ли текущие товары магазина в Redis
+            shop_items = await session.get("shop_items")
+
+            if shop_items:
+                # Товары существуют и актуальны (TTL еще не истек)
+                logger.info("Товары ежедневного магазина уже актуальны")
+            else:
+                # Генерируем новые товары для магазина
+                async with _sessionmaker() as db_session:
+                    daily_items = await get_daily_shop_items(db_session)
+
+                    if daily_items and len(daily_items) > 0:
+                        # Сохраняем только ID карточек для ежедневного магазина с TTL 24 часа
+                        shop_items_ids = [str(card.id) for card in daily_items]
+                        await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)
+                        logger.info(f"Ежедневный магазин обновлен. Товары: {len(daily_items)} шт.")
+                    else:
+                        logger.warning("Не удалось получить товары для ежедневного магазина")
+
+            await session.aclose()
+        except Exception as e:
+            logger.error(f"Ошибка в _daily_shop_updates: {str(e)}", exc_info=True)
+        await asyncio.sleep(600)  # Уменьшаем задержку до 10 минут для более быстрого обновления
 
 dp.message.middleware(DBSessionMiddleware(_sessionmaker))
 dp.callback_query.middleware(DBSessionMiddleware(_sessionmaker))
@@ -71,6 +102,7 @@ async def on_startup():
 
     # Запуск ежедневных обновлений в фоновом режиме
     asyncio.create_task(_daily_updates())
+    asyncio.create_task(_daily_shop_updates())
     logger.info("Бот успешно запущен")
 @dp.shutdown()
 async def on_shudown():

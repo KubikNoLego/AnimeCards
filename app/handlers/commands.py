@@ -14,8 +14,8 @@ from app.filters import Private
 from app.func import user_photo_link, start_message_generator
 from app.func.utils import _load_messages, card_formatter, not_user, nottime, profile_creator,random_card
 from app.keyboards import main_kb
-from db.models import Referrals, User
-from db.requests import create_or_update_user, get_award, get_user_place_on_top, add_referral
+from db.models import Referrals, User, Verse
+from db.requests import create_or_update_user, get_award, get_user_place_on_top, add_referral, RedisRequests
 
 router = Router()
 
@@ -158,3 +158,26 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
     else:
         text = await not_user(message.from_user.full_name)
         await message.reply(text)
+
+@router.message(Command("daily"))
+async def _(message: Message, command: CommandObject,session: AsyncSession):
+    messages = _load_messages()
+    try:
+        # Получаем ID текущей ежедневной вселенной из Redis
+        verse_id = await RedisRequests.daily_verse()
+
+        if verse_id:
+            # Получаем информацию о вселенной из базы данных
+            verse = await session.scalar(select(Verse).filter_by(id=verse_id))
+
+            if verse:
+                # Форматируем сообщение с информацией о ежедневной вселенной
+                text = messages["daily_verse"] % verse.name
+                await message.reply(text)
+            else:
+                await message.reply(messages["daily_verse_error"])
+        else:
+            await message.reply(messages["daily_verse_error"])
+    except Exception as e:
+        logger.error(f"Ошибка при получении ежедневной вселенной: {str(e)}", exc_info=True)
+        await message.reply(messages["daily_verse_error"])

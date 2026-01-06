@@ -14,13 +14,43 @@ from app.StateGroups import ChangeDescribe
 from app.filters import ProfileFilter, Private
 from app.func import (card_formatter, not_user, nottime, profile_creator,
                     profile_step2_tutorial, profile_tutorial, random_card, user_photo_link, _load_messages)
-from app.keyboards.utils import profile_keyboard
-from db.models import User
-from db.requests import get_user_place_on_top, get_top_players_by_balance
+from app.keyboards.utils import profile_keyboard, shop_keyboard
+from db.models import Card, User
+from db.requests import RedisRequests, get_user_place_on_top, get_top_players_by_balance
 from sqlalchemy import select
 
 router = Router()
 
+
+@router.message(F.text == "🛒 Магазин")
+async def _(message:Message,session:AsyncSession):
+    items = await RedisRequests.daily_items()
+    messages = _load_messages()
+    if items:
+        try:
+            items = items.decode("utf-8").split(",")
+            cards = []
+
+            for item_id in items:
+                if item_id.strip():  # Проверяем, что ID не пустой
+                    card = await session.scalar(select(Card).filter_by(id=int(item_id.strip())))
+                    if card:
+                        # Применяем 70% надбавку к цене карточки
+                        card.value = int(card.value * 1.7)
+                        cards.append(card)
+
+            if cards:
+                # Создаем клавиатуру с товарами
+                keyboard = await shop_keyboard(cards)
+                await message.answer(messages["daily_shop"], reply_markup=keyboard)
+            else:
+                await message.answer(messages['shop_empty'])
+        except Exception as e:
+            logger.error(f"Ошибка при обработке магазина: {str(e)}", exc_info=True)
+            await message.answer(messages['shop_empty'])
+    else:
+        await message.answer(messages['shop_empty'])
+        
 @router.message(F.text == "🔗 Реферальная ссылка")
 async def _(message: Message, session: AsyncSession):
     """Обработчик кнопки реферальной ссылки."""

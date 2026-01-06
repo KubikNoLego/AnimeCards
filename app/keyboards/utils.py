@@ -3,6 +3,10 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 from aiogram.filters.callback_data import CallbackData
 from random import randint
 
+class ShopItemCallback(CallbackData, prefix="shop"):
+    """Данные обратного вызова для кнопок товаров магазина."""
+    item_id: int
+
 class Pagination(CallbackData, prefix="p"):
     """Данные обратного вызова для кнопок пагинации."""
     p: int
@@ -29,10 +33,10 @@ async def main_kb():
     Returns:
         ReplyKeyboardMarkup с основными кнопками
     """
-    buttons = ["🌐 Открыть карту", "👤 Профиль", "🏆 Топ игроков", "🔗 Реферальная ссылка"]
+    buttons = ["🌐 Открыть карту", "👤 Профиль", "🏆 Топ игроков", "🔗 Реферальная ссылка","🛒 Магазин"]
     builder = ReplyKeyboardBuilder()
     [builder.button(text=item) for item in buttons]
-    builder.adjust(2, 2)
+    builder.adjust(2, 3)
 
     return builder.as_markup(resize_keyboard=True, input_field="Привет!" if randint(1, 1000) == 777 else "...")
 
@@ -110,7 +114,7 @@ async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
         builder.button(text=" ", callback_data="pass")
 
     prev_1_active = current_page > 1
-    next_1_active = current_page < len(rarities)
+    next_1_active = current_page < pages
 
     if prev_1_active:
         builder.button(text="←", callback_data=RarityFilterPagination(p=current_page-1).pack())
@@ -127,7 +131,6 @@ async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
         builder.adjust(3, 3, 1, 1)
 
     return builder.as_markup()
-
 
 async def profile_keyboard(has_describe: bool):
     builder = InlineKeyboardBuilder()
@@ -167,7 +170,7 @@ async def verse_filter_pagination_keyboard(current_page: int, verses: list):
 
 
     prev_1_active = current_page > 1
-    next_1_active = current_page < len(verses)
+    next_1_active = current_page < pages
 
     if prev_1_active:
         builder.button(text="←", callback_data=VerseFilterPagination(p=current_page-1).pack())
@@ -182,5 +185,24 @@ async def verse_filter_pagination_keyboard(current_page: int, verses: list):
         builder.adjust(2, 2, 2, 1)
     else:
         builder.adjust(2, 2, 1, 1)
+
+    return builder.as_markup()
+
+
+async def shop_keyboard(cards: list):
+    """Создать инлайн-клавиатуру для магазина.
+
+    Args:
+        cards: Список карточек для отображения
+
+    Returns:
+        InlineKeyboardMarkup с кнопками товаров
+    """
+    builder = InlineKeyboardBuilder()
+
+    for card in cards:
+        builder.button(text=f"{card.name} ({int(card.value)} ¥)", callback_data=ShopItemCallback(item_id=card.id).pack())
+
+    builder.adjust(2)
 
     return builder.as_markup()

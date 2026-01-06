@@ -143,6 +143,56 @@ async def get_random_verse(session: AsyncSession) -> Verse:
         logger.exception(f"Ошибка при получении случайной вселенной: {exc}")
         return None
 
+async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
+    """Возвращает список карточек для ежедневного магазина с использованием системы вероятностей.
+
+    Args:
+        session: Асинхронная сессия базы данных
+
+    Returns:
+        Список карточек для ежедневного магазина или пустой список в случае ошибки
+    """
+    try:
+        from app.func.utils import random_card
+
+        # Используем random_card для генерации карточек с учетом вероятностей
+        # Используем фиксированное значение pity=100 для магазина (максимальный шанс)
+        daily_cards = []
+        attempts = 0
+        max_attempts = 100
+
+        while len(daily_cards) < 5 and attempts < max_attempts:
+            attempts += 1
+            try:
+                card = await random_card(session, pity=100)  # Используем максимальный pity для лучших шансов
+                if card not in daily_cards:
+                    daily_cards.append(card)
+            except Exception as e:
+                logger.warning(f"Не удалось сгенерировать карточку (попытка {attempts}): {str(e)}")
+                continue
+
+        if len(daily_cards) >= 5:
+            logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина с использованием random_card")
+            return daily_cards
+        else:
+            logger.warning(f"Не удалось получить достаточно карточек после {attempts} попыток, используем резервный метод")
+
+            # Резервный метод: случайный выбор, если random_card не сработал
+            cards = await session.scalars(select(Card).filter_by(shiny=False))
+            cards = cards.all()
+
+            if len(cards) >= 5:
+                daily_cards = random.sample(cards, 5)
+                logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина (резервный метод)")
+                return daily_cards
+            else:
+                logger.warning("Недостаточно карточек в базе данных для ежедневного магазина")
+                return []
+
+    except Exception as exc:
+        logger.exception(f"Ошибка при получении карточек для ежедневного магазина: {exc}")
+        return []
+
 async def add_referral(session:AsyncSession, referral_id: int, referrer_id: int) -> bool:
     if referral_id != referrer_id:
         referrer = await session.scalar(select(User).filter_by(id=referrer_id))
@@ -168,8 +218,18 @@ async def get_award(session:AsyncSession, referral_object:Referrals ,award:int):
         pass
 
 class RedisRequests:
+    
+    
     async def daily_verse() -> int:
         session = Redis()
-        verse = await session.get('verse') or None
+        verse = await session.get('verse')
         await session.aclose()
-        return verse
+        if verse:
+            return int(verse.decode('utf-8'))
+        return None
+
+    async def daily_items() -> str:
+        session = Redis()
+        items = await session.get('shop_items') or None
+        await session.aclose()
+        return items

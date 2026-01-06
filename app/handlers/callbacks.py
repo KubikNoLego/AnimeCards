@@ -6,10 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from loguru import logger
-from db.models import User, Verse, Rarity
-from app.func.utils import _load_messages
-from app.keyboards.utils import Pagination, VerseFilterPagination, VerseFilter, RarityFilterPagination, RarityFilter, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
+from db.models import Card, User, Verse, Rarity
+from app.func.utils import _load_messages, card_formatter
+from app.keyboards.utils import Pagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilterPagination, RarityFilter, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
 from app.StateGroups.states import ChangeDescribe
+from db.requests import RedisRequests
 
 router = Router()
 
@@ -112,6 +113,132 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
     except Exception as e:
         logger.error(f"Ошибка при обработке callback выбора способа сортировки инвентаря: {e}")
         await callback.answer("❌ Произошла ошибка при обработке запроса", show_alert=True)
+
+@router.callback_query(ShopItemCallback.filter())
+async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCallback, session: AsyncSession):
+    """Обработчик callback для покупки карточки из магазина."""
+    try:
+        logger.info(f"Обработка callback покупки карточки {callback_data.item_id} для пользователя {callback.from_user.id}")
+
+        # Получаем карточку из базы данных
+        card = await session.scalar(select(Card).filter_by(id=callback_data.item_id))
+
+        if not card:
+            await callback.answer("❌ Карточка не найдена", show_alert=True)
+            return
+
+        # Получаем пользователя
+        user = await session.scalar(select(User).filter_by(id=callback.from_user.id))
+
+        if not user:
+            await callback.answer("❌ Пользователь не найден", show_alert=True)
+            return
+
+        # Проверяем, достаточно ли у пользователя йен
+        if user.yens < int(card.value*1.7):
+            await callback.answer(f"❌ Недостаточно йен для покупки", show_alert=True)
+            return
+
+        # Проверяем, есть ли уже эта карточка у пользователя
+        if card in user.inventory:
+            await callback.answer("ℹ️ У вас уже есть эта карточка", show_alert=True)
+            return
+
+        # Создаем клавиатуру с подтверждением покупки
+        builder = InlineKeyboardBuilder()
+        builder.button(text="💰 Купить", callback_data=f"buy_card_{card.id}")
+        builder.button(text="🔙 Отмена", callback_data="cancel_buy")
+        builder.adjust(2)
+
+        # Форматируем информацию о карточке
+        card_info = f"""
+🛒 <b>{card.name}</b>
+🌌 Вселенная: {card.verse.name}
+🎨 Редкость: {card.rarity.name}
+💰 Цена: {card.value} ¥
+
+<i>Подтвердите покупку:</i>
+"""
+
+        # Отображаем карточку с клавиатурой подтверждения
+        if card.icon:
+            try:
+                await callback.message.answer_photo(
+                    FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
+                    caption=card_info,
+                    reply_markup=builder.as_markup()
+                )
+            except Exception as e:
+                logger.warning(f"Не удалось отправить фото карточки: {e}")
+                await callback.message.answer(
+                    card_info,
+                    reply_markup=builder.as_markup()
+                )
+        else:
+            await callback.message.answer(
+                card_info,
+                reply_markup=builder.as_markup()
+            )
+
+        await callback.answer()
+
+    except Exception as e:
+        logger.error(f"Ошибка при обработке покупки карточки: {str(e)}", exc_info=True)
+        await callback.answer("❌ Произошла ошибка при обработке покупки", show_alert=True)
+
+@router.callback_query(F.data.startswith("buy_card_"))
+async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
+    """Обработчик callback для подтверждения покупки карточки."""
+    try:
+        logger.info(f"Обработка подтверждения покупки карточки для пользователя {callback.from_user.id}")
+
+        # Извлекаем ID карточки из callback данных
+        card_id = int(callback.data.split("_")[-1])
+
+        # Получаем карточку и пользователя
+        card = await session.scalar(select(Card).filter_by(id=card_id))
+        user = await session.scalar(select(User).filter_by(id=callback.from_user.id))
+
+        if not card or not user:
+            await callback.answer("❌ Карточка или пользователь не найдены", show_alert=True)
+            return
+
+        # Проверяем, достаточно ли у пользователя йен
+        if user.yens < card.value:
+            await callback.answer(f"❌ Недостаточно йен для покупки", show_alert=True)
+            return
+
+        # Проверяем, есть ли уже эта карточка у пользователя
+        if card in user.inventory:
+            await callback.answer("ℹ️ У вас уже есть эта карточка", show_alert=True)
+            return
+
+        # Выполняем покупку
+        user.yens -= card.value
+        user.inventory.append(card)
+
+        await session.commit()
+
+        # Отправляем подтверждение о покупке
+        await callback.message.answer(f"🎉 Покупка успешна! Вы купили карточку <b>{card.name}</b> за <b>{card.value} ¥</b>")
+
+        # Обновляем сообщение с магазином
+        await callback.message.edit_text("✅ Покупка завершена успешно!")
+        await callback.answer("🎉 Покупка успешна!")
+
+    except Exception as e:
+        logger.error(f"Ошибка при покупке карточки: {str(e)}", exc_info=True)
+        await callback.answer("❌ Произошла ошибка при покупке", show_alert=True)
+
+@router.callback_query(F.data == "cancel_buy")
+async def cancel_buy_callback(callback: CallbackQuery):
+    """Обработчик callback для отмены покупки."""
+    try:
+        await callback.message.edit_text("🔙 Покупка отменена")
+        await callback.answer("🔙 Покупка отменена")
+    except Exception as e:
+        logger.error(f"Ошибка при отмене покупки: {str(e)}")
+        await callback.answer("❌ Произошла ошибка при отмене", show_alert=True)
 
 @router.callback_query(VerseFilterPagination.filter())
 async def verse_filter_pagination_callback(callback: CallbackQuery, callback_data: VerseFilterPagination, session: AsyncSession):
