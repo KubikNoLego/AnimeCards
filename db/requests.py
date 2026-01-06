@@ -1,7 +1,7 @@
 import random
 from loguru import logger
 from redis.asyncio import Redis
-from db.models import Card, User, Profile, Verse
+from db.models import Card, User, Profile, Verse, Referrals
 
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
@@ -142,6 +142,30 @@ async def get_random_verse(session: AsyncSession) -> Verse:
     except Exception as exc:
         logger.exception(f"Ошибка при получении случайной вселенной: {exc}")
         return None
+
+async def add_referral(session:AsyncSession, referral_id: int, referrer_id: int) -> bool:
+    if referral_id != referrer_id:
+        referrer = await session.scalar(select(User).filter_by(id=referrer_id))
+        if referral_id not in referrer.referrals:
+                refferal_alredy = await session.scalar(select(Referrals).filter_by(referral_id=referral_id))
+                if refferal_alredy:
+                    referral_object = Referrals(
+                        user_id=referrer_id,
+                        referral_id = referral_id
+                    )
+                    session.add(referral_object)
+                    session.commit()
+                    return referral_object
+    return None
+
+async def get_award(session:AsyncSession, referral_object:Referrals ,award:int):
+    try:
+        user = await session.scalar(select(User).filter_by(id=referral_object.user_id))
+        user.yens+=award
+        referral_object.referrer_reward = award
+        await session.commit()
+    except:
+        pass
 
 class RedisRequests:
     async def daily_verse() -> int:

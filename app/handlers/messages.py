@@ -14,12 +14,40 @@ from app.StateGroups import ChangeDescribe
 from app.filters import ProfileFilter, Private
 from app.func import (card_formatter, not_user, nottime, profile_creator,
                     profile_step2_tutorial, profile_tutorial, random_card, user_photo_link, _load_messages)
-from app.keyboards.utils import profile_keyboard, verse_filter_pagination_keyboard
-from db.models import User, Verse
+from app.keyboards.utils import profile_keyboard
+from db.models import User
 from db.requests import get_user_place_on_top, get_top_players_by_balance
 from sqlalchemy import select
 
 router = Router()
+
+@router.message(F.text == "🔗 Реферальная ссылка")
+async def _(message: Message, session: AsyncSession):
+    """Обработчик кнопки реферальной ссылки."""
+    user = await session.scalar(select(User).filter_by(id=message.from_user.id))
+    if user:
+        total_reward = 0
+        for i in user.referrals:
+            total_reward += i.referrer_reward
+        # Создаем реферальную ссылку
+        bot_info = await message.bot.get_me()
+        referral_link = f"https://t.me/{bot_info.username}?start=r_{user.id}"
+
+        stats_message = f"""
+🔗 <b>Ваша реферальная ссылка:</b>
+<code>{referral_link}</code>
+
+📊 <b>Статистика рефералов:</b>
+👥 Приглашено друзей: {len(user.referrals)}
+💰 Получено йен: {total_reward}
+
+💡 <i>Приглашайте друзей и получайте бонусы от 100 до 700 йен за каждого!</i>
+"""
+
+        await message.reply(stats_message, parse_mode="HTML")
+    else:
+        messages = _load_messages()
+        await message.reply(messages["not_registered"])
 
 
 @router.message(ChangeDescribe.text)

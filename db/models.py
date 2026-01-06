@@ -15,6 +15,16 @@ class Base(DeclarativeBase):
 
         return f"<{self.__class__.__name__}; {columns_str}>"
 
+class Referrals(Base):
+    __tablename__ = "referrals"
+
+    id: Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
+    referral_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
+    referrer_reward: Mapped[int] = mapped_column(default=0)
+
+    referrer: Mapped["User"] = relationship("User",back_populates="referrals",foreign_keys=[user_id],lazy="selectin")
+
 class UserCards(Base):
     __tablename__ = 'usercards'
 
@@ -42,6 +52,8 @@ class User(Base):
     profile: Mapped["Profile"] = relationship("Profile", back_populates="owner", lazy="selectin")
 
     start: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    referrals: Mapped[list["Referrals"]] = relationship("Referrals", back_populates="referrer", foreign_keys="Referrals.user_id", lazy="selectin")
 
 class Card(Base):
     __tablename__ = "cards"
