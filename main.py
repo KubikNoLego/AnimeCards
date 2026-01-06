@@ -34,7 +34,6 @@ _sessionmaker = async_sessionmaker(_engine,expire_on_commit=False)
 async def _daily_updates():
     while True:
         try:
-            logger.info("Запуск проверки ежедневных обновлений")
             session = Redis()
             current_date = datetime.now(timezone.utc).date()
             last_date_str = await session.get("last_update")
@@ -44,18 +43,14 @@ async def _daily_updates():
                 last_date = current_date - timedelta(days=1)
 
             if current_date > last_date:
-                logger.info("Начало обновления ежедневной вселенной")
                 async with _sessionmaker() as db_session:
                     new_verse: Verse = await get_random_verse(db_session)
 
                     if new_verse:
                         await session.set("verse",new_verse.id)
                         await session.set("last_update", current_date.isoformat())
-                        logger.info(f"Ежедневная вселенная обновлена. ID: {new_verse.id}")
                     else:
                         logger.warning("Не удалось получить новую вселенную для ежедневного обновления")
-            else:
-                logger.info("Ежедневное обновление не требуется, сегодня уже обновлялось")
             await session.aclose()
         except Exception as e:
             logger.error(f"Ошибка в _daily_updates: {str(e)}", exc_info=True)
@@ -73,7 +68,6 @@ async def on_startup():
 
     # Запуск ежедневных обновлений в фоновом режиме
     asyncio.create_task(_daily_updates())
-    logger.info("Бот успешно запущен")
 @dp.shutdown()
 async def on_shudown():
     await _engine.dispose()

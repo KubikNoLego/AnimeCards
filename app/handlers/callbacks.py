@@ -32,7 +32,6 @@ async def change_describe_user(callback: CallbackQuery, session: AsyncSession, s
 async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext):
     """Обработчик callback для сброса фильтров сортировки."""
     try:
-        logger.info(f"Сброс фильтров сортировки для пользователя {callback.from_user.id}")
 
         # Очищаем данные FSM
         await state.clear()
@@ -59,7 +58,6 @@ async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext
 async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора способа сортировки инвентаря."""
     try:
-        logger.info(f"Обработка callback выбора способа сортировки инвентаря для пользователя {callback.from_user.id}")
 
         messages = _load_messages()
         select_sort_message = messages["select_sort"]
@@ -118,7 +116,6 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
 async def verse_filter_pagination_callback(callback: CallbackQuery, callback_data: VerseFilterPagination, session: AsyncSession):
     """Обработчик callback для пагинации фильтра по вселенной."""
     try:
-        logger.info(f"Обработка callback пагинации фильтра по вселенной для пользователя {callback.from_user.id}, страница {callback_data.p}")
 
         verses = await session.scalars(select(Verse))
         verses = verses.all()
@@ -148,7 +145,6 @@ async def verse_filter_pagination_callback(callback: CallbackQuery, callback_dat
 async def verse_filter_callback(callback: CallbackQuery, callback_data: VerseFilter, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора конкретной вселенной."""
     try:
-        logger.info(f"Обработка callback выбора вселенной {callback_data.verse_name} для пользователя {callback.from_user.id}")
 
         # Сохраняем выбранное название вселенной в FSM
         await state.update_data(selected_verse_name=callback_data.verse_name)
@@ -176,7 +172,6 @@ async def verse_filter_callback(callback: CallbackQuery, callback_data: VerseFil
 async def sort_by_rarity_callback(callback: CallbackQuery, session: AsyncSession):
     """Обработчик callback для сортировки по редкости."""
     try:
-        logger.info(f"Обработка callback сортировки по редкости для пользователя {callback.from_user.id}")
 
         # Получаем все редкости из базы данных
         rarities = await session.scalars(select(Rarity))
@@ -203,7 +198,6 @@ async def sort_by_rarity_callback(callback: CallbackQuery, session: AsyncSession
 async def rarity_filter_pagination_callback(callback: CallbackQuery, callback_data: RarityFilterPagination, session: AsyncSession):
     """Обработчик callback для пагинации фильтра по редкости."""
     try:
-        logger.info(f"Обработка callback пагинации фильтра по редкости для пользователя {callback.from_user.id}, страница {callback_data.p}")
 
         rarities = await session.scalars(select(Rarity))
         rarities = rarities.all()
@@ -233,7 +227,6 @@ async def rarity_filter_pagination_callback(callback: CallbackQuery, callback_da
 async def rarity_filter_callback(callback: CallbackQuery, callback_data: RarityFilter, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора конкретной редкости."""
     try:
-        logger.info(f"Обработка callback выбора редкости {callback_data.rarity_name} для пользователя {callback.from_user.id}")
 
         # Сохраняем выбранное название редкости в FSM
         await state.update_data(selected_rarity_name=callback_data.rarity_name)
@@ -261,7 +254,6 @@ async def rarity_filter_callback(callback: CallbackQuery, callback_data: RarityF
 async def inventory_pagination_callback(callback: CallbackQuery, callback_data: Pagination, session: AsyncSession, state: FSMContext):
     """Обработчик callback для пагинации инвентаря с фильтрацией."""
     try:
-        logger.info(f"Обработка callback пагинации инвентаря для пользователя {callback.from_user.id}, страница {callback_data.p}")
 
         user = await session.scalar(
             select(User)
@@ -309,12 +301,10 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
 
             # Проверка валидности индекса карты для отфильтрованного списка
             if 0 <= card_index < len(filtered_cards):
-                logger.info(f"Показ карты с индексом {card_index} для пользователя {user.id} (отфильтрованный список)")
                 await show_inventory_card(callback, user, card_index, filtered_cards)
             else:
                 logger.warning(f"Неверный индекс карты: {callback_data.p} для пользователя {user.id}")
         else:
-            logger.info(f"У пользователя {callback.from_user.id} нет карт в инвентаре")
             messages = _load_messages()
             await callback.message.answer(messages["inventory_empty"])
 
@@ -327,7 +317,6 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
     # Используем отфильтрованный список или полный инвентарь
     cards = filtered_cards if filtered_cards is not None else user.inventory
     card = cards[card_index]
-    logger.info(f"Отображение карты {card.name} (ID: {card.id}) для пользователя {user.id}")
 
     # Форматирование информации о карте
     card_info = f"""
@@ -341,7 +330,6 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
     # Редактирование сообщения с информацией о карте
     if card.icon:
         keyboard = await pagination_keyboard(card_index + 1, len(cards))
-        logger.info(f"Редактирование сообщения с картой {card.name} с иконкой")
         try:
             await callback.message.edit_media(
                 media=InputMediaPhoto(media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}")),
@@ -359,7 +347,6 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
                 reply_markup=keyboard
             )
     else:
-        logger.info(f"У карты {card.name} нет иконки, редактирую текст сообщения")
         try:
             await callback.message.edit_text(
                 text=card_info

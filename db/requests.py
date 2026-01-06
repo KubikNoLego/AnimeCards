@@ -37,7 +37,6 @@ async def create_or_update_user(id: int,
             action = "обновлён"
 
         await session.commit()
-        logger.info(f"Пользователь id={id} {action} username={username}")
         return user
     except Exception as exc:
         # Логируем исключение с трассировкой на русском
@@ -51,7 +50,6 @@ async def get_user_place_on_top(session: AsyncSession, user: User):
     count_higher = result.scalar()
 
     place = (count_higher or 0) + 1
-    logger.info(f"Пользователь id={getattr(user, 'id', None)} занимает место: {place}")
     return place
 
 async def get_user_collections_count(session: AsyncSession, user: User) -> int:
@@ -96,7 +94,6 @@ async def get_user_collections_count(session: AsyncSession, user: User) -> int:
             if all(card.id in cards_id for card in verse.cards):
                 collections += 1
 
-        logger.info(f"Пользователь id={getattr(user, 'id', None)} имеет {collections} собранных коллекций")
         return collections
     except Exception as exc:
         logger.exception(f"Ошибка при подсчёте коллекций для пользователя id={getattr(user, 'id', None)}: {exc}")
@@ -116,7 +113,6 @@ async def get_top_players_by_balance(session: AsyncSession, limit: int = 10) -> 
         stmt = select(User).order_by(User.yens.desc()).limit(limit)
         result = await session.execute(stmt)
         top_players = result.scalars().all()
-        logger.info(f"Получено {len(top_players)} игроков в топе по балансу")
         return top_players
     except Exception as exc:
         logger.exception(f"Ошибка при получении топ игроков по балансу: {exc}")
@@ -136,9 +132,7 @@ async def get_random_verse(session: AsyncSession) -> Verse:
         verses = verses.all()
         if verses:
             random_verse = random.choice(verses)
-            logger.info(f"Получена случайная вселенная: {random_verse.id}")
             return random_verse
-        logger.warning("Нет доступных вселенных в базе данных")
         return None
     except Exception as exc:
         logger.exception(f"Ошибка при получении случайной вселенной: {exc}")

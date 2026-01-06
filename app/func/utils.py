@@ -33,7 +33,6 @@ async def random_card(session: AsyncSession, pity: int):
     # Определяем, выпала ли shiny-версия
     is_shiny = random.random() < SHINY_CHANCE
 
-    logger.info(f"Выбор карты: rarity={random_rarity}, shiny={is_shiny}, pity={pity}")
 
     cards_result = await session.scalars(
         select(Card).where(
@@ -65,11 +64,9 @@ async def random_card(session: AsyncSession, pity: int):
             # Добавляем карты из ежедневной вселенной с увеличенным весом
             # Каждая карта добавляется 1.25 раза (оригинал + 25% шанс)
             weighted_cards = boosted_cards * 5 + normal_cards  # 5 раз по 25% = 125% шанс
-            logger.info(f"Увеличен шанс для ежедневной вселенной: {len(boosted_cards)} карт с весом 1.25")
             cards = weighted_cards
 
     chosen = random.choice(cards)
-    logger.info(f"Выдана карта id={getattr(chosen, 'id', None)} name={getattr(chosen, 'name', None)} shiny={chosen.shiny}")
     return chosen
 
 async def user_photo_link(message: Message) -> Optional[str]:
@@ -92,10 +89,7 @@ async def user_photo_link(message: Message) -> Optional[str]:
             # Берём последний элемент в первом варианте (обычно наибольший размер)
             photo = profile_photos.photos[0][-1]
             file_id = photo.file_id
-            logger.info(f"Найдено фото для пользователя id={target_id}: file_id={file_id}")
             return file_id
-        else:
-            logger.info(f"У пользователя id={target_id} нет фото профиля")
     except Exception as exc:
         # Логируем исключение с трассировкой для удобства отладки
         logger.exception(f"Ошибка при получении фото пользователя: {exc}")
@@ -119,21 +113,18 @@ async def start_message_generator(start: bool):
     """
     messages = _load_messages()
     key = "first_start" if start else "start"
-    logger.info(f"Возвращаю стартовое сообщение: {key}")
     return messages[key]
 
 @logger.catch
 async def profile_tutorial():
     """Получить сообщение-руководство для профиля (шаг 1)."""
     messages = _load_messages()
-    logger.info("Возвращаю сообщение-руководство для профиля (шаг 1)")
     return messages["profile_tutorial"]
 
 @logger.catch
 async def profile_step2_tutorial():
     """Получить сообщение-руководство для профиля (шаг 2)."""
     messages = _load_messages()
-    logger.info("Возвращаю сообщение-руководство для профиля (шаг 2)")
     return messages["profile_tutorial2"]
 
 @logger.catch
@@ -180,7 +171,6 @@ async def nottime(openc: datetime):
             minutes = (total_seconds % 3600) // 60
             formatted_time = f"{hours:02d}:{minutes:02d}"
 
-        logger.info(f"Осталось до следующего открытия: {formatted_time}")
         return messages["nottime"] % formatted_time
     except Exception as e:
         logger.error(f"Ошибка при генерации сообщения о времени: {e}")
@@ -202,7 +192,6 @@ async def profile_creator(profile: Profile, place_on_top: int, session: AsyncSes
     messages = _load_messages()
 
     owner = profile.owner
-    logger.info(f"Генерирую профиль для пользователя id={getattr(owner, 'id', None)}")
 
     collections_count = await get_user_collections_count(session, owner)
 
@@ -282,7 +271,6 @@ async def check_and_update_daily_verse(session: AsyncSession):
 
         if verse_data_json:
             # Вселенная существует и актуальна (TTL еще не истек)
-            logger.info("Вселенная дня уже актуальна")
             return False
 
         # Выбираем случайную вселенную
@@ -303,7 +291,6 @@ async def check_and_update_daily_verse(session: AsyncSession):
 
         # Устанавливаем TTL на 24 часа (24*60*60 секунд)
         await redis_client.set("daily_verse", json.dumps(verse_data), ex=24*60*60)
-        logger.info(f"Вселенная дня успешно обновлена на: {new_verse.name}")
         return True
 
     except Exception as exc:
