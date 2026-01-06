@@ -239,7 +239,7 @@ async def top_players_formatter(top_players: list, current_user_id: int):
         current_user_id: ID текущего пользователя для выделения
 
     Returns:
-        Форматированная строка с топом игроков
+        Форматированная строка с топом игроков и кликабельными ссылками на профили
     """
     messages = _load_messages()
 
@@ -254,7 +254,9 @@ async def top_players_formatter(top_players: list, current_user_id: int):
         highlight = "<b><i>" if player.id == current_user_id else ""
         end_highlight = "</i></b>" if player.id == current_user_id else ""
 
-        player_info = f"{place_emoji} {highlight}{escape(player.name)} — {player.yens} ¥{end_highlight}"
+        # Создаем кликабельную ссылку на профиль пользователя
+        player_link = f'<a href="tg://user?id={player.id}">{escape(player.name)}</a>'
+        player_info = f"{place_emoji} {highlight}{player_link} — {player.yens} ¥{end_highlight}"
         players_text.append(player_info)
 
     return header + "\n".join(players_text)

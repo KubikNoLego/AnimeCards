@@ -3,6 +3,7 @@ from html import escape
 from aiogram import Router,F
 from aiogram.types import Message,FSInputFile
 from aiogram.fsm.context import FSMContext
+import re
 
 
 from loguru import logger
@@ -82,6 +83,54 @@ async def _(message: Message, session: AsyncSession):
     else:
         text = await not_user(message.from_user.full_name)
         await message.reply(text)
+
+@router.message(F.text.startswith(".профиль @"))
+async def _(message: Message, session: AsyncSession):
+    """Обработчик команды .профиль @username - показывает профиль пользователя по username"""
+    try:
+        # Извлекаем username из команды
+        pattern = r'\.профиль @([a-zA-Z0-9_]+)'
+        match = re.search(pattern, message.text)
+
+        if not match:
+            await message.reply("❌ Неправильный формат команды. Используйте: .профиль @username")
+            return
+
+        target_username = match.group(1)
+
+        # Ищем пользователя по username
+        user = await session.scalar(
+            select(User)
+            .filter_by(username=target_username)
+        )
+
+        if not user:
+            await message.reply(f"❌ Пользователь с username @{target_username} не найден")
+            return
+
+        # Получаем информацию о профиле
+        place_on_top = await get_user_place_on_top(session, user)
+        text = await profile_creator(user.profile, place_on_top, session)
+
+        # Получаем фото профиля целевого пользователя (не отправителя команды)
+        target_profile_photo = None
+        try:
+            profile_photos = await message.bot.get_user_profile_photos(user.id, limit=1)
+            if profile_photos and len(profile_photos.photos) > 0:
+                photo = profile_photos.photos[0][-1]
+                target_profile_photo = photo.file_id
+        except Exception as photo_error:
+            logger.error(f"Ошибка при получении фото пользователя {user.id}: {photo_error}")
+
+        # Отправляем профиль
+        if target_profile_photo:
+            await message.reply_photo(photo=target_profile_photo, caption=text)
+        else:
+            await message.reply(text)
+
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды .профиль @username: {e}")
+        await message.reply("❌ Произошла ошибка при получении профиля")
 
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):
