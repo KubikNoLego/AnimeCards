@@ -48,7 +48,9 @@ async def _(message: Message, session: AsyncSession):
         # Предполагаем UTC для записей без timezone
         last_open = last_open.replace(tzinfo=timezone.utc)
 
-    if last_open + timedelta(hours=3) <= datetime.now(timezone.utc):
+    hour = 2 if datetime.now(timezone.utc).weekday() >= 5 else 3
+
+    if last_open + timedelta(hours=hour) <= datetime.now(timezone.utc):
         card = await random_card(session, user.pity)
         text = await card_formatter(card)
         await message.answer_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)

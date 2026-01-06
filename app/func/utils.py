@@ -158,8 +158,10 @@ async def nottime(openc: datetime):
     try:
         messages = _load_messages()
 
-        # Целевое время — открытие + 3 часа (локальная корректировка)
-        target_time = openc + timedelta(hours=3)
+        # Используем ту же логику, что и в messages.py: 2 часа в будни, 3 часа в выходные
+        hour = 2 if datetime.now(timezone.utc).weekday() >= 5 else 3
+        # Целевое время — открытие + hour часов (локальная корректировка)
+        target_time = openc + timedelta(hours=hour)
 
         time_left = target_time - datetime.now(timezone.utc)
         total_seconds = int(time_left.total_seconds())
