@@ -28,6 +28,33 @@ async def change_describe_user(callback: CallbackQuery, session: AsyncSession, s
     messages = _load_messages()
     await callback.message.answer(messages['change_describe_prompt'])
 
+@router.callback_query(F.data == "reset_sort_filters")
+async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext):
+    """Обработчик callback для сброса фильтров сортировки."""
+    try:
+        logger.info(f"Сброс фильтров сортировки для пользователя {callback.from_user.id}")
+
+        # Очищаем данные FSM
+        await state.clear()
+
+        # Получаем сообщение из messages.json
+        messages = _load_messages()
+
+        # Создаем клавиатуру для подтверждения сброса
+        builder = InlineKeyboardBuilder()
+        builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory")
+        builder.adjust(1)
+
+        # Обновляем сообщение с подтверждением сброса
+        await callback.message.edit_text(
+            text="✅ Фильтры сортировки сброшены!",
+            reply_markup=builder.as_markup()
+        )
+        await callback.answer("✅ Фильтры сортировки сброшены!")
+    except Exception as e:
+        logger.error(f"Ошибка при сбросе фильтров сортировки: {e}")
+        await callback.answer("❌ Произошла ошибка при сбросе фильтров", show_alert=True)
+
 @router.callback_query(F.data == "sort_inventory")
 async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора способа сортировки инвентаря."""
@@ -54,9 +81,11 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
         else:
             builder.button(text="🌌 По вселенной", callback_data=VerseFilterPagination(p=1).pack())
 
+        # Add Reset button
+        builder.button(text="🔄 Сбросить фильтры", callback_data="reset_sort_filters")
         # Add Apply button
         builder.button(text="✅ Применить фильтры", callback_data=Pagination(p=1).pack())
-        builder.adjust(2, 1)
+        builder.adjust(2, 1, 1)
 
         # Проверяем, есть ли фото в текущем сообщении
         if callback.message.photo or callback.message.media_group_id:
