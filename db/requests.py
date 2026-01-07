@@ -165,7 +165,9 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
             attempts += 1
             try:
                 card = await random_card(session, pity=100)  # Используем максимальный pity для лучших шансов
-                if card not in daily_cards:
+
+                # Проверяем, что карта не является shiny (для магазина shiny карты не подходят)
+                if not card.shiny and card not in daily_cards:
                     daily_cards.append(card)
             except Exception as e:
                 logger.warning(f"Не удалось сгенерировать карточку (попытка {attempts}): {str(e)}")
@@ -178,6 +180,7 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
             logger.warning(f"Не удалось получить достаточно карточек после {attempts} попыток, используем резервный метод")
 
             # Резервный метод: случайный выбор, если random_card не сработал
+            # Гарантированно выбираем только не-shiny карты
             cards = await session.scalars(select(Card).filter_by(shiny=False))
             cards = cards.all()
 
@@ -222,7 +225,7 @@ class RedisRequests:
     
     async def daily_verse() -> int:
         session = Redis()
-        verse = await session.get('verse')
+        verse = await session.get('daily_verse')
         await session.aclose()
         if verse:
             return int(verse.decode('utf-8'))

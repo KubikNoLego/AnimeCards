@@ -155,7 +155,7 @@ async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCal
 🛒 <b>{card.name}</b>
 🌌 Вселенная: {card.verse.name}
 🎨 Редкость: {card.rarity.name}
-💰 Цена: {card.value} ¥
+💰 Цена: {int(card.value*1.7)} ¥
 
 <i>Подтвердите покупку:</i>
 """
@@ -191,40 +191,61 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
     """Обработчик callback для подтверждения покупки карточки."""
     try:
         logger.info(f"Обработка подтверждения покупки карточки для пользователя {callback.from_user.id}")
+        current_items = await RedisRequests.daily_items()
 
+        # Проверяем, что current_items не None и не пустой
+        if not current_items:
+            messages = _load_messages()
+            await callback.message.answer(messages['shop_items_changed'])
+            return
+
+        current_items = current_items.decode("utf-8").split(",")
         # Извлекаем ID карточки из callback данных
         card_id = int(callback.data.split("_")[-1])
 
-        # Получаем карточку и пользователя
-        card = await session.scalar(select(Card).filter_by(id=card_id))
-        user = await session.scalar(select(User).filter_by(id=callback.from_user.id))
+        # Добавляем отладочный вывод для проверки
+        logger.info(f"Текущие товары в магазине: {current_items}")
+        logger.info(f"Покупаемая карточка ID: {card_id}")
+        logger.info(f"Карточка в текущем ассортименте: {card_id in current_items}")
 
-        if not card or not user:
-            await callback.answer("❌ Карточка или пользователь не найдены", show_alert=True)
-            return
+        if card_id in current_items:
+            # Получаем карточку и пользователя
+            card = await session.scalar(select(Card).filter_by(id=card_id))
+            user = await session.scalar(select(User).filter_by(id=callback.from_user.id))
 
-        # Проверяем, достаточно ли у пользователя йен
-        if user.yens < card.value:
-            await callback.answer(f"❌ Недостаточно йен для покупки", show_alert=True)
-            return
+            if not card or not user:
+                await callback.answer("❌ Карточка или пользователь не найдены", show_alert=True)
+                return
 
-        # Проверяем, есть ли уже эта карточка у пользователя
-        if card in user.inventory:
-            await callback.answer("ℹ️ У вас уже есть эта карточка", show_alert=True)
-            return
+            # Проверяем, достаточно ли у пользователя йен
+            if user.yens < card.value:
+                await callback.answer(f"❌ Недостаточно йен для покупки", show_alert=True)
+                return
 
-        # Выполняем покупку
-        user.yens -= card.value
-        user.inventory.append(card)
+            # Проверяем, есть ли уже эта карточка у пользователя
+            if card in user.inventory:
+                await callback.answer("ℹ️ У вас уже есть эта карточка", show_alert=True)
+                return
 
-        await session.commit()
+            # Выполняем покупку
+            user.yens -= card.value
+            user.inventory.append(card)
 
-        # Отправляем подтверждение о покупке
-        await callback.message.answer(f"🎉 Покупка успешна! Вы купили карточку <b>{card.name}</b> за <b>{card.value} ¥</b>")
+            await session.commit()
 
-        # Обновляем сообщение с магазином
-        await callback.message.edit_text("✅ Покупка завершена успешно!")
-        await callback.answer("🎉 Покупка успешна!")
+            # Удаляем сообщение с предложением покупки
+            try:
+                await callback.message.delete()
+            except Exception as delete_error:
+                logger.warning(f"Не удалось удалить сообщение с предложением покупки: {str(delete_error)}")
+
+            # Отправляем подтверждение о покупке
+            await callback.message.answer(f"🎉 Покупка успешна! Вы купили карточку <b>{card.name}</b> за <b>{card.value} ¥</b>")
+
+            await callback.answer("🎉 Покупка успешна!")
+        else:
+            messages = _load_messages()
+            await callback.message.answer(messages['shop_items_changed'])
 
     except Exception as e:
         logger.error(f"Ошибка при покупке карточки: {str(e)}", exc_info=True)
@@ -234,7 +255,14 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
 async def cancel_buy_callback(callback: CallbackQuery):
     """Обработчик callback для отмены покупки."""
     try:
-        await callback.message.edit_text("🔙 Покупка отменена")
+        # Удаляем сообщение с предложением покупки
+        try:
+            await callback.message.delete()
+        except Exception as delete_error:
+            logger.warning(f"Не удалось удалить сообщение с предложением покупки: {str(delete_error)}")
+
+        # Отправляем сообщение об отмене
+        await callback.message.answer("🔙 Покупка отменена")
         await callback.answer("🔙 Покупка отменена")
     except Exception as e:
         logger.error(f"Ошибка при отмене покупки: {str(e)}")
