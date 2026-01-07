@@ -200,6 +200,7 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
             return
 
         current_items = current_items.decode("utf-8").split(",")
+        current_items = list(map(int, current_items))
         # Извлекаем ID карточки из callback данных
         card_id = int(callback.data.split("_")[-1])
 
@@ -228,7 +229,7 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
                 return
 
             # Выполняем покупку
-            user.yens -= card.value
+            user.yens -= int(card.value*1.7)
             user.inventory.append(card)
 
             await session.commit()
@@ -240,7 +241,7 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
                 logger.warning(f"Не удалось удалить сообщение с предложением покупки: {str(delete_error)}")
 
             # Отправляем подтверждение о покупке
-            await callback.message.answer(f"🎉 Покупка успешна! Вы купили карточку <b>{card.name}</b> за <b>{card.value} ¥</b>")
+            await callback.message.answer(f"🎉 Покупка успешна! Вы купили карточку <b>{card.name}</b> за <b>{int(card.value*1.7)} ¥</b>")
 
             await callback.answer("🎉 Покупка успешна!")
         else:
