@@ -161,7 +161,7 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
         attempts = 0
         max_attempts = 100
 
-        while len(daily_cards) < 5 and attempts < max_attempts:
+        while len(daily_cards) < 6 and attempts < max_attempts:
             attempts += 1
             try:
                 card = await random_card(session, pity=100)  # Используем максимальный pity для лучших шансов
@@ -173,7 +173,7 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
                 logger.warning(f"Не удалось сгенерировать карточку (попытка {attempts}): {str(e)}")
                 continue
 
-        if len(daily_cards) >= 5:
+        if len(daily_cards) >= 6:
             logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина с использованием random_card")
             return daily_cards
         else:
@@ -184,8 +184,8 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
             cards = await session.scalars(select(Card).filter_by(shiny=False))
             cards = cards.all()
 
-            if len(cards) >= 5:
-                daily_cards = random.sample(cards, 5)
+            if len(cards) >= 6:
+                daily_cards = random.sample(cards, 6)
                 logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина (резервный метод)")
                 return daily_cards
             else:

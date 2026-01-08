@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto
+from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, LabeledPrice
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,12 +7,13 @@ from sqlalchemy import select
 
 from loguru import logger
 from db.models import Card, User, Verse, Rarity
-from app.func.utils import _load_messages, card_formatter
+from app.func.utils import _load_messages
 from app.keyboards.utils import Pagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilterPagination, RarityFilter, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
 from app.StateGroups.states import ChangeDescribe
 from db.requests import RedisRequests
 
 router = Router()
+
 
 @router.callback_query(F.data == "delete_describe")
 async def delete_describe_user(callback: CallbackQuery,session : AsyncSession, state:FSMContext):

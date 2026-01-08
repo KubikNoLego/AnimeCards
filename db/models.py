@@ -1,7 +1,6 @@
 ﻿from datetime import datetime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import BigInteger, VARCHAR, DateTime, ForeignKey, Integer, String, Boolean
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Boolean
 
 class Base(DeclarativeBase):
     def __repr__(self) -> str:
@@ -50,10 +49,13 @@ class User(Base):
     inventory: Mapped[list["Card"]] = relationship("Card", back_populates="owners", secondary="usercards", lazy="selectin")
     # Профиль — 1 к 1 связь
     profile: Mapped["Profile"] = relationship("Profile", back_populates="owner", lazy="selectin")
+    # VIP подписка — 1 к 1 связь
+    vip: Mapped["VipSubscription"] = relationship("VipSubscription", back_populates="user", lazy="selectin", uselist=False)
+
+    # Рефералы — один ко многим связь (пользователи, которых пригласил этот пользователь)
+    referrals: Mapped[list["Referrals"]] = relationship("Referrals", back_populates="referrer", foreign_keys="[Referrals.user_id]", lazy="selectin")
 
     start: Mapped[bool] = mapped_column(Boolean, default=True)
-
-    referrals: Mapped[list["Referrals"]] = relationship("Referrals", back_populates="referrer", foreign_keys="Referrals.user_id", lazy="selectin")
 
 class Card(Base):
     __tablename__ = "cards"
@@ -73,7 +75,7 @@ class Card(Base):
     shiny: Mapped[bool] = mapped_column(Boolean, default=False)
     can_drop: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    owners: Mapped[list["User"]] = relationship("User", back_populates="inventory", secondary="usercards", lazy="selectin")
+    owners: Mapped[list["User"] | None] = relationship("User", back_populates="inventory", secondary="usercards", lazy="selectin")
 
 class Rarity(Base):
     __tablename__ = "rarities"
@@ -90,6 +92,17 @@ class Verse(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
 
     cards: Mapped[list["Card"]] = relationship("Card", back_populates="verse", lazy="selectin")
+
+class VipSubscription(Base):
+    __tablename__ = "vip_subscriptions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
+    start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(100), default=None)
+
+    user: Mapped["User"] = relationship("User", back_populates="vip", lazy="selectin")
 
 class Profile(Base):
     __tablename__ = "profiles"

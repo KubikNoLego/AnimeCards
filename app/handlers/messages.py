@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import math
 from html import escape
 from aiogram import Router,F
 from aiogram.types import Message,FSInputFile
@@ -14,6 +15,7 @@ from app.StateGroups import ChangeDescribe
 from app.filters import ProfileFilter, Private
 from app.func import (card_formatter, not_user, nottime, profile_creator,
                     profile_step2_tutorial, profile_tutorial, random_card, user_photo_link, _load_messages)
+from app.func.utils import create_qr
 from app.keyboards.utils import profile_keyboard, shop_keyboard
 from db.models import Card, User
 from db.requests import RedisRequests, get_user_place_on_top, get_top_players_by_balance
@@ -22,10 +24,11 @@ from sqlalchemy import select
 router = Router()
 
 
-@router.message(F.text == "🛒 Магазин")
+@router.message(F.text == "🛒 Магазин",Private())
 async def _(message:Message,session:AsyncSession):
     items = await RedisRequests.daily_items()
     messages = _load_messages()
+    user = await session.scalar(select(User).filter_by(id=message.from_user.id))
     if items:
         try:
             items = items.decode("utf-8").split(",")
@@ -41,7 +44,7 @@ async def _(message:Message,session:AsyncSession):
 
             if cards:
                 # Создаем клавиатуру с товарами
-                keyboard = await shop_keyboard(cards)
+                keyboard = await shop_keyboard(cards if user.vip else cards[0:5])
                 await message.answer(messages["daily_shop"], reply_markup=keyboard)
             else:
                 await message.answer(messages['shop_empty'])
@@ -51,6 +54,9 @@ async def _(message:Message,session:AsyncSession):
     else:
         await message.answer(messages['shop_empty'])
         
+import os
+import tempfile
+
 @router.message(F.text == "🔗 Реферальная ссылка")
 async def _(message: Message, session: AsyncSession):
     """Обработчик кнопки реферальной ссылки."""
@@ -71,10 +77,17 @@ async def _(message: Message, session: AsyncSession):
 👥 Приглашено друзей: {len(user.referrals)}
 💰 Получено йен: {total_reward}
 
-💡 <i>Приглашайте друзей и получайте бонусы от 100 до 700 йен за каждого!</i>
+💡 <i>Приглашайте друзей и получайте бонусы от {"100 до 700" if not user.vip else "300 до 1400"} йен за каждого!</i>
 """
-
-        await message.reply(stats_message, parse_mode="HTML")
+        try:
+            qr_file = await create_qr(referral_link)
+            await message.reply_photo(qr_file, caption=stats_message, parse_mode="HTML")
+            # Удаляем временный файл после отправки
+            if hasattr(qr_file, 'path') and os.path.exists(qr_file.path):
+                os.unlink(qr_file.path)
+        except Exception as e:
+            logger.error(f"Ошибка при генерации QR-кода: {e}")
+            await message.reply("❌ Произошла ошибка при генерации QR-кода")
     else:
         messages = _load_messages()
         await message.reply(messages["not_registered"])
@@ -110,7 +123,7 @@ async def _(message: Message, session: AsyncSession):
 
     if last_open + timedelta(hours=hour) <= datetime.now(timezone.utc):
         card = await random_card(session, user.pity)
-        text = await card_formatter(card)
+        text = await card_formatter(card, user)
         await message.answer_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
         if card not in user.inventory:
             user.inventory.append(card)
@@ -120,7 +133,7 @@ async def _(message: Message, session: AsyncSession):
             case _:
                 user.pity -= 1
         user.last_open = datetime.now(timezone.utc)
-        user.yens += card.value
+        user.yens += card.value + (math.ceil(card.value * 0.1) if user.vip else 0)
         await session.commit()
         if user.start:
             tutorial = await profile_tutorial()
@@ -143,6 +156,7 @@ async def _(message: Message, session: AsyncSession):
     else:
         text = await not_user(message.from_user.full_name)
         await message.reply(text)
+
 
 @router.message(F.text.startswith(".профиль @"))
 async def _(message: Message, session: AsyncSession):

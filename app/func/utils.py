@@ -1,8 +1,10 @@
 import random
+import math
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 import json
 from html import escape
+import qrcode
 
 from aiogram.types import Message
 from sqlalchemy import select
@@ -17,6 +19,42 @@ import redis.asyncio as redis
 RARITIES = [1, 2, 3, 4, 5]
 CHANCES = [55, 27, 12, 4.5, 1]
 SHINY_CHANCE = 0.05
+
+
+import tempfile
+import os
+from aiogram.types import FSInputFile
+
+async def create_qr(link:str):
+    """Создать QR-код для ссылки и сохранить во временный файл.
+
+    Args:
+        link: Ссылка для кодирования в QR-код
+
+    Returns:
+        FSInputFile: Объект файла для отправки в Telegram
+    """
+    qr = qrcode.QRCode(
+        version=1,
+        box_size=10,
+        border=4
+    )
+    qr.add_data(link)
+
+    # Создаем временный файл
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+    try:
+        # Генерируем изображение и сохраняем во временный файл
+        img = qr.make_image(fill_color="black", back_color="white")
+        img.save(temp_file.name)
+        return FSInputFile(temp_file.name)
+    except Exception as e:
+        # Удаляем временный файл в случае ошибки
+        if os.path.exists(temp_file.name):
+            os.unlink(temp_file.name)
+        logger.error(f"Ошибка при генерации QR-кода: {e}")
+        raise
+
 
 async def random_card(session: AsyncSession, pity: int):
     """Генерировать случайную карту на основе системы жалости.
@@ -137,20 +175,26 @@ async def profile_step2_tutorial():
     return messages["profile_tutorial2"]
 
 @logger.catch
-async def card_formatter(card: Card):
+async def card_formatter(card: Card, user: User = None):
     """Форматировать информацию о карте для отображения.
 
     Args:
         card: Объект Card для форматирования
+        user: Объект User для проверки VIP статуса (опционально)
 
     Returns:
         Форматированная строка с информацией о карте
     """
+    vip_bonus = ""
+    if user and user.vip:
+        bonus_amount = math.ceil(card.value * 0.1)
+        vip_bonus = f" (+{bonus_amount} ¥)"
+
     return f"""
 📄 <b>{card.name}</b>
 📚 Вселенная: {card.verse.name}
 🎨 Редкость: {card.rarity.name}
-💰 Ценность: {card.value} ¥
+💰 Ценность: {card.value} ¥{vip_bonus}
 {"✨ Shiny" if card.shiny else ""}
 """
 
@@ -209,7 +253,7 @@ async def profile_creator(profile: Profile, place_on_top: int, session: AsyncSes
     collections_count = await get_user_collections_count(session, owner)
 
     return messages["profile"] % (
-        escape(owner.name),
+        escape(owner.name) + (" 👑" if owner.vip else ""),
         profile.yens,
         place_on_top,
         len(owner.inventory),

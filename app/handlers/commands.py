@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import math
 import random
 from aiogram import Router,F
 from aiogram.filters import CommandStart,CommandObject,Command
@@ -50,7 +51,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                             logger.info(f"Добавлен реферал: {inviter_id} -> {user.id}")
 
                             # Случайная награда от 100 до 700 йен
-                            reward_amount = random.randint(100, 700)
+                            reward_amount = random.randint(100, 700) if not inviter.vip else random.randint(300, 1400)
 
                             # Награждаем реферрера за реферала
                             reward_success = await get_award(session,inviter_id,reward_amount)
@@ -113,7 +114,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
     user = await session.scalar(select(User).filter_by(id=message.from_user.id).with_for_update())
     if user:
         last_open = user.last_open
-        
+
         if last_open.tzinfo is None:
             # Предполагаем UTC для записей без timezone
             last_open = last_open.replace(tzinfo=timezone.utc)
@@ -122,7 +123,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
         if last_open + timedelta(hours=hour) <= datetime.now(timezone.utc):
             card = await random_card(session, user.pity)
-            text = await card_formatter(card)
+            text = await card_formatter(card, user)
             await message.reply_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
             if card not in user.inventory:
                 user.inventory.append(card)
@@ -132,7 +133,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                 case _:
                     user.pity -= 1
             user.last_open = datetime.now(timezone.utc)
-            user.yens += card.value
+            user.yens += card.value + (math.ceil(card.value * 0.1) if user.vip else 0)
             await session.commit()
         else:
             text = await nottime(user.last_open)
