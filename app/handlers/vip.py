@@ -1,21 +1,23 @@
+# Стандартные библиотеки
 from datetime import datetime, timedelta, timezone
+import json
+
+# Сторонние библиотеки
 from aiogram import Router,F
 from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery, SuccessfulPayment
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-
-
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
+import validate_email
 
+# Локальные импорты
 from app.filters import Private
 from app.func import _load_messages
 from db.models import User, VipSubscription
 from configR import config
-import validate_email
-import json
 
 def validate_email(email: str) -> bool:
     """Проверка валидности email адреса."""
@@ -31,7 +33,7 @@ router = Router()
 async def vip_offer_handler(message: Message, session: AsyncSession):
     """Обработчик кнопки покупки VIP подписки."""
     try:
-        logger.info(f"Обработка запроса на покупку VIP для пользователя {message.from_user.id}")
+        # logger.info(f"Обработка запроса на покупку VIP для пользователя {message.from_user.id}")
 
         # Получаем пользователя из базы данных
         user = await session.scalar(select(User).filter_by(id=message.from_user.id))
@@ -47,7 +49,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
             # Если подписка истекла, удаляем ее
             if user.vip.end_date <= current_time:
-                logger.info(f"Удаляем истекшую VIP подписку для пользователя {user.id}")
+                # logger.info(f"Удаляем истекшую VIP подписку для пользователя {user.id}")
                 await session.execute(delete(VipSubscription).where(VipSubscription.user_id == user.id))
                 await session.commit()
                 user.vip = None  # Обновляем объект пользователя
@@ -103,9 +105,17 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext, session: AsyncSess
             prices=[LabeledPrice(label="VIP Подписка", amount=int(vip_price_rub * 100))],  # Цена в копейках для Telegram
             need_email=True,
             send_email_to_provider=True,
-            is_flexible=False
-            # Временно убрали provider_data для диагностики ошибки
-        )
+            is_flexible=False,
+        provider_data=json.dumps({"receipt": {
+        "items": [
+          {
+            "description": "Подписка VIP на месяц",
+            "quantity": "1.00",
+            "amount": {
+              "value": f"{vip_price_rub:.2f}",
+              "currency": "RUB"
+            },
+            "vat_code": 1}]}}))
 
         # Сообщаем пользователю об отправке счета
         await callback.message.answer("💳 Счет для оплаты VIP подписки отправлен! Пожалуйста, завершите оплату.")
@@ -130,7 +140,7 @@ async def cancel_vip_purchase(callback: CallbackQuery, state: FSMContext):
 async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
     """Обработчик PreCheckoutQuery - подтверждение оплаты."""
     try:
-        logger.info(f"PreCheckoutQuery от пользователя {pre_checkout_query.from_user.id}")
+        # logger.info(f"PreCheckoutQuery от пользователя {pre_checkout_query.from_user.id}")
         await pre_checkout_query.answer(ok=True)
     except Exception as e:
         logger.error(f"Ошибка при обработке PreCheckoutQuery: {e}")
@@ -140,7 +150,7 @@ async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
 async def process_successful_payment(message: Message, state: FSMContext, session: AsyncSession):
     """Обработчик успешной оплаты - создание VIP подписки."""
     try:
-        logger.info(f"Успешная оплата от пользователя {message.from_user.id}")
+        # logger.info(f"Успешная оплата от пользователя {message.from_user.id}")
 
         # Получаем email из successful_payment (Telegram запросил его во время оплаты)
         email = message.successful_payment.order_info.email

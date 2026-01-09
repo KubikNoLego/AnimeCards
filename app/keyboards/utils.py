@@ -1,7 +1,9 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+# Стандартные библиотеки
+from random import randint
+
+# Сторонние библиотеки
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 from aiogram.filters.callback_data import CallbackData
-from random import randint
 
 class ShopItemCallback(CallbackData, prefix="shop"):
     """Данные обратного вызова для кнопок товаров магазина."""

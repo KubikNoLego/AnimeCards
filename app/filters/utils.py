@@ -1,3 +1,6 @@
+# Стандартные библиотеки
+
+# Сторонние библиотеки
 from aiogram.filters import BaseFilter
 from aiogram.types import Message
 

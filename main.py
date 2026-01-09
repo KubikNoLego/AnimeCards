@@ -1,23 +1,24 @@
+# Стандартные библиотеки
 import asyncio
 from datetime import timedelta,datetime, timezone
 
+# Сторонние библиотеки
 from aiogram import Bot,Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import RedisStorage
-
 from redis.asyncio import Redis
-
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession,async_sessionmaker
+from sqlalchemy import delete, select
 from loguru import logger
 
+# Локальные импорты
 from db import Base,Verse
 from configR import config
 from app.handlers import setup_routers
 from app.middlewares import DBSessionMiddleware
 from db.requests import get_random_verse, get_daily_shop_items
 from db.models import VipSubscription
-from sqlalchemy import delete, select
 
 
 # Настройка логирования: записывать в файл `log.txt`, ротация при 10 МБ
@@ -41,7 +42,7 @@ _vip_cleanup_task = None
 async def _daily_updates():
     while True:
         try:
-            logger.info("Запуск проверки ежедневных обновлений")
+            # logger.info("Запуск проверки ежедневных обновлений")
             session = Redis()
 
             # Получаем текущую дату в UTC
@@ -58,11 +59,7 @@ async def _daily_updates():
             else:
                 last_update_date = None
 
-            if verse_data_json and last_update_date and last_update_date == current_date:
-                # Вселенная существует и актуальна для текущей даты
-                logger.info("Ежедневная вселенная уже актуальна")
-            else:
-                # Выбираем новую вселенную
+            if not (verse_data_json and last_update_date and last_update_date == current_date):
                 async with _sessionmaker() as db_session:
                     new_verse: Verse = await get_random_verse(db_session)
 
@@ -82,7 +79,7 @@ async def _daily_updates():
 async def _daily_shop_updates():
     while True:
         try:
-            logger.info("Запуск проверки ежедневных обновлений магазина")
+            # logger.info("Запуск проверки ежедневных обновлений магазина")
             session = Redis()
 
             # Получаем текущую дату в UTC
@@ -99,10 +96,8 @@ async def _daily_shop_updates():
             else:
                 last_update_date = None
 
-            if shop_items and last_update_date and last_update_date == current_date:
-                # Товары существуют и актуальны для текущей даты
-                logger.info("Товары ежедневного магазина уже актуальны")
-            else:
+            if not (shop_items and last_update_date and last_update_date == current_date):
+
                 # Генерируем новые товары для магазина
                 async with _sessionmaker() as db_session:
                     daily_items = await get_daily_shop_items(db_session)
@@ -125,7 +120,7 @@ async def _cleanup_expired_vip_subscriptions():
     """Фоновая задача для очистки истекших VIP подписок."""
     while True:
         try:
-            logger.info("Запуск проверки истекших VIP подписок")
+            # logger.info("Запуск проверки истекших VIP подписок")
             current_time = datetime.now(timezone.utc)
 
             async with _sessionmaker() as session:
@@ -147,8 +142,6 @@ async def _cleanup_expired_vip_subscriptions():
                 if expired_count > 0:
                     await session.commit()
                     logger.info(f"Удалено {expired_count} истекших VIP подписок")
-                else:
-                    logger.info("Истекших VIP подписок не найдено")
 
         except Exception as e:
             logger.error(f"Ошибка при очистке истекших VIP подписок: {str(e)}", exc_info=True)

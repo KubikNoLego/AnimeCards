@@ -1,5 +1,7 @@
+# Стандартные библиотеки
 from os.path import join,dirname
 
+# Сторонние библиотеки
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings,SettingsConfigDict
 

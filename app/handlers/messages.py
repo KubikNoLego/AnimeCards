@@ -1,25 +1,29 @@
+# Стандартные библиотеки
 from datetime import datetime, timedelta, timezone
 import math
 from html import escape
+import re
+import os
+import tempfile
+
+# Сторонние библиотеки
 from aiogram import Router,F
 from aiogram.types import Message,FSInputFile
 from aiogram.fsm.context import FSMContext
-import re
-
-
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+# Локальные импорты
 from app.StateGroups import ChangeDescribe
 from app.filters import ProfileFilter, Private
 from app.func import (card_formatter, not_user, nottime, profile_creator,
-                    profile_step2_tutorial, profile_tutorial, random_card, user_photo_link, _load_messages)
-from app.func.utils import create_qr
-from app.keyboards.utils import profile_keyboard, shop_keyboard
+                    profile_step2_tutorial, profile_tutorial,
+                    random_card, user_photo_link, _load_messages,
+                    top_players_formatter,create_qr)
+from app.keyboards import profile_keyboard, shop_keyboard
 from db.models import Card, User
 from db.requests import RedisRequests, get_user_place_on_top, get_top_players_by_balance
-from sqlalchemy import select
 
 router = Router()
 
@@ -54,8 +58,6 @@ async def _(message:Message,session:AsyncSession):
     else:
         await message.answer(messages['shop_empty'])
         
-import os
-import tempfile
 
 @router.message(F.text == "🔗 Реферальная ссылка")
 async def _(message: Message, session: AsyncSession):
@@ -86,7 +88,7 @@ async def _(message: Message, session: AsyncSession):
             if hasattr(qr_file, 'path') and os.path.exists(qr_file.path):
                 os.unlink(qr_file.path)
         except Exception as e:
-            logger.error(f"Ошибка при генерации QR-кода: {e}")
+            # logger.error(f"Ошибка при генерации QR-кода: {e}")
             await message.reply("❌ Произошла ошибка при генерации QR-кода")
     else:
         messages = _load_messages()
@@ -146,8 +148,6 @@ async def _(message: Message, session: AsyncSession):
     
 @router.message(F.text == "🏆 Топ игроков", Private())
 async def _(message: Message, session: AsyncSession):
-    from app.func.utils import top_players_formatter
-
     user = await session.scalar(select(User).filter_by(id=message.from_user.id))
     if user:
         top_players = await get_top_players_by_balance(session)
@@ -203,7 +203,7 @@ async def _(message: Message, session: AsyncSession):
             await message.reply(text)
 
     except Exception as e:
-        logger.error(f"Ошибка при обработке команды .профиль @username: {e}")
+        # logger.error(f"Ошибка при обработке команды .профиль @username: {e}")
         await message.reply("❌ Произошла ошибка при получении профиля")
 
 @router.message(ProfileFilter())

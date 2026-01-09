@@ -1,16 +1,21 @@
-import random
-import math
-from typing import Optional
-from datetime import datetime, timedelta, timezone
+# Стандартные библиотеки
 import json
+import math
+import os
+import random
+import tempfile
+from datetime import datetime, timedelta, timezone
 from html import escape
-import qrcode
+from typing import Optional
 
-from aiogram.types import Message
+# Сторонние библиотеки
+import qrcode
+from aiogram.types import FSInputFile, Message
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from loguru import logger
 
+# Локальные импорты
 from db.models import Card, Profile, User, Verse
 from db.requests import RedisRequests, get_user_collections_count
 import redis.asyncio as redis
@@ -19,11 +24,6 @@ import redis.asyncio as redis
 RARITIES = [1, 2, 3, 4, 5]
 CHANCES = [55, 27, 12, 4.5, 1]
 SHINY_CHANCE = 0.05
-
-
-import tempfile
-import os
-from aiogram.types import FSInputFile
 
 async def create_qr(link:str):
     """Создать QR-код для ссылки и сохранить во временный файл.
@@ -52,9 +52,8 @@ async def create_qr(link:str):
         # Удаляем временный файл в случае ошибки
         if os.path.exists(temp_file.name):
             os.unlink(temp_file.name)
-        logger.error(f"Ошибка при генерации QR-кода: {e}")
+        # logger.error(f"Ошибка при генерации QR-кода: {e}")
         raise
-
 
 async def random_card(session: AsyncSession, pity: int):
     """Генерировать случайную карту на основе системы жалости.
@@ -71,7 +70,7 @@ async def random_card(session: AsyncSession, pity: int):
     # Определяем, выпала ли shiny-версия
     is_shiny = random.random() < SHINY_CHANCE
 
-    logger.info(f"Выбор карты: rarity={random_rarity}, shiny={is_shiny}, pity={pity}")
+    # logger.info(f"Выбор карты: rarity={random_rarity}, shiny={is_shiny}, pity={pity}")
 
     cards_result = await session.scalars(
         select(Card).where(
@@ -83,7 +82,7 @@ async def random_card(session: AsyncSession, pity: int):
     cards = cards_result.all()
 
     if not cards:
-        logger.error(f"Нет доступных карт для генерации: rarity={random_rarity}, shiny={is_shiny}")
+        # logger.error(f"Нет доступных карт для генерации: rarity={random_rarity}, shiny={is_shiny}")
         raise ValueError(f"Нет доступных карт с редкостью {random_rarity} и shiny={is_shiny}")
 
     daily_verse = await RedisRequests.daily_verse()
@@ -103,11 +102,11 @@ async def random_card(session: AsyncSession, pity: int):
             # Добавляем карты из ежедневной вселенной с увеличенным весом
             # Каждая карта добавляется 1.25 раза (оригинал + 25% шанс)
             weighted_cards = boosted_cards * 5 + normal_cards  # 5 раз по 25% = 125% шанс
-            logger.info(f"Увеличен шанс для ежедневной вселенной: {len(boosted_cards)} карт с весом 1.25")
+            # logger.info(f"Увеличен шанс для ежедневной вселенной: {len(boosted_cards)} карт с весом 1.25")
             cards = weighted_cards
 
     chosen = random.choice(cards)
-    logger.info(f"Выдана карта id={getattr(chosen, 'id', None)} name={getattr(chosen, 'name', None)} shiny={chosen.shiny}")
+    # logger.info(f"Выдана карта id={getattr(chosen, 'id', None)} name={getattr(chosen, 'name', None)} shiny={chosen.shiny}")
     return chosen
 
 async def user_photo_link(message: Message) -> Optional[str]:
@@ -130,10 +129,8 @@ async def user_photo_link(message: Message) -> Optional[str]:
             # Берём последний элемент в первом варианте (обычно наибольший размер)
             photo = profile_photos.photos[0][-1]
             file_id = photo.file_id
-            logger.info(f"Найдено фото для пользователя id={target_id}: file_id={file_id}")
+            # logger.info(f"Найдено фото для пользователя id={target_id}: file_id={file_id}")
             return file_id
-        else:
-            logger.info(f"У пользователя id={target_id} нет фото профиля")
     except Exception as exc:
         # Логируем исключение с трассировкой для удобства отладки
         logger.exception(f"Ошибка при получении фото пользователя: {exc}")
@@ -157,21 +154,21 @@ async def start_message_generator(start: bool):
     """
     messages = _load_messages()
     key = "first_start" if start else "start"
-    logger.info(f"Возвращаю стартовое сообщение: {key}")
+    # logger.info(f"Возвращаю стартовое сообщение: {key}")
     return messages[key]
 
 @logger.catch
 async def profile_tutorial():
     """Получить сообщение-руководство для профиля (шаг 1)."""
     messages = _load_messages()
-    logger.info("Возвращаю сообщение-руководство для профиля (шаг 1)")
+    # logger.info("Возвращаю сообщение-руководство для профиля (шаг 1)")
     return messages["profile_tutorial"]
 
 @logger.catch
 async def profile_step2_tutorial():
     """Получить сообщение-руководство для профиля (шаг 2)."""
     messages = _load_messages()
-    logger.info("Возвращаю сообщение-руководство для профиля (шаг 2)")
+    # logger.info("Возвращаю сообщение-руководство для профиля (шаг 2)")
     return messages["profile_tutorial2"]
 
 @logger.catch
@@ -226,10 +223,10 @@ async def nottime(openc: datetime):
             minutes = (total_seconds % 3600) // 60
             formatted_time = f"{hours:02d}:{minutes:02d}"
 
-        logger.info(f"Осталось до следующего открытия: {formatted_time}")
+        # logger.info(f"Осталось до следующего открытия: {formatted_time}")
         return messages["nottime"] % formatted_time
     except Exception as e:
-        logger.error(f"Ошибка при генерации сообщения о времени: {e}")
+        # logger.error(f"Ошибка при генерации сообщения о времени: {e}")
         # Возвращаем сообщение по умолчанию, если что-то пошло не так
         return "<i>⏳ До следующего открытия осталось немного времени</i>"
 
@@ -248,7 +245,7 @@ async def profile_creator(profile: Profile, place_on_top: int, session: AsyncSes
     messages = _load_messages()
 
     owner = profile.owner
-    logger.info(f"Генерирую профиль для пользователя id={getattr(owner, 'id', None)}")
+    # logger.info(f"Генерирую профиль для пользователя id={getattr(owner, 'id', None)}")
 
     collections_count = await get_user_collections_count(session, owner)
 
@@ -273,7 +270,7 @@ async def not_user(name: str):
         Форматированное сообщение об ошибке
     """
     messages = _load_messages()
-    logger.warning(f"Запрос для несуществующего пользователя: {name}")
+    # logger.warning(f"Запрос для несуществующего пользователя: {name}")
     return messages["not_user"] % escape(name)
 
 @logger.catch

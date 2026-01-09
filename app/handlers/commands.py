@@ -1,19 +1,20 @@
+# Стандартные библиотеки
 from datetime import datetime, timedelta, timezone
 import math
 import random
+
+# Сторонние библиотеки
 from aiogram import Router,F
 from aiogram.filters import CommandStart,CommandObject,Command
 from aiogram.types import Message,FSInputFile
 from aiogram.utils.markdown import html_decoration
-
-
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+# Локальные импорты
 from app.filters import Private
-from app.func import user_photo_link, start_message_generator
-from app.func.utils import _load_messages, card_formatter, not_user, nottime, profile_creator,random_card
+from app.func import user_photo_link, start_message_generator, _load_messages, card_formatter, not_user, nottime, profile_creator, random_card
 from app.keyboards import main_kb
 from db.models import Referrals, User, Verse
 from db.requests import create_or_update_user, get_award, get_user_place_on_top, add_referral, RedisRequests
@@ -48,7 +49,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                         # Добавляем реферальную связь
                         referral = await add_referral(session, referral_id=user.id, referrer_id=inviter_id)
                         if referral:
-                            logger.info(f"Добавлен реферал: {inviter_id} -> {user.id}")
+                            # logger.info(f"Добавлен реферал: {inviter_id} -> {user.id}")
 
                             # Случайная награда от 100 до 700 йен
                             reward_amount = random.randint(100, 700) if not inviter.vip else random.randint(300, 1400)
@@ -56,7 +57,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                             # Награждаем реферрера за реферала
                             reward_success = await get_award(session,inviter_id,reward_amount)
                             if reward_success:
-                                logger.info(f"Пользователь {inviter_id} получил {reward_amount} йен за реферала")
+                                # logger.info(f"Пользователь {inviter_id} получил {reward_amount} йен за реферала")
 
                                 # Создаем кликабельную ссылку на профиль реферрера
                                 referrer_link = f'<a href="tg://user?id={inviter.id}">{html_decoration.quote(inviter.name)}</a>'
@@ -83,7 +84,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
                                 await message.reply(f"💰 {referrer_link} получил {reward_amount} ¥ за ваше приглашение!")
                             else:
-                                logger.info(f"Пользователь {inviter_id} уже получил награду за этого реферала")
+                                # logger.info(f"Пользователь {inviter_id} уже получил награду за этого реферала")
 
                                 # Создаем кликабельную ссылку на профиль реферрера
                                 referrer_link = f'<a href="tg://user?id={inviter.id}">{html_decoration.quote(inviter.name)}</a>'

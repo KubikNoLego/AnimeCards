@@ -1,11 +1,15 @@
+# Стандартные библиотеки
 import random
+from datetime import datetime, timedelta, timezone
+
+# Сторонние библиотеки
 from loguru import logger
 from redis.asyncio import Redis
-from db.models import Card, User, Profile, Verse, Referrals
-
-from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+# Локальные импорты
+from db.models import Card, User, Profile, Verse, Referrals
 
 async def create_or_update_user(id: int,
                                 username: str | None,
@@ -37,7 +41,7 @@ async def create_or_update_user(id: int,
             action = "обновлён"
 
         await session.commit()
-        logger.info(f"Пользователь id={id} {action} username={username}")
+        # logger.info(f"Пользователь id={id} {action} username={username}")
         return user
     except Exception as exc:
         # Логируем исключение с трассировкой на русском
@@ -50,7 +54,7 @@ async def get_user_place_on_top(session: AsyncSession, user: User):
     count_higher = result.scalar()
 
     place = (count_higher or 0) + 1
-    logger.info(f"Пользователь id={getattr(user, 'id', None)} занимает место: {place}")
+    # logger.info(f"Пользователь id={getattr(user, 'id', None)} занимает место: {place}")
     return place
 
 async def get_user_collections_count(session: AsyncSession, user: User) -> int:
@@ -95,7 +99,7 @@ async def get_user_collections_count(session: AsyncSession, user: User) -> int:
             if all(card.id in cards_id for card in verse.cards):
                 collections += 1
 
-        logger.info(f"Пользователь id={getattr(user, 'id', None)} имеет {collections} собранных коллекций")
+        # logger.info(f"Пользователь id={getattr(user, 'id', None)} имеет {collections} собранных коллекций")
         return collections
     except Exception as exc:
         logger.exception(f"Ошибка при подсчёте коллекций для пользователя id={getattr(user, 'id', None)}: {exc}")
@@ -115,7 +119,7 @@ async def get_top_players_by_balance(session: AsyncSession, limit: int = 10) -> 
         stmt = select(User).order_by(User.yens.desc()).limit(limit)
         result = await session.execute(stmt)
         top_players = result.scalars().all()
-        logger.info(f"Получено {len(top_players)} игроков в топе по балансу")
+        # logger.info(f"Получено {len(top_players)} игроков в топе по балансу")
         return top_players
     except Exception as exc:
         logger.exception(f"Ошибка при получении топ игроков по балансу: {exc}")
@@ -135,7 +139,7 @@ async def get_random_verse(session: AsyncSession) -> Verse:
         verses = verses.all()
         if verses:
             random_verse = random.choice(verses)
-            logger.info(f"Получена случайная вселенная: {random_verse.id}")
+            # logger.info(f"Получена случайная вселенная: {random_verse.id}")
             return random_verse
         logger.warning("Нет доступных вселенных в базе данных")
         return None
@@ -153,7 +157,8 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
         Список карточек для ежедневного магазина или пустой список в случае ошибки
     """
     try:
-        from app.func.utils import random_card
+        # Локальный импорт для избежания циклических зависимостей
+        from app.func import random_card
 
         # Используем random_card для генерации карточек с учетом вероятностей
         # Используем фиксированное значение pity=100 для магазина (максимальный шанс)
@@ -174,7 +179,7 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
                 continue
 
         if len(daily_cards) >= 6:
-            logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина с использованием random_card")
+            # logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина с использованием random_card")
             return daily_cards
         else:
             logger.warning(f"Не удалось получить достаточно карточек после {attempts} попыток, используем резервный метод")
@@ -186,7 +191,7 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
 
             if len(cards) >= 6:
                 daily_cards = random.sample(cards, 6)
-                logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина (резервный метод)")
+                # logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина (резервный метод)")
                 return daily_cards
             else:
                 logger.warning("Недостаточно карточек в базе данных для ежедневного магазина")

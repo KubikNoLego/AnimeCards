@@ -1,4 +1,7 @@
-﻿from datetime import datetime
+﻿# Стандартные библиотеки
+from datetime import datetime
+
+# Сторонние библиотеки
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Boolean
 

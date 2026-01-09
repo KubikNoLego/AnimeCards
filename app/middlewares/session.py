@@ -1,6 +1,8 @@
+# Стандартные библиотеки
+
+# Сторонние библиотеки
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 class DBSessionMiddleware(BaseMiddleware):
