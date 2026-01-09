@@ -118,13 +118,14 @@ async def _(message: Message, session: AsyncSession):
 
     # Нормализуем `last_open` на случай, если в БД хранится naive datetime
     last_open = user.last_open
+    free_open = user.free_open > 0
     if last_open.tzinfo is None:
         # Предполагаем UTC для записей без timezone
         last_open = last_open.replace(tzinfo=timezone.utc)
 
     hour = 2 if datetime.now(timezone.utc).weekday() >= 5 else 3
 
-    if last_open + timedelta(hours=hour) <= datetime.now(timezone.utc):
+    if (last_open + timedelta(hours=hour) <= datetime.now(timezone.utc)) or free_open:
         card = await random_card(session, user.pity)
         text = await card_formatter(card, user)
         await message.answer_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
@@ -135,7 +136,10 @@ async def _(message: Message, session: AsyncSession):
                 user.pity = 100
             case _:
                 user.pity -= 1
-        user.last_open = datetime.now(timezone.utc)
+        if free_open: 
+            user.free_open -= 1
+        else: 
+            user.last_open = datetime.now(timezone.utc)
         user.yens += card.value + (math.ceil(card.value * 0.1) if user.vip else 0)
         await session.commit()
         if user.start:

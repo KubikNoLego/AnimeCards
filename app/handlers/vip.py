@@ -35,11 +35,13 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
     try:
         # logger.info(f"Обработка запроса на покупку VIP для пользователя {message.from_user.id}")
 
+        # Загружаем сообщения в начале функции
+        messages = _load_messages()
+
         # Получаем пользователя из базы данных
         user = await session.scalar(select(User).filter_by(id=message.from_user.id))
 
         if not user:
-            messages = _load_messages()
             await message.answer(messages["user_not_found_vip"])
             return
 
@@ -60,7 +62,6 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
                 return
 
         # Загружаем сообщение о VIP предложении
-        messages = _load_messages()
         vip_message = messages["vip_offer"]
 
         # Создаем инлайн-клавиатуру с кнопкой покупки
@@ -73,7 +74,6 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
     except Exception as e:
         logger.error(f"Ошибка при обработке запроса на покупку VIP: {e}")
-        messages = _load_messages()
         await message.answer(messages["processing_request_error"])
 
 @router.callback_query(F.data == "buy_vip")

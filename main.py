@@ -18,7 +18,7 @@ from configR import config
 from app.handlers import setup_routers
 from app.middlewares import DBSessionMiddleware
 from db.requests import get_random_verse, get_daily_shop_items
-from db.models import VipSubscription
+from db.models import VipSubscription, User
 
 
 # Настройка логирования: записывать в файл `log.txt`, ротация при 10 МБ
@@ -34,87 +34,10 @@ _sessionmaker = async_sessionmaker(_engine,expire_on_commit=False)
 # Middleware проксирует сессию БД в обработчики сообщений и callback'и
 
 # Глобальные переменные для хранения ссылок на фоновые задачи
-_daily_updates_task = None
-_daily_shop_updates_task = None
+_daily_coordinator_task = None
 _vip_cleanup_task = None
 
 
-async def _daily_updates():
-    while True:
-        try:
-            # logger.info("Запуск проверки ежедневных обновлений")
-            session = Redis()
-
-            # Получаем текущую дату в UTC
-            current_date = datetime.now(timezone.utc).date()
-
-            # Проверяем, существует ли текущая вселенная в Redis
-            verse_data_json = await session.get("daily_verse")
-
-            # Также проверяем дату последнего обновления (общую для всех ежедневных обновлений)
-            last_update_date_str = await session.get("last_update")
-            if last_update_date_str:
-                last_update_date_str = last_update_date_str.decode('utf-8')
-                last_update_date = datetime.strptime(last_update_date_str, "%Y-%m-%d").date()
-            else:
-                last_update_date = None
-
-            if not (verse_data_json and last_update_date and last_update_date == current_date):
-                async with _sessionmaker() as db_session:
-                    new_verse: Verse = await get_random_verse(db_session)
-
-                    if new_verse:
-                        # Сохраняем ID вселенной и текущую дату в Redis с TTL 24 часа
-                        await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
-                        await session.set("last_update", current_date.strftime("%Y-%m-%d"), ex=24*60*60)
-                        logger.info(f"Ежедневная вселенная обновлена. ID: {new_verse.id}, Дата: {current_date}")
-                    else:
-                        logger.warning("Не удалось получить новую вселенную для ежедневного обновления")
-
-            await session.aclose()
-        except Exception as e:
-            logger.error(f"Ошибка в _daily_updates: {str(e)}", exc_info=True)
-        await asyncio.sleep(600)  # Уменьшаем задержку до 10 минут для более быстрого обновления
-
-async def _daily_shop_updates():
-    while True:
-        try:
-            # logger.info("Запуск проверки ежедневных обновлений магазина")
-            session = Redis()
-
-            # Получаем текущую дату в UTC
-            current_date = datetime.now(timezone.utc).date()
-
-            # Проверяем, существуют ли текущие товары магазина в Redis
-            shop_items = await session.get("shop_items")
-
-            # Также проверяем дату последнего обновления (общую для всех ежедневных обновлений)
-            last_update_date_str = await session.get("last_update")
-            if last_update_date_str:
-                last_update_date_str = last_update_date_str.decode('utf-8')
-                last_update_date = datetime.strptime(last_update_date_str, "%Y-%m-%d").date()
-            else:
-                last_update_date = None
-
-            if not (shop_items and last_update_date and last_update_date == current_date):
-
-                # Генерируем новые товары для магазина
-                async with _sessionmaker() as db_session:
-                    daily_items = await get_daily_shop_items(db_session)
-
-                    if daily_items and len(daily_items) > 0:
-                        # Сохраняем ID карточек и текущую дату в Redis с TTL 24 часа
-                        shop_items_ids = [str(card.id) for card in daily_items]
-                        await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)
-                        await session.set("last_update", current_date.strftime("%Y-%m-%d"), ex=24*60*60)
-                        logger.info(f"Ежедневный магазин обновлен. Товары: {len(daily_items)} шт., Дата: {current_date}")
-                    else:
-                        logger.warning("Не удалось получить товары для ежедневного магазина")
-
-            await session.aclose()
-        except Exception as e:
-            logger.error(f"Ошибка в _daily_shop_updates: {str(e)}", exc_info=True)
-        await asyncio.sleep(600)  # Уменьшаем задержку до 10 минут для более быстрого обновления
 
 async def _cleanup_expired_vip_subscriptions():
     """Фоновая задача для очистки истекших VIP подписок."""
@@ -150,6 +73,87 @@ async def _cleanup_expired_vip_subscriptions():
 
         await asyncio.sleep(3600)  # Проверяем каждые 60 минут
 
+async def _update_daily_verse(session, db_session, current_date):
+    """Обновляем ежедневную вселенную."""
+    new_verse: Verse = await get_random_verse(db_session)
+    if new_verse:
+        await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
+        logger.info(f"Ежедневная вселенная обновлена. ID: {new_verse.id}, Дата: {current_date}")
+        return True
+    else:
+        logger.warning("Не удалось получить новую вселенную для ежедневного обновления")
+        return False
+
+async def _update_daily_shop(session, db_session, current_date):
+    """Обновляем ежедневный магазин."""
+    daily_items = await get_daily_shop_items(db_session)
+    if daily_items and len(daily_items) > 0:
+        shop_items_ids = [str(card.id) for card in daily_items]
+        await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)
+        logger.info(f"Ежедневный магазин обновлен. Товары: {len(daily_items)} шт., Дата: {current_date}")
+        return True
+    else:
+        logger.warning("Не удалось получить товары для ежедневного магазина")
+        return False
+
+async def _add_vip_free_opens(db_session, current_date):
+    """Добавляем бесплатные открытия VIP пользователям."""
+    current_time = datetime.now(timezone.utc)
+    result = await db_session.execute(
+        select(User)
+        .join(User.vip)
+        .where(VipSubscription.end_date > current_time)
+    )
+    vip_users = result.scalars().all()
+
+    updated_count = 0
+    for user in vip_users:
+        user.free_open += 1
+        updated_count += 1
+
+    if updated_count > 0:
+        await db_session.commit()
+        logger.info(f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
+    return updated_count > 0
+
+async def _daily_coordinator():
+    """Главная координирующая функция для всех ежедневных задач."""
+    while True:
+        try:
+            # logger.info("Запуск координатора ежедневных задач")
+            current_date = datetime.now(timezone.utc).date()
+            session = Redis()
+
+            # Проверяем, выполняли ли мы уже ежедневные задачи сегодня
+            last_update_date_str = await session.get("last_update")
+
+            if last_update_date_str:
+                last_update_date_str = last_update_date_str.decode('utf-8')
+                last_update_date = datetime.strptime(last_update_date_str, "%Y-%m-%d").date()
+            else:
+                last_update_date = None
+
+            # Если сегодня еще не обновляли, выполняем все ежедневные задачи
+            if not last_update_date or last_update_date < current_date:
+                async with _sessionmaker() as db_session:
+                    # Выполняем все ежедневные задачи
+                    verse_updated = await _update_daily_verse(session, db_session, current_date)
+                    shop_updated = await _update_daily_shop(session, db_session, current_date)
+                    vip_updated = await _add_vip_free_opens(db_session, current_date)
+
+                    # Обновляем дату последнего обновления только если хотя бы одна задача выполнилась успешно
+                    if verse_updated or shop_updated or vip_updated:
+                        await session.set("last_update", current_date.strftime("%Y-%m-%d"), ex=24*60*60)
+                        logger.info(f"Все ежедневные задачи выполнены. Дата: {current_date}")
+
+            await session.aclose()
+        except Exception as e:
+            logger.error(f"Ошибка в _daily_coordinator: {str(e)}", exc_info=True)
+            # Продолжаем работу даже в случае ошибки
+            await asyncio.sleep(60)  # Ждем минуту перед повторной попыткой
+
+        await asyncio.sleep(3600)  # Проверяем каждые 60 минут
+
 dp.message.middleware(DBSessionMiddleware(_sessionmaker))
 dp.callback_query.middleware(DBSessionMiddleware(_sessionmaker))
 dp.include_router(router=setup_routers())
@@ -161,25 +165,17 @@ async def on_startup():
         await connection.run_sync(Base.metadata.create_all)
 
     # Запуск ежедневных обновлений в фоновом режиме
-    global _daily_updates_task, _daily_shop_updates_task, _vip_cleanup_task
-    _daily_updates_task = asyncio.create_task(_daily_updates())
-    _daily_shop_updates_task = asyncio.create_task(_daily_shop_updates())
+    global _daily_coordinator_task, _vip_cleanup_task
+    _daily_coordinator_task = asyncio.create_task(_daily_coordinator())
     _vip_cleanup_task = asyncio.create_task(_cleanup_expired_vip_subscriptions())
     logger.info("Бот успешно запущен")
 @dp.shutdown()
 async def on_shudown():
     # Отменяем фоновые задачи при завершении работы
-    if _daily_updates_task and not _daily_updates_task.done():
-        _daily_updates_task.cancel()
+    if _daily_coordinator_task and not _daily_coordinator_task.done():
+        _daily_coordinator_task.cancel()
         try:
-            await _daily_updates_task
-        except asyncio.CancelledError:
-            pass
-
-    if _daily_shop_updates_task and not _daily_shop_updates_task.done():
-        _daily_shop_updates_task.cancel()
-        try:
-            await _daily_shop_updates_task
+            await _daily_coordinator_task
         except asyncio.CancelledError:
             pass
 
