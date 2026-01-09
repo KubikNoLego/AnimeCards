@@ -191,6 +191,7 @@ async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCal
                 reply_markup=builder.as_markup()
             )
 
+        await callback.message.delete()
         await callback.answer()
 
     except Exception as e:
@@ -535,13 +536,9 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
                 caption=card_info,
                 reply_markup=keyboard
             )
+        
         except Exception as e:
-            # logger.warning(f"Не удалось отредактировать сообщение, отправляю новое: {e}")
-            await callback.message.answer_photo(
-                FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
-                caption=card_info,
-                reply_markup=keyboard
-            )
+            logger.warning(f"Не удалось отредактировать сообщение: {e}")
     else:
         # logger.info(f"У карты {card.name} нет иконки, редактирую текст сообщения")
         try:
