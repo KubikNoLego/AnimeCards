@@ -29,7 +29,14 @@ bot = Bot(config.BOT_TOKEN.get_secret_value(),default=DefaultBotProperties(parse
 dp = Dispatcher(storage=RedisStorage.from_url(config.REDIS_URL.get_secret_value(), state_ttl=timedelta(days=7)))
 
 
-_engine = create_async_engine(config.DB_URL.get_secret_value())
+_engine = create_async_engine(
+    config.DB_URL.get_secret_value(),
+    pool_size=20,
+    max_overflow=30,
+    pool_timeout=60.0,
+    pool_recycle=3600,
+    pool_pre_ping=True
+)
 _sessionmaker = async_sessionmaker(_engine,expire_on_commit=False)
 # Middleware проксирует сессию БД в обработчики сообщений и callback'и
 
