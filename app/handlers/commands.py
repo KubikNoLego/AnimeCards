@@ -65,7 +65,8 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                                 # Создаем кликабельную ссылку на профиль нового пользователя
                                 new_user_link = f'<a href="tg://user?id={user.id}">{html_decoration.quote(user.name)}</a>'
 
-                                await message.reply(f"🎉 Вы были приглашены пользователем {referrer_link}!")
+                                messages = _load_messages()
+                                await message.reply(messages["referral_welcome"].format(referrer_link=referrer_link))
 
                                 # Отправляем сообщение реферреру о новом реферале
                                 try:
@@ -82,7 +83,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                                 except Exception as e:
                                     logger.error(f"Не удалось отправить сообщение реферреру {inviter.id}: {e}")
 
-                                await message.reply(f"💰 {referrer_link} получил {reward_amount} ¥ за ваше приглашение!")
+                                await message.reply(messages["referral_reward_sent"].format(referrer_link=referrer_link, reward_amount=reward_amount))
                             else:
                                 # logger.info(f"Пользователь {inviter_id} уже получил награду за этого реферала")
 
@@ -92,7 +93,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                                 # Создаем кликабельную ссылку на профиль нового пользователя
                                 new_user_link = f'<a href="tg://user?id={user.id}">{html_decoration.quote(user.name)}</a>'
 
-                                await message.reply(f"🎉 Вы были приглашены пользователем {referrer_link}!")
+                                await message.reply(messages["referral_welcome"].format(referrer_link=referrer_link))
 
                                 # Отправляем сообщение реферреру о новом реферале (даже если награда уже была выдана)
                                 try:
@@ -103,7 +104,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                                 except Exception as e:
                                     logger.error(f"Не удалось отправить сообщение реферреру {inviter.id}: {e}")
 
-                                await message.reply(f"💰 {referrer_link} уже получил бонус за ваше приглашение.")
+                                await message.reply(messages["referral_reward_already_sent"].format(referrer_link=referrer_link))
 
 
     message_text = await start_message_generator(user.start)
@@ -139,7 +140,8 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
         else:
             text = await nottime(user.last_open)
             if text is None:
-                text = "<i>⏳ До следующего открытия осталось немного времени</i>"
+                messages = _load_messages()
+                text = messages["not_enough_time"]
             await message.reply(text)
     else:
         messages = _load_messages()

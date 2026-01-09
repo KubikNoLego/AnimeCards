@@ -138,9 +138,27 @@ async def user_photo_link(message: Message) -> Optional[str]:
     return None
 
 def _load_messages() -> dict:
-    """Вспомогательная функция: загружает JSON с сообщениями (кодировка utf-8)."""
+    """Вспомогательная функция: загружает JSON с сообщениями (кодировка utf-8).
+
+    Новая структура поддерживает категории сообщений:
+    - success_messages: успешные сообщения и информационные
+    - error_messages: сообщения об ошибках и предупреждения
+
+    Для обратной совместимости возвращает объединенный словарь.
+    """
     with open("app/messages.json", "r", encoding="utf-8") as f:
-        return json.load(f)
+        messages_data = json.load(f)
+
+    # Объединяем сообщения из категорий для обратной совместимости
+    combined_messages = {}
+    combined_messages.update(messages_data.get("success_messages", {}))
+    combined_messages.update(messages_data.get("error_messages", {}))
+
+    # Добавляем категории для прямого доступа
+    combined_messages["success_messages"] = messages_data.get("success_messages", {})
+    combined_messages["error_messages"] = messages_data.get("error_messages", {})
+
+    return combined_messages
 
 @logger.catch
 async def start_message_generator(start: bool):
@@ -300,6 +318,41 @@ async def top_players_formatter(top_players: list, current_user_id: int):
         # Создаем кликабельную ссылку на профиль пользователя
         player_link = f'<a href="tg://user?id={player.id}">{escape(player.name)}</a>'
         player_info = f"{place_emoji} {highlight}{player_link} — {player.yens} ¥{end_highlight}"
+        players_text.append(player_info)
+
+    return header + "\n".join(players_text)
+
+@logger.catch
+async def top_collections_formatter(top_players: list, current_user_id: int, session: AsyncSession):
+    """Форматировать список топ игроков по количеству собранных коллекций.
+
+    Args:
+        top_players: Список пользователей (топ по собранным коллекциям)
+        current_user_id: ID текущего пользователя для выделения
+        session: Асинхронная сессия базы данных
+
+    Returns:
+        Форматированная строка с топом игроков и кликабельными ссылками на профили
+    """
+    messages = _load_messages()
+
+    if not top_players:
+        return "<i>🏆 Топ по собранным коллекциям пока пуст.</i>"
+
+    header = "<b>🏆 Топ игроков по собранным коллекциям</b>\n\n"
+    players_text = []
+
+    for i, player in enumerate(top_players, 1):
+        place_emoji = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+        highlight = "<b><i>" if player.id == current_user_id else ""
+        end_highlight = "</i></b>" if player.id == current_user_id else ""
+
+        # Получаем количество собранных коллекций для текущего игрока
+        collections_count = await get_user_collections_count(session, player)
+
+        # Создаем кликабельную ссылку на профиль пользователя
+        player_link = f'<a href="tg://user?id={player.id}">{escape(player.name)}</a>'
+        player_info = f"{place_emoji} {highlight}{player_link} — {collections_count} коллекций{end_highlight}"
         players_text.append(player_info)
 
     return header + "\n".join(players_text)

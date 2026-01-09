@@ -125,6 +125,62 @@ async def get_top_players_by_balance(session: AsyncSession, limit: int = 10) -> 
         logger.exception(f"Ошибка при получении топ игроков по балансу: {exc}")
         return []
 
+async def get_top_players_by_collections(session: AsyncSession, limit: int = 10) -> list[User]:
+    """Возвращает топ игроков по количеству собранных коллекций.
+
+    Args:
+        session: Асинхронная сессия базы данных
+        limit: Максимальное количество игроков в топе (по умолчанию 10)
+
+    Returns:
+        Список пользователей, отсортированных по убыванию количества собранных коллекций
+    """
+    try:
+        from sqlalchemy.orm import selectinload
+
+        # Загружаем всех пользователей с их инвентарем и связанными данными
+        users = await session.scalars(
+            select(User)
+            .options(
+                selectinload(User.inventory).selectinload(Card.verse).selectinload(Verse.cards)
+            )
+        )
+        users = users.all()
+
+        # Для каждого пользователя считаем количество собранных коллекций
+        users_with_collections = []
+        for user in users:
+            collections_count = 0
+            verses = []
+            cards_id = []
+
+            # Собираем все уникальные вселенные и ID карт из инвентаря пользователя
+            for card in user.inventory:
+                verses.append(card.verse)
+                cards_id.append(card.id)
+
+            # Убираем дубликаты вселенных
+            verses = list(set(verses))
+
+            # Для каждой вселенной проверяем, собрана ли она полностью
+            for verse in verses:
+                # Проверяем, есть ли у пользователя все карты этой вселенной
+                if all(card.id in cards_id for card in verse.cards):
+                    collections_count += 1
+
+            users_with_collections.append((user, collections_count))
+
+        # Сортируем пользователей по количеству собранных коллекций (по убыванию)
+        users_with_collections.sort(key=lambda x: x[1], reverse=True)
+
+        # Возвращаем только пользователей (без количества коллекций) в пределах лимита
+        top_players = [user for user, _ in users_with_collections[:limit]]
+        # logger.info(f"Получено {len(top_players)} игроков в топе по собранным коллекциям")
+        return top_players
+    except Exception as exc:
+        logger.exception(f"Ошибка при получении топ игроков по собранным коллекциям: {exc}")
+        return []
+
 async def get_random_verse(session: AsyncSession) -> Verse:
     """Возвращает случайную вселенную (verse) из базы данных.
 
@@ -166,7 +222,7 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
         attempts = 0
         max_attempts = 100
 
-        while len(daily_cards) < 6 and attempts < max_attempts:
+        while len(daily_cards) < 4 and attempts < max_attempts:
             attempts += 1
             try:
                 card = await random_card(session, pity=100)  # Используем максимальный pity для лучших шансов
@@ -178,7 +234,7 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
                 logger.warning(f"Не удалось сгенерировать карточку (попытка {attempts}): {str(e)}")
                 continue
 
-        if len(daily_cards) >= 6:
+        if len(daily_cards) >= 4:
             # logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина с использованием random_card")
             return daily_cards
         else:
@@ -189,8 +245,8 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
             cards = await session.scalars(select(Card).filter_by(shiny=False))
             cards = cards.all()
 
-            if len(cards) >= 6:
-                daily_cards = random.sample(cards, 6)
+            if len(cards) >= 4:
+                daily_cards = random.sample(cards, 4)
                 # logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина (резервный метод)")
                 return daily_cards
             else:

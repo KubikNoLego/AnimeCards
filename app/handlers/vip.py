@@ -40,7 +40,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
         if not user:
             messages = _load_messages()
-            await message.answer("❌ Пользователь не найден. Пожалуйста, начните работу с ботом командой /start")
+            await message.answer(messages["user_not_found_vip"])
             return
 
         # Проверяем, есть ли у пользователя VIP подписка
@@ -56,7 +56,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
             else:
                 # Если подписка еще активна, сообщаем пользователю
                 end_date = user.vip.end_date.astimezone(timezone.utc)
-                await message.answer(f"💎 У вас уже есть активная VIP подписка до {end_date.strftime('%d.%m.%Y %H:%M')}")
+                await message.answer(messages["vip_already_active"].format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
                 return
 
         # Загружаем сообщение о VIP предложении
@@ -73,7 +73,8 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
     except Exception as e:
         logger.error(f"Ошибка при обработке запроса на покупку VIP: {e}")
-        await message.answer("❌ Произошла ошибка при обработке запроса. Пожалуйста, попробуйте позже.")
+        messages = _load_messages()
+        await message.answer(messages["processing_request_error"])
 
 @router.callback_query(F.data == "buy_vip")
 async def buy_vip(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
@@ -81,12 +82,12 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext, session: AsyncSess
     messages = _load_messages()
 
     if not user:
-        await callback.message.answer("❌ Пользователь не найден. Пожалуйста, начните работу с ботом командой /start")
+        await callback.message.answer(messages["user_not_found_vip"])
         return
 
     if user.vip:
         end_date = user.vip.end_date.astimezone(timezone.utc)
-        await callback.message.answer(f"💎 У вас уже есть активная VIP подписка до {end_date.strftime('%d.%m.%Y %H:%M')}")
+        await callback.message.answer(messages["vip_already_active"].format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
         return
 
 
@@ -117,38 +118,39 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext, session: AsyncSess
             },
             "vat_code": 1}]}}))
 
-        # Сообщаем пользователю об отправке счета
-        await callback.message.answer("💳 Счет для оплаты VIP подписки отправлен! Пожалуйста, завершите оплату.")
 
     except Exception as e:
         logger.error(f"Ошибка при отправке invoice для VIP подписки: {e}")
-        await callback.message.answer("❌ Произошла ошибка при создании счета для оплаты. Пожалуйста, попробуйте позже.")
+        await callback.message.answer(messages["invoice_error"])
 
 
 @router.callback_query(F.data == "cancel_vip_purchase")
 async def cancel_vip_purchase(callback: CallbackQuery, state: FSMContext):
     """Обработчик отмены покупки VIP подписки."""
+    messages = _load_messages()
     try:
         await state.clear()
-        await callback.message.answer("🔙 Покупка VIP подписки отменена.")
+        await callback.message.answer(messages["purchase_cancelled"])
         await callback.answer()
     except Exception as e:
         logger.error(f"Ошибка при отмене покупки VIP: {e}")
-        await callback.answer("❌ Произошла ошибка при отмене", show_alert=True)
+        await callback.answer(messages["cancel_error"], show_alert=True)
 
 @router.pre_checkout_query()
 async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
     """Обработчик PreCheckoutQuery - подтверждение оплаты."""
+    messages = _load_messages()
     try:
         # logger.info(f"PreCheckoutQuery от пользователя {pre_checkout_query.from_user.id}")
         await pre_checkout_query.answer(ok=True)
     except Exception as e:
         logger.error(f"Ошибка при обработке PreCheckoutQuery: {e}")
-        await pre_checkout_query.answer(ok=False, error_message="Произошла ошибка при обработке платежа")
+        await pre_checkout_query.answer(ok=False, error_message=messages["processing_error"])
 
 @router.message(F.successful_payment)
 async def process_successful_payment(message: Message, state: FSMContext, session: AsyncSession):
     """Обработчик успешной оплаты - создание VIP подписки."""
+    messages = _load_messages()
     try:
         # logger.info(f"Успешная оплата от пользователя {message.from_user.id}")
 
@@ -156,7 +158,7 @@ async def process_successful_payment(message: Message, state: FSMContext, sessio
         email = message.successful_payment.order_info.email
         if not email:
             logger.error(f"Email не найден в successful_payment для пользователя {message.from_user.id}")
-            await message.answer("❌ Произошла ошибка при обработке платежа: email не найден.")
+            await message.answer(messages["payment_error_no_email"])
             await state.clear()
             return
 
@@ -164,14 +166,14 @@ async def process_successful_payment(message: Message, state: FSMContext, sessio
         user = await session.scalar(select(User).filter_by(id=message.from_user.id))
 
         if not user:
-            await message.answer("❌ Пользователь не найден. Пожалуйста, начните работу с ботом командой /start")
+            await message.answer(messages["user_not_found_vip"])
             await state.clear()
             return
 
         # Проверяем, есть ли уже VIP подписка
         if user.vip:
             end_date = user.vip.end_date.astimezone(timezone.utc)
-            await message.answer(f"💎 У вас уже есть активная VIP подписка до {end_date.strftime('%d.%m.%Y %H:%M')}")
+            await message.answer(messages["vip_already_active"].format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
             await state.clear()
             return
 
@@ -193,16 +195,10 @@ async def process_successful_payment(message: Message, state: FSMContext, sessio
         await state.clear()
 
         # Сообщаем об успешной покупке
-        await message.answer(f"🎉 Поздравляем! Вы успешно купили VIP подписку до {end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
-                           f"💎 Спасибо за покупку! Теперь вы получаете:\n"
-                           f"💰 Увеличенные награды (+10% йен за открытие карт)\n"
-                           f"🎁 Больше бонусов за рефералов (300-1400 йен)\n"
-                           f"🛒 Полный доступ к магазину (все 6 товаров)\n"
-                           f"👑 Специальный символ 👑 в вашем профиле!\n\n"
-                           f"Наслаждайтесь всеми преимуществами VIP статуса! 🎉")
+        await message.answer(messages["vip_purchase_success"].format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
 
     except Exception as e:
         logger.error(f"Ошибка при обработке успешной оплаты VIP: {e}")
-        await message.answer("❌ Произошла ошибка при обработке платежа. Пожалуйста, обратитесь в поддержку.")
+        await message.answer(messages["payment_error"])
         await state.clear()
         # Сбрасываем состояние

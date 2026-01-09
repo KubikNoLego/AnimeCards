@@ -20,10 +20,10 @@ from app.filters import ProfileFilter, Private
 from app.func import (card_formatter, not_user, nottime, profile_creator,
                     profile_step2_tutorial, profile_tutorial,
                     random_card, user_photo_link, _load_messages,
-                    top_players_formatter,create_qr)
+                    top_players_formatter, top_collections_formatter, create_qr)
 from app.keyboards import profile_keyboard, shop_keyboard
 from db.models import Card, User
-from db.requests import RedisRequests, get_user_place_on_top, get_top_players_by_balance
+from db.requests import RedisRequests, get_user_place_on_top, get_top_players_by_balance, get_top_players_by_collections
 
 router = Router()
 
@@ -48,7 +48,7 @@ async def _(message:Message,session:AsyncSession):
 
             if cards:
                 # Создаем клавиатуру с товарами
-                keyboard = await shop_keyboard(cards if user.vip else cards[0:5])
+                keyboard = await shop_keyboard(cards if user.vip else cards[0:3])
                 await message.answer(messages["daily_shop"], reply_markup=keyboard)
             else:
                 await message.answer(messages['shop_empty'])
@@ -89,7 +89,8 @@ async def _(message: Message, session: AsyncSession):
                 os.unlink(qr_file.path)
         except Exception as e:
             # logger.error(f"Ошибка при генерации QR-кода: {e}")
-            await message.reply("❌ Произошла ошибка при генерации QR-кода")
+            messages = _load_messages()
+            await message.reply(messages["qr_error"])
     else:
         messages = _load_messages()
         await message.reply(messages["not_registered"])
@@ -150,9 +151,17 @@ async def _(message: Message, session: AsyncSession):
 async def _(message: Message, session: AsyncSession):
     user = await session.scalar(select(User).filter_by(id=message.from_user.id))
     if user:
-        top_players = await get_top_players_by_balance(session)
-        text = await top_players_formatter(top_players, user.id)
-        await message.answer(text)
+        # Получаем топ игроков по балансу (10 человек)
+        top_players_balance = await get_top_players_by_balance(session)
+        text_balance = await top_players_formatter(top_players_balance, user.id)
+
+        # Получаем топ игроков по собранным коллекциям (30 человек)
+        top_players_collections = await get_top_players_by_collections(session, limit=30)
+        text_collections = await top_collections_formatter(top_players_collections, user.id, session)
+
+        # Объединяем оба топа
+        combined_text = f"{text_balance}\n\n{text_collections}"
+        await message.answer(combined_text)
     else:
         text = await not_user(message.from_user.full_name)
         await message.reply(text)
@@ -167,7 +176,8 @@ async def _(message: Message, session: AsyncSession):
         match = re.search(pattern, message.text)
 
         if not match:
-            await message.reply("❌ Неправильный формат команды. Используйте: .профиль @username")
+            messages = _load_messages()
+            await message.reply(messages["invalid_profile_command"])
             return
 
         target_username = match.group(1)
@@ -179,7 +189,8 @@ async def _(message: Message, session: AsyncSession):
         )
 
         if not user:
-            await message.reply(f"❌ Пользователь с username @{target_username} не найден")
+            messages = _load_messages()
+            await message.reply(messages["user_not_found"].format(target_username=target_username))
             return
 
         # Получаем информацию о профиле
@@ -204,7 +215,8 @@ async def _(message: Message, session: AsyncSession):
 
     except Exception as e:
         # logger.error(f"Ошибка при обработке команды .профиль @username: {e}")
-        await message.reply("❌ Произошла ошибка при получении профиля")
+        messages = _load_messages()
+        await message.reply(messages["profile_error"])
 
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):
