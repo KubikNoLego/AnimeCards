@@ -39,7 +39,6 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     yens: Mapped[int] = mapped_column(default=0)
-    seasons_yens: Mapped[int] = mapped_column(server_default=0)
     pity: Mapped[int] = mapped_column(default=100)
 
     username: Mapped[str | None] = mapped_column(String(32), default=None)
@@ -120,8 +119,4 @@ class Profile(Base):
 
     @property
     def yens(self) -> int:
-        return self.owner.yens if self.owner else 0
-    
-    @property
-    def seasons_yens(self) -> int:
         return self.owner.yens if self.owner else 0
