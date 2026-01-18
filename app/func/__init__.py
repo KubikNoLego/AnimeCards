@@ -10,6 +10,5 @@ from .utils import (
     not_user,
     _load_messages,
     top_players_formatter,
-    create_qr,
-    top_collections_formatter
+    create_qr
 )
