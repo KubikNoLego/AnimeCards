@@ -59,6 +59,7 @@ class User(Base):
     # Рефералы — один ко многим связь (пользователи, которых пригласил этот пользователь)
     referrals: Mapped[list["Referrals"]] = relationship("Referrals", back_populates="referrer", foreign_keys="[Referrals.user_id]", lazy="selectin")
 
+    clan_member: Mapped["ClanMember"] = relationship("ClanMember", back_populates="user", lazy="selectin", uselist=False)
     start: Mapped[bool] = mapped_column(Boolean, default=True)
 
 class Card(Base):
@@ -121,3 +122,33 @@ class Profile(Base):
     @property
     def yens(self) -> int:
         return self.owner.yens if self.owner else 0
+
+class ClanMember(Base):
+    __tablename__ = "clan_members"
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    clan_id: Mapped[int] = mapped_column(Integer, ForeignKey("clans.id", ondelete="CASCADE"), primary_key=True)
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    is_leader: Mapped[bool] = mapped_column(Boolean, default=False)  # True для лидера, False для участника
+    contribution: Mapped[int] = mapped_column(Integer, default=0)  # Вклад в баланс клана
+
+    # Связи
+    user: Mapped["User"] = relationship("User", back_populates="clan_member", lazy="selectin")
+    clan: Mapped["Clan"] = relationship("Clan", back_populates="members", lazy="selectin")
+
+class Clan(Base):
+    __tablename__ = "clans"
+
+    id: Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
+
+    name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    tag: Mapped[str] = mapped_column(String(5),nullable=False,unique=True)
+    description: Mapped[str] = mapped_column(String(255), default="")
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False)
+    
+    leader_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
+    leader: Mapped["User"] = relationship("User", foreign_keys=[leader_id], lazy="selectin")
+    members: Mapped[list["ClanMember"]] = relationship("ClanMember", back_populates="clan", lazy="selectin", cascade="all, delete-orphan")
+
+    balance: Mapped[int] = mapped_column(Integer, default=0)

@@ -35,7 +35,7 @@ async def main_kb():
     Returns:
         ReplyKeyboardMarkup с основными кнопками
     """
-    buttons = ["🌐 Открыть карту", "👤 Профиль", "🏆 Топ игроков", "🔗 Реферальная ссылка","🛒 Магазин", "💎 Купить VIP"]
+    buttons = ["🌐 Открыть карту", "👤 Профиль", "🏆 Топ игроков", "🔗 Реферальная ссылка","🛒 Магазин", "💎 Купить VIP","🛡️ Клан"]
     builder = ReplyKeyboardBuilder()
     [builder.button(text=item) for item in buttons]
     builder.adjust(2, 3, 1)
@@ -206,5 +206,13 @@ async def shop_keyboard(cards: list):
         builder.button(text=f"{card.name} ({int(card.value)} ¥)", callback_data=ShopItemCallback(item_id=card.id).pack())
 
     builder.adjust(2)
+
+    return builder.as_markup()
+
+async def create_clan():
+    builder = InlineKeyboardBuilder()
+    
+
+    builder.button(text="📝 Создать клан",callback_data="create_clan")
 
     return builder.as_markup()

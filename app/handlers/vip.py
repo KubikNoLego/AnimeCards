@@ -17,6 +17,7 @@ import validate_email
 from app.filters import Private
 from app.func import _load_messages
 from db.models import User, VipSubscription
+from db.requests import get_user
 from configR import config
 
 def validate_email(email: str) -> bool:
@@ -39,7 +40,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
         messages = _load_messages()
 
         # Получаем пользователя из базы данных
-        user = await session.scalar(select(User).filter_by(id=message.from_user.id))
+        user = await get_user(session, message.from_user.id)
 
         if not user:
             await message.answer(messages["user_not_found_vip"])
@@ -78,7 +79,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
 @router.callback_query(F.data == "buy_vip")
 async def buy_vip(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
-    user = await session.scalar(select(User).filter_by(id=callback.from_user.id))
+    user = await get_user(session, callback.from_user.id)
     messages = _load_messages()
 
     if not user:
@@ -163,7 +164,7 @@ async def process_successful_payment(message: Message, state: FSMContext, sessio
             return
 
         # Получаем пользователя
-        user = await session.scalar(select(User).filter_by(id=message.from_user.id))
+        user = await get_user(session, message.from_user.id)
 
         if not user:
             await message.answer(messages["user_not_found_vip"])

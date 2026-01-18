@@ -1,1 +1,1 @@
-from .models import Base,User,Card,Profile,Verse,Rarity,Referrals
+from .models import Base,User,Card,Profile,Verse,Rarity,Referrals,Clan,ClanMember

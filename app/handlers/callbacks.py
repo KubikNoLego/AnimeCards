@@ -12,9 +12,9 @@ from loguru import logger
 # Локальные импорты
 from db.models import Card, User, Verse, Rarity
 from app.func import _load_messages
-from app.keyboards import Pagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilterPagination, RarityFilter, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
+from app.keyboards import Pagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilter, RarityFilterPagination, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
 from app.StateGroups.states import ChangeDescribe
-from db.requests import RedisRequests
+from db.requests import RedisRequests, get_user
 
 router = Router()
 
@@ -23,7 +23,7 @@ router = Router()
 async def delete_describe_user(callback: CallbackQuery,session : AsyncSession, state:FSMContext):
     messages = _load_messages()
     await callback.message.answer(messages["describe_updated_empty"])
-    user = await session.scalar(select(User).filter_by(id=callback.from_user.id))
+    user = await get_user(session, callback.from_user.id)
     user.profile.describe = ""
     await session.commit()
 
@@ -136,7 +136,7 @@ async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCal
             return
 
         # Получаем пользователя
-        user = await session.scalar(select(User).filter_by(id=callback.from_user.id))
+        user = await get_user(session, callback.from_user.id)
 
         if not user:
             messages = _load_messages()
@@ -225,7 +225,7 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
         if card_id in current_items:
             # Получаем карточку и пользователя
             card = await session.scalar(select(Card).filter_by(id=card_id))
-            user = await session.scalar(select(User).filter_by(id=callback.from_user.id))
+            user = await get_user(session, callback.from_user.id)
 
             if not card or not user:
                 messages = _load_messages()
@@ -445,10 +445,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
     try:
         # logger.info(f"Обработка callback пагинации инвентаря для пользователя {callback.from_user.id}, страница {callback_data.p}")
 
-        user = await session.scalar(
-            select(User)
-            .filter_by(id=callback.from_user.id)
-        )
+        user = await get_user(session, callback.from_user.id)
 
         if user and user.inventory and len(user.inventory) > 0:
             # Получаем текущие фильтры из FSM

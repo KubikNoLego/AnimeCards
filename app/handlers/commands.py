@@ -17,7 +17,7 @@ from app.filters import Private
 from app.func import user_photo_link, start_message_generator, _load_messages, card_formatter, not_user, nottime, profile_creator, random_card
 from app.keyboards import main_kb
 from db.models import Referrals, User, Verse
-from db.requests import create_or_update_user, get_award, get_user_place_on_top, add_referral, RedisRequests
+from db.requests import create_or_update_user, get_award, get_user_place_on_top, add_referral, RedisRequests, get_user
 
 router = Router()
 
@@ -32,7 +32,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                                 user.bio,
                                 session
                             )
-    user = await session.scalar(select(User).filter_by(id=user.id))
+    user = await get_user(session, user.id)
 
     if command.args:
         option,value = command.args.split("_")
@@ -44,7 +44,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                     inviter_id = None
 
                 if inviter_id:
-                    inviter = await session.scalar(select(User).filter_by(id=inviter_id))
+                    inviter = await get_user(session, inviter_id)
                     if inviter:
                         # Добавляем реферальную связь
                         referral = await add_referral(session, referral_id=user.id, referrer_id=inviter_id)
@@ -71,7 +71,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                                 # Отправляем сообщение реферреру о новом реферале
                                 try:
                                     # Получаем текущий баланс реферрера для отображения общего количества йен
-                                    updated_inviter = await session.scalar(select(User).filter_by(id=inviter_id))
+                                    updated_inviter = await get_user(session, inviter_id)
                                     await message.bot.send_message(
                                         inviter.id,
                                         f"🎉 Новый реферал! {new_user_link} использовал вашу реферальную ссылку!"
@@ -113,7 +113,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
 @router.message(Command("card"))
 async def _(message: Message, command: CommandObject,session: AsyncSession):
-    user = await session.scalar(select(User).filter_by(id=message.from_user.id).with_for_update())
+    user = await get_user(session, message.from_user.id)
     if user:
         last_open = user.last_open
 
@@ -149,8 +149,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
 @router.message(Command("profile"))
 async def _(message: Message, command: CommandObject,session: AsyncSession):
-    user = await session.scalar(select(User).filter_by(
-                                                    id=message.from_user.id))
+    user = await get_user(session, message.from_user.id)
     if user:
         place_on_top = await get_user_place_on_top(session,user)
         text = await profile_creator(user.profile,place_on_top, session)

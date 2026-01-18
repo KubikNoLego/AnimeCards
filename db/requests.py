@@ -11,6 +11,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # Локальные импорты
 from db.models import Card, User, Profile, Verse, Referrals
 
+async def get_user(session: AsyncSession, user_id: int) -> User | None:
+    """Получает пользователя из базы данных по ID.
+
+    Args:
+        session: Асинхронная сессия базы данных
+        user_id: ID пользователя
+
+    Returns:
+        Объект User или None, если пользователь не найден
+    """
+    try:
+        return await session.scalar(select(User).filter_by(id=user_id))
+    except Exception as exc:
+        logger.exception(f"Ошибка при получении пользователя id={user_id}: {exc}")
+        return None
+
 async def create_or_update_user(id: int,
                                 username: str | None,
                                 name: str,
@@ -22,7 +38,7 @@ async def create_or_update_user(id: int,
     """
     now = datetime.now(timezone.utc)
     try:
-        user = await session.scalar(select(User).filter_by(id=id))
+        user = await get_user(session, id)
         if user is None:
             user = User(
                 id=id,
@@ -125,61 +141,6 @@ async def get_top_players_by_balance(session: AsyncSession, limit: int = 10) -> 
         logger.exception(f"Ошибка при получении топ игроков по балансу: {exc}")
         return []
 
-async def get_top_players_by_collections(session: AsyncSession, limit: int = 10) -> list[User]:
-    """Возвращает топ игроков по количеству собранных коллекций.
-
-    Args:
-        session: Асинхронная сессия базы данных
-        limit: Максимальное количество игроков в топе (по умолчанию 10)
-
-    Returns:
-        Список пользователей, отсортированных по убыванию количества собранных коллекций
-    """
-    try:
-        from sqlalchemy.orm import selectinload
-
-        # Загружаем всех пользователей с их инвентарем и связанными данными
-        users = await session.scalars(
-            select(User)
-            .options(
-                selectinload(User.inventory).selectinload(Card.verse).selectinload(Verse.cards)
-            )
-        )
-        users = users.all()
-
-        # Для каждого пользователя считаем количество собранных коллекций
-        users_with_collections = []
-        for user in users:
-            collections_count = 0
-            verses = []
-            cards_id = []
-
-            # Собираем все уникальные вселенные и ID карт из инвентаря пользователя
-            for card in user.inventory:
-                verses.append(card.verse)
-                cards_id.append(card.id)
-
-            # Убираем дубликаты вселенных
-            verses = list(set(verses))
-
-            # Для каждой вселенной проверяем, собрана ли она полностью
-            for verse in verses:
-                # Проверяем, есть ли у пользователя все карты этой вселенной
-                if all(card.id in cards_id for card in verse.cards):
-                    collections_count += 1
-
-            users_with_collections.append((user, collections_count))
-
-        # Сортируем пользователей по количеству собранных коллекций (по убыванию)
-        users_with_collections.sort(key=lambda x: x[1], reverse=True)
-
-        # Возвращаем только пользователей (без количества коллекций) в пределах лимита
-        top_players = [user for user, _ in users_with_collections[:limit]]
-        # logger.info(f"Получено {len(top_players)} игроков в топе по собранным коллекциям")
-        return top_players
-    except Exception as exc:
-        logger.exception(f"Ошибка при получении топ игроков по собранным коллекциям: {exc}")
-        return []
 
 async def get_random_verse(session: AsyncSession) -> Verse:
     """Возвращает случайную вселенную (verse) из базы данных.
@@ -259,7 +220,7 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
 
 async def add_referral(session:AsyncSession, referral_id: int, referrer_id: int) -> bool:
     if referral_id != referrer_id:
-        referrer = await session.scalar(select(User).filter_by(id=referrer_id))
+        referrer = await get_user(session, referrer_id)
         if referral_id not in referrer.referrals:
                 refferal_alredy = await session.scalar(select(Referrals).filter_by(referral_id=referral_id))
                 if refferal_alredy:
@@ -274,7 +235,7 @@ async def add_referral(session:AsyncSession, referral_id: int, referrer_id: int)
 
 async def get_award(session:AsyncSession, referral_object:Referrals ,award:int):
     try:
-        user = await session.scalar(select(User).filter_by(id=referral_object.user_id))
+        user = await get_user(session, referral_object.user_id)
         user.yens+=award
         referral_object.referrer_reward = award
         await session.commit()

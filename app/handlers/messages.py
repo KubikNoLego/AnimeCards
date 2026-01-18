@@ -20,19 +20,28 @@ from app.filters import ProfileFilter, Private
 from app.func import (card_formatter, not_user, nottime, profile_creator,
                     profile_step2_tutorial, profile_tutorial,
                     random_card, user_photo_link, _load_messages,
-                    top_players_formatter, top_collections_formatter, create_qr)
-from app.keyboards import profile_keyboard, shop_keyboard
+                    top_players_formatter, create_qr)
+from app.keyboards import profile_keyboard, shop_keyboard,create_clan
 from db.models import Card, User
-from db.requests import RedisRequests, get_user_place_on_top, get_top_players_by_balance, get_top_players_by_collections
+from db.requests import RedisRequests, get_user, get_user_place_on_top, get_top_players_by_balance
 
 router = Router()
 
+
+@router.message(F.text == "🛡️ Клан",Private())
+async def _(message:Message, session:AsyncSession, state:FSMContext):
+    user = await get_user(session, message.from_user.id)
+    messages = _load_messages()
+    if user.clan_member:
+        pass
+    else: 
+        await message.reply(messages["not_in_clan"], reply_markup= None if not user.vip else await create_clan())
 
 @router.message(F.text == "🛒 Магазин",Private())
 async def _(message:Message,session:AsyncSession):
     items = await RedisRequests.daily_items()
     messages = _load_messages()
-    user = await session.scalar(select(User).filter_by(id=message.from_user.id))
+    user = await get_user(session, message.from_user.id)
     if items:
         try:
             items = items.decode("utf-8").split(",")
@@ -62,7 +71,7 @@ async def _(message:Message,session:AsyncSession):
 @router.message(F.text == "🔗 Реферальная ссылка")
 async def _(message: Message, session: AsyncSession):
     """Обработчик кнопки реферальной ссылки."""
-    user = await session.scalar(select(User).filter_by(id=message.from_user.id))
+    user = await get_user(session, message.from_user.id)
     if user:
         total_reward = 0
         for i in user.referrals:
@@ -102,7 +111,7 @@ async def _(message:Message, session: AsyncSession, state: FSMContext):
     if len(message.text) > 70:
         await message.answer(messages["describe_too_long"] % len(message.text))
     else:
-        user = await session.scalar(select(User).filter_by(id=message.from_user.id))
+        user = await get_user(session, message.from_user.id)
         user.profile.describe = escape(message.text)
         await session.commit()
         await message.answer(messages["describe_updated_success"] % escape(message.text))
@@ -110,11 +119,7 @@ async def _(message:Message, session: AsyncSession, state: FSMContext):
 
 @router.message(F.text == "🌐 Открыть карту", Private())
 async def _(message: Message, session: AsyncSession):
-    user = await session.scalar(
-        select(User)
-        .filter_by(id=message.from_user.id)
-        .with_for_update()
-    )
+    user = await get_user(session, message.from_user.id)
 
     # Нормализуем `last_open` на случай, если в БД хранится naive datetime
     last_open = user.last_open
@@ -153,19 +158,14 @@ async def _(message: Message, session: AsyncSession):
     
 @router.message(F.text == "🏆 Топ игроков", Private())
 async def _(message: Message, session: AsyncSession):
-    user = await session.scalar(select(User).filter_by(id=message.from_user.id))
+    user = await get_user(session, message.from_user.id)
     if user:
         # Получаем топ игроков по балансу (10 человек)
         top_players_balance = await get_top_players_by_balance(session)
         text_balance = await top_players_formatter(top_players_balance, user.id)
 
-        # Получаем топ игроков по собранным коллекциям (30 человек)
-        top_players_collections = await get_top_players_by_collections(session, limit=30)
-        text_collections = await top_collections_formatter(top_players_collections, user.id, session)
-
-        # Объединяем оба топа
-        combined_text = f"{text_balance}\n\n{text_collections}"
-        await message.answer(combined_text)
+        # Отправляем только топ по балансу
+        await message.answer(text_balance)
     else:
         text = await not_user(message.from_user.full_name)
         await message.reply(text)
@@ -228,8 +228,7 @@ async def _(message: Message, session: AsyncSession):
     is_reply = message.reply_to_message
     match is_reply:
         case None:
-            user = await session.scalar(select(User).filter_by(
-                                                    id=message.from_user.id))
+            user = await get_user(session, message.from_user.id)
             if user:
                 place_on_top = await get_user_place_on_top(session,user)
                 text = await profile_creator(user.profile,place_on_top, session)
@@ -248,8 +247,7 @@ async def _(message: Message, session: AsyncSession):
                 text = await not_user(message.from_user.full_name)
                 await message.reply(text)
         case _:
-            user = await session.scalar(select(User).filter_by(
-                                    id=message.reply_to_message.from_user.id))
+            user = await get_user(session, message.reply_to_message.from_user.id)
             if user:
                 place_on_top = await get_user_place_on_top(session,user)
                 text = await profile_creator(user.profile,place_on_top, session)
