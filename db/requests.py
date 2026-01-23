@@ -9,262 +9,276 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Локальные импорты
-from db.models import Card, Clan, ClanMember, User, Profile, Verse, Referrals
+from db.models import (Card, Clan, ClanMember,
+                    User, Profile, Verse, Referrals,ClanInvitation)
 
-async def get_user(session: AsyncSession, user_id: int) -> User | None:
-    """Получает пользователя из базы данных по ID.
+class DB:
+    def __init__(self, session):
+        self.__session = session
 
-    Args:
-        session: Асинхронная сессия базы данных
-        user_id: ID пользователя
+    async def get_user(self,user_id: int) -> User | None:
+        """Получает пользователя из БД, если он есть"""
+        try:
+            return await self.__session.scalar(select(User).filter_by(id=user_id))
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении пользователя id={user_id}: {exc}")
+            return None
 
-    Returns:
-        Объект User или None, если пользователь не найден
-    """
-    try:
-        return await session.scalar(select(User).filter_by(id=user_id))
-    except Exception as exc:
-        logger.exception(f"Ошибка при получении пользователя id={user_id}: {exc}")
-        return None
+    async def create_or_update_user(self, id: int,
+                                    username: str | None,
+                                    name: str,
+                                    describe: str):
+        """Создаёт пользователя, если нет, иначе обновляет поля."""
+        now = datetime.now(timezone.utc)
+        try:
+            user = await self.get_user(id)
+            if user is None:
+                user = User(
+                    id=id,
+                    username=username,
+                    name=name,
+                    last_open=now - timedelta(hours=3),
+                    joined=now,
+                )
+                user.profile = Profile(user_id=id, describe=describe)
+                self.__session.add(user)
+            else:
+                user.username = username
+                user.name = name
 
-async def create_or_update_user(id: int,
-                                username: str | None,
-                                name: str,
-                                describe: str,
-                                session: AsyncSession):
-    """Создаёт пользователя, если нет, иначе обновляет поля.
+            await self.__session.commit()
+            return user
+        except Exception as exc:
+            logger.exception(f"Ошибка при сохранении пользователя id={id}: {exc}")
 
-    Лёгкое упрощение: используем одну метку времени `now` для полей.
-    """
-    now = datetime.now(timezone.utc)
-    try:
-        user = await get_user(session, id)
-        if user is None:
-            user = User(
-                id=id,
-                username=username,
-                name=name,
-                # локальная корректировка времени:
-                last_open=now - timedelta(hours=3),
-                joined=now,
+    async def get_user_place_on_top(self,user: User):
+        """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
+        stmt = select(func.count(User.id)).where(User.yens > user.yens)
+        result = await self.__session.execute(stmt)
+        count_higher = result.scalar()
+
+        place = (count_higher or 0) + 1
+        return place
+
+    async def get_user_collections_count(self, user: User) -> int:
+        """Возвращает количество полных коллекций юзера"""
+        try:
+            from sqlalchemy.orm import selectinload
+
+            # Загружаем пользователя с инвентарем, вселенными и картами вселенных
+            user_with_data = await self.__session.scalar(
+                select(User)
+                .filter_by(id=user.id)
+                .options(
+                    selectinload(User.inventory).selectinload(Card.verse).selectinload(Verse.cards)
+                )
             )
-            user.profile = Profile(user_id=id, describe=describe)
-            session.add(user)
-            action = "создан"
-        else:
-            user.username = username
-            user.name = name
-            action = "обновлён"
 
-        await session.commit()
-        # logger.info(f"Пользователь id={id} {action} username={username}")
-        return user
-    except Exception as exc:
-        # Логируем исключение с трассировкой на русском
-        logger.exception(f"Ошибка при сохранении пользователя id={id}: {exc}")
+            collections = 0
+            # Используем множество для более эффективного хранения уникальных вселенных и карт
+            user_verses = set()
+            user_cards = set()
 
-async def get_user_place_on_top(session: AsyncSession, user: User):
-    """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
-    stmt = select(func.count(User.id)).where(User.yens > user.yens)
-    result = await session.execute(stmt)
-    count_higher = result.scalar()
+            # Собираем все уникальные вселенные и ID карт из инвентаря пользователя
+            for card in user_with_data.inventory:
+                user_verses.add(card.verse)
+                user_cards.add(card.id)
 
-    place = (count_higher or 0) + 1
-    # logger.info(f"Пользователь id={getattr(user, 'id', None)} занимает место: {place}")
-    return place
+            # Для каждой вселенной проверяем, собрана ли она полностью
+            for verse in user_verses:
+                # Проверяем, есть ли у пользователя все карты этой вселенной
+                # Используем генератор для более эффективной проверки
+                if all(card.id in user_cards for card in verse.cards):
+                    collections += 1
 
-async def get_user_collections_count(session: AsyncSession, user: User) -> int:
-    """Возвращает количество полностью собранных коллекций (вселенных) пользователя.
+            return collections
+        except Exception as exc:
+            logger.exception(f"Ошибка при подсчёте коллекций для пользователя id={getattr(user, 'id', None)}: {exc}")
+            return 0
 
-    Коллекция считается собранной, если у пользователя есть все карты из данной вселенной.
-
-    Args:
-        session: Асинхронная сессия базы данных
-        user: Объект пользователя
-
-    Returns:
-        Количество полностью собранных коллекций
-    """
-    try:
-        from sqlalchemy.orm import selectinload
-
-        # Загружаем пользователя с инвентарем, вселенными и картами вселенных
-        user_with_data = await session.scalar(
-            select(User)
-            .filter_by(id=user.id)
-            .options(
-                selectinload(User.inventory).selectinload(Card.verse).selectinload(Verse.cards)
-            )
-        )
-
-        collections = 0
-        verses = []
-        cards_id = []
-
-        # Собираем все уникальные вселенные и ID карт из инвентаря пользователя
-        for card in user_with_data.inventory:
-            verses.append(card.verse)
-            cards_id.append(card.id)
-
-        # Убираем дубликаты вселенных
-        verses = list(set(verses))
-
-        # Для каждой вселенной проверяем, собрана ли она полностью
-        for verse in verses:
-            # Проверяем, есть ли у пользователя все карты этой вселенной
-            if all(card.id in cards_id for card in verse.cards):
-                collections += 1
-
-        # logger.info(f"Пользователь id={getattr(user, 'id', None)} имеет {collections} собранных коллекций")
-        return collections
-    except Exception as exc:
-        logger.exception(f"Ошибка при подсчёте коллекций для пользователя id={getattr(user, 'id', None)}: {exc}")
-        return 0
-
-async def get_top_players_by_balance(session: AsyncSession, limit: int = 10) -> list[User]:
-    """Возвращает топ игроков по балансу yens.
-
-    Args:
-        session: Асинхронная сессия базы данных
-        limit: Максимальное количество игроков в топе (по умолчанию 10)
-
-    Returns:
-        Список пользователей, отсортированных по убыванию баланса
-    """
-    try:
-        stmt = select(User).order_by(User.yens.desc()).limit(limit)
-        result = await session.execute(stmt)
-        top_players = result.scalars().all()
-        # logger.info(f"Получено {len(top_players)} игроков в топе по балансу")
-        return top_players
-    except Exception as exc:
-        logger.exception(f"Ошибка при получении топ игроков по балансу: {exc}")
-        return []
+    async def get_top_players_by_balance(self,
+                                        limit: int = 10) -> list[User]:
+        """Возвращает топ юзеров по балансу"""
+        try:
+            stmt = select(User).order_by(User.yens.desc()).limit(limit)
+            result = await self.__session.execute(stmt)
+            top_players = result.scalars().all()
+            return top_players
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении топ игроков по балансу: {exc}")
+            return []
 
 
-async def get_random_verse(session: AsyncSession) -> Verse:
-    """Возвращает случайную вселенную (verse) из базы данных.
+    async def get_random_verse(self) -> Verse:
+        """Возвращает случайную вселенную из БД"""
+        try:
+            verses = await self.__session.scalars(select(Verse))
+            verses = verses.all()
+            if verses:
+                random_verse = random.choice(verses)
+                return random_verse
+            logger.warning("Нет доступных вселенных в базе данных")
+            return None
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении случайной вселенной: {exc}")
+            return None
 
-    Args:
-        session: Асинхронная сессия базы данных
+    async def get_verse(self, verse_id: int) -> Verse | None:
+        """Возвращает вселенную по ID"""
+        try:
+            return await self.__session.scalar(select(Verse).filter_by(id=verse_id))
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении вселенной id={verse_id}: {exc}")
+            return None
 
-    Returns:
-        Случайный объект Verse или None в случае ошибки
-    """
-    try:
-        verses = await session.scalars(select(Verse))
-        verses = verses.all()
-        if verses:
-            random_verse = random.choice(verses)
-            # logger.info(f"Получена случайная вселенная: {random_verse.id}")
-            return random_verse
-        logger.warning("Нет доступных вселенных в базе данных")
-        return None
-    except Exception as exc:
-        logger.exception(f"Ошибка при получении случайной вселенной: {exc}")
-        return None
+    async def get_daily_shop_items(self) -> list[Card]:
+        """Возвращает карточки для магазина"""
+        try:
+            # Локальный импорт для избежания циклических зависимостей
+            from app.func import random_card
 
-async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
-    """Возвращает список карточек для ежедневного магазина с использованием системы вероятностей.
+            daily_cards = []
+            attempts = 0
+            max_attempts = 100
 
-    Args:
-        session: Асинхронная сессия базы данных
+            while len(daily_cards) < 4 and attempts < max_attempts:
+                attempts += 1
+                try:
+                    card = await random_card(self.__session, pity=100)
 
-    Returns:
-        Список карточек для ежедневного магазина или пустой список в случае ошибки
-    """
-    try:
-        # Локальный импорт для избежания циклических зависимостей
-        from app.func import random_card
+                    # Проверяем, что карта не является shiny и уникальна
+                    if not card.shiny and not any(c.id == card.id for c in daily_cards):
+                        daily_cards.append(card)
+                except Exception as e:
+                    logger.warning(f"Не удалось сгенерировать карточку (попытка {attempts}): {str(e)}")
+                    continue
 
-        # Используем random_card для генерации карточек с учетом вероятностей
-        # Используем фиксированное значение pity=100 для магазина (максимальный шанс)
-        daily_cards = []
-        attempts = 0
-        max_attempts = 100
-
-        while len(daily_cards) < 4 and attempts < max_attempts:
-            attempts += 1
-            try:
-                card = await random_card(session, pity=100)  # Используем максимальный pity для лучших шансов
-
-                # Проверяем, что карта не является shiny (для магазина shiny карты не подходят)
-                if not card.shiny and card not in daily_cards:
-                    daily_cards.append(card)
-            except Exception as e:
-                logger.warning(f"Не удалось сгенерировать карточку (попытка {attempts}): {str(e)}")
-                continue
-
-        if len(daily_cards) >= 4:
-            # logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина с использованием random_card")
-            return daily_cards
-        else:
-            logger.warning(f"Не удалось получить достаточно карточек после {attempts} попыток, используем резервный метод")
-
-            # Резервный метод: случайный выбор, если random_card не сработал
-            # Гарантированно выбираем только не-shiny карты
-            cards = await session.scalars(select(Card).filter_by(shiny=False))
-            cards = cards.all()
-
-            if len(cards) >= 4:
-                daily_cards = random.sample(cards, 4)
-                # logger.info(f"Получено {len(daily_cards)} карточек для ежедневного магазина (резервный метод)")
+            if len(daily_cards) >= 4:
                 return daily_cards
             else:
-                logger.warning("Недостаточно карточек в базе данных для ежедневного магазина")
-                return []
+                logger.warning(f"Не удалось получить достаточно карточек после {attempts} попыток, используем резервный метод")
 
-    except Exception as exc:
-        logger.exception(f"Ошибка при получении карточек для ежедневного магазина: {exc}")
-        return []
+                # Резервный метод: случайный выбор, если random_card не сработал
+                # Гарантированно выбираем только не-shiny карты
+                cards = await self.__session.scalars(select(Card).filter_by(shiny=False))
+                cards = cards.all()
 
-async def add_referral(session:AsyncSession, referral_id: int, referrer_id: int) -> bool:
-    if referral_id != referrer_id:
-        existing_referral = await session.scalar(
-            select(Referrals).filter_by(user_id=referrer_id, referral_id=referral_id)
-        )
-        if not existing_referral:
-            referrer = await get_user(session, referrer_id)
-            if referrer:
-                referral_object = Referrals(
-                    user_id=referrer_id,
-                    referral_id=referral_id
-                )
-                session.add(referral_object)
-                await session.commit()
-                return referral_object
-    return None
+                if len(cards) >= 4:
+                    # Используем множество для отслеживания уникальных карт
+                    unique_cards = []
+                    used_ids = set()
+                    for card in cards:
+                        if card.id not in used_ids:
+                            unique_cards.append(card)
+                            used_ids.add(card.id)
+                            if len(unique_cards) >= 4:
+                                break
+                    return unique_cards[:4]
+                else:
+                    logger.warning("Недостаточно карточек в базе данных для ежедневного магазина")
+                    return []
 
-async def get_award(session:AsyncSession, referrer_id:int, award:int) -> bool:
-    try:
-        referrer = await get_user(session, referrer_id)
-        if referrer:
-            referrer.yens += award
-            await session.commit()
-            return True
-        return False
-    except Exception as e:
-        logger.error(f"Ошибка при начислении награды за реферала: {e}")
-        return False
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении карточек для ежедневного магазина: {exc}")
+            return []
 
-async def create_clan(name:str,tag:str,description:str,user_id:int,session: AsyncSession):
-    time = datetime.now(timezone.utc)
-    clan = Clan(name = name, tag = tag, description = description, created_at = time, leader_id = user_id)
-    member = ClanMember(user_id = user_id, clan_id = clan.id,joined_at= time, is_leader = True)
-    clan.members.append(member)
-    session.add(clan)
-    await session.commit()
-    logger.info(f"Создан клан {tag}")
-class RedisRequests:
-    
-    
-    async def daily_verse() -> int:
-        session = Redis()
-        verse = await session.get('daily_verse')
-        await session.aclose()
-        if verse:
-            return int(verse.decode('utf-8'))
+    async def add_referral(self,
+                        referral_id: int, referrer_id: int) -> Referrals | None:
+        """Создаёт рефералов"""
+        if referral_id != referrer_id:
+            existing_referral = await self.__session.scalar(
+                select(Referrals).filter_by(user_id=referrer_id, referral_id=referral_id)
+            )
+            if not existing_referral:
+                referrer = await self.get_user(referrer_id)
+                if referrer:
+                    referral_object = Referrals(
+                        user_id=referrer_id,
+                        referral_id=referral_id
+                    )
+                    self.__session.add(referral_object)
+                    await self.__session.commit()
+                    return referral_object
         return None
+
+    async def get_award(self,
+                        referrer_id: int, award: int) -> bool:
+        """Выдаёт награду за реферала"""
+        try:
+            referrer = await self.get_user(referrer_id)
+            if referrer:
+                referrer.yens += award
+                await self.__session.commit()
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка при начислении награды за реферала: {e}")
+            return False
+
+    async def create_clan(self, name: str, tag: str, description: str,
+                        user_id: int):
+        """Создаёт клан по данным юзера"""
+        time = datetime.now(timezone.utc)
+        clan = Clan(name=name, tag=tag, description=description,
+                    created_at=time, leader_id=user_id)
+        self.__session.add(clan)
+        await self.__session.commit()
+        member = ClanMember(user_id=user_id, clan_id=clan.id,
+                            joined_at=time, is_leader=True)
+        clan.members.append(member)
+        self.__session.add(member)
+        await self.__session.commit()
+        logger.info(f"Создан клан {tag}")
+
+    async def get_clan_invitation(self, clan_id: int, receiver_id: int) -> ClanInvitation | None:
+        """Проверяет существование приглашения в клан для пользователя"""
+        try:
+            return await self.__session.scalar(
+                select(ClanInvitation)
+                .filter_by(clan_id=clan_id, receiver_id=receiver_id)
+            )
+        except Exception as exc:
+            logger.exception(f"Ошибка при проверке приглашения в клан для пользователя id={receiver_id}: {exc}")
+            return None
+
+    async def create_clan_invitation(self,clan_id: int, sender_id: int,
+                                    receiver_id: int) -> ClanInvitation | None:
+        """Создает новое приглашение в клан"""
+        try:
+            # Проверяем, что приглашение еще не существует
+            existing_invitation = await self.get_clan_invitation(clan_id, receiver_id)
+            if existing_invitation:
+                return None
+
+            invitation = ClanInvitation(
+                clan_id=clan_id,
+                sender_id=sender_id,
+                receiver_id=receiver_id,
+                sent_at=datetime.now(timezone.utc)
+            )
+            self.__session.add(invitation)
+            await self.__session.commit()
+            logger.info(f"Создано приглашение в клан {clan_id} для пользователя {receiver_id}")
+            return invitation
+        except Exception as exc:
+            logger.exception(f"Ошибка при создании приглашения в клан для пользователя id={receiver_id}: {exc}")
+            return None
+class RedisRequests:
+
+    async def daily_verse() -> int:
+        session = None
+        try:
+            session = Redis()
+            verse = await session.get('daily_verse')
+            if verse:
+                return int(verse.decode('utf-8'))
+            return None
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении ежедневной вселенной из Redis: {exc}")
+            return None
+        finally:
+            if session:
+                await session.aclose()
 
     async def daily_items() -> str:
         session = Redis()

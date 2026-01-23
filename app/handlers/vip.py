@@ -15,9 +15,8 @@ import validate_email
 
 # Локальные импорты
 from app.filters import Private
-from app.func import _load_messages
-from db.models import User, VipSubscription
-from db.requests import get_user
+from app.func import Text
+from db import User, VipSubscription, DB
 from configR import config
 
 def validate_email(email: str) -> bool:
@@ -37,10 +36,10 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
         # logger.info(f"Обработка запроса на покупку VIP для пользователя {message.from_user.id}")
 
         # Загружаем сообщения в начале функции
-        messages = _load_messages()
+        messages = Text()._load_messages()
 
         # Получаем пользователя из базы данных
-        user = await get_user(session, message.from_user.id)
+        user = await DB(session).get_user(message.from_user.id)
 
         if not user:
             await message.answer(messages["user_not_found_vip"])
@@ -52,9 +51,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
             # Если подписка истекла, удаляем ее
             if user.vip.end_date <= current_time:
-                # logger.info(f"Удаляем истекшую VIP подписку для пользователя {user.id}")
-                await session.execute(delete(VipSubscription).where(VipSubscription.user_id == user.id))
-                await session.commit()
+                await DB(session).delete_vip_subscription(user.id)
                 user.vip = None  # Обновляем объект пользователя
             else:
                 # Если подписка еще активна, сообщаем пользователю
@@ -79,8 +76,8 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
 @router.callback_query(F.data == "buy_vip")
 async def buy_vip(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
-    user = await get_user(session, callback.from_user.id)
-    messages = _load_messages()
+    user = await DB(session).get_user(callback.from_user.id)
+    messages = Text()._load_messages()
 
     if not user:
         await callback.message.answer(messages["user_not_found_vip"])
@@ -110,12 +107,12 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext, session: AsyncSess
             is_flexible=False,
         provider_data=json.dumps({"receipt": {
         "items": [
-          {
+        {
             "description": "Подписка VIP на месяц",
             "quantity": "1.00",
             "amount": {
-              "value": f"{vip_price_rub:.2f}",
-              "currency": "RUB"
+                "value": f"{vip_price_rub:.2f}",
+                "currency": "RUB"
             },
             "vat_code": 1}]}}))
 
@@ -128,7 +125,7 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext, session: AsyncSess
 @router.callback_query(F.data == "cancel_vip_purchase")
 async def cancel_vip_purchase(callback: CallbackQuery, state: FSMContext):
     """Обработчик отмены покупки VIP подписки."""
-    messages = _load_messages()
+    messages = Text._load_messages()
     try:
         await state.clear()
         await callback.message.answer(messages["purchase_cancelled"])
@@ -140,7 +137,7 @@ async def cancel_vip_purchase(callback: CallbackQuery, state: FSMContext):
 @router.pre_checkout_query()
 async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
     """Обработчик PreCheckoutQuery - подтверждение оплаты."""
-    messages = _load_messages()
+    messages = Text()._load_messages()
     try:
         # logger.info(f"PreCheckoutQuery от пользователя {pre_checkout_query.from_user.id}")
         await pre_checkout_query.answer(ok=True)
@@ -151,7 +148,7 @@ async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
 @router.message(F.successful_payment)
 async def process_successful_payment(message: Message, state: FSMContext, session: AsyncSession):
     """Обработчик успешной оплаты - создание VIP подписки."""
-    messages = _load_messages()
+    messages = Text()._load_messages()
     try:
         # logger.info(f"Успешная оплата от пользователя {message.from_user.id}")
 
@@ -164,7 +161,7 @@ async def process_successful_payment(message: Message, state: FSMContext, sessio
             return
 
         # Получаем пользователя
-        user = await get_user(session, message.from_user.id)
+        user = await DB(session).get_user(message.from_user.id)
 
         if not user:
             await message.answer(messages["user_not_found_vip"])

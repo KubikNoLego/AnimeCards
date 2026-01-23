@@ -42,6 +42,9 @@ async def main_kb():
 
     return builder.as_markup(resize_keyboard=True, input_field="Привет!" if randint(1, 1000) == 777 else "...")
 
+
+async def clan_invite_kb():
+    ...
 async def pagination_keyboard(current_page: int, total_pages: int):
     """Создать инлайн-клавиатуру пагинации.
 

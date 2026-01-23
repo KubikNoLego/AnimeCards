@@ -14,10 +14,9 @@ from sqlalchemy import select
 
 # Локальные импорты
 from app.filters import Private
-from app.func import user_photo_link, start_message_generator, _load_messages, card_formatter, not_user, nottime, profile_creator, random_card
+from app.func import user_photo_link, random_card, Text,create_qr
 from app.keyboards import main_kb
-from db.models import Referrals, User, Verse
-from db.requests import create_or_update_user, get_award, get_user_place_on_top, add_referral, RedisRequests, get_user
+from db import Referrals, User, Verse,RedisRequests, DB
 
 # Глобальный список для отслеживания пользователей, которые открывают карты через команду
 user_card_opens = []
@@ -29,13 +28,12 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
     user = await message.bot.get_chat(message.from_user.id)
     
     
-    await create_or_update_user(user.id,
+    db = DB(session)
+    await db.create_or_update_user(user.id,
                                 message.from_user.username,
                                 user.full_name,
-                                user.bio,
-                                session
-                            )
-    user = await get_user(session, user.id)
+                                user.bio)
+    user = await db.get_user(user.id)
 
     if command.args:
         option,value = command.args.split("_")
@@ -46,11 +44,11 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                 except:
                     inviter_id = None
 
-                if inviter_id:
-                    inviter = await get_user(session, inviter_id)
+                if inviter_id and inviter_id != message.from_user.id:
+                    inviter = await db.get_user(inviter_id)
                     if inviter:
                         # Добавляем реферальную связь
-                        referral = await add_referral(session, referral_id=user.id, referrer_id=inviter_id)
+                        referral = await db.add_referral(referral_id=user.id, referrer_id=inviter_id)
                         if referral:
                             # logger.info(f"Добавлен реферал: {inviter_id} -> {user.id}")
 
@@ -58,7 +56,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                             reward_amount = random.randint(50, 300) if not inviter.vip else random.randint(150, 700)
 
                             # Награждаем реферрера за реферала
-                            reward_success = await get_award(session, inviter_id, reward_amount)
+                            reward_success = await db.get_award(inviter_id, reward_amount)
                             if reward_success:
                                 # logger.info(f"Пользователь {inviter_id} получил {reward_amount} йен за реферала")
 
@@ -68,13 +66,13 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                                 # Создаем кликабельную ссылку на профиль нового пользователя
                                 new_user_link = f'<a href="tg://user?id={user.id}">{html_decoration.quote(user.name)}</a>'
 
-                                messages = _load_messages()
+                                messages = Text()._load_messages()
                                 await message.reply(messages["referral_welcome"].format(referrer_link=referrer_link))
 
                                 # Отправляем сообщение реферреру о новом реферале
                                 try:
                                     # Получаем текущий баланс реферрера для отображения общего количества йен
-                                    updated_inviter = await get_user(session, inviter_id)
+                                    updated_inviter = await db.get_user(inviter_id)
                                     await message.bot.send_message(
                                         inviter.id,
                                         f"🎉 Новый реферал! {new_user_link} использовал вашу реферальную ссылку!"
@@ -110,8 +108,11 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                                 await message.reply(messages["referral_reward_already_sent"].format(referrer_link=referrer_link))
 
 
-    message_text = await start_message_generator(user.start)
-    await message.reply(message_text, reply_markup=await main_kb())
+    message_text = await Text().start_message_generator(user.start if user.start is not None else False)
+    keyboard = await main_kb()
+    if message_text is None:
+        message_text = "Добро пожаловать!"
+    await message.reply(message_text, reply_markup=keyboard)
 
 
 @router.message(Command("card"))
@@ -123,7 +124,8 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
         user_card_opens.append(user_id)
 
         try:
-            user = await get_user(session, user_id)
+            db = DB(session)
+            user = await db.get_user(user_id)
             if user:
                 last_open = user.last_open
 
@@ -134,8 +136,8 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                 hour = 2 if datetime.now(timezone.utc).weekday() >= 5 else 3
 
                 if last_open + timedelta(hours=hour) <= datetime.now(timezone.utc):
-                    card = await random_card(session, user.pity)
-                    text = await card_formatter(card, user)
+                    card = await random_card( user.pity)
+                    text = await Text().card_formatter(card, user)
                     await message.reply_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
                     if card not in user.inventory:
                         user.inventory.append(card)
@@ -148,13 +150,13 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                     user.yens += card.value + (math.ceil(card.value * 0.1) if user.vip else 0)
                     await session.commit()
                 else:
-                    text = await nottime(user.last_open)
+                    text = await Text().nottime(user.last_open)
                     if text is None:
-                        messages = _load_messages()
+                        messages = Text._load_messages()
                         text = messages["not_enough_time"]
                     await message.reply(text)
             else:
-                messages = _load_messages()
+                messages = Text._load_messages()
                 await message.reply(messages["not_registered"])
         finally:
             # Убираем пользователя из списка после завершения (даже если была ошибка)
@@ -165,29 +167,31 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
 @router.message(Command("profile"))
 async def _(message: Message, command: CommandObject,session: AsyncSession):
-    user = await get_user(session, message.from_user.id)
+    db = DB(session)
+    user = await db.get_user(message.from_user.id)
     if user:
-        place_on_top = await get_user_place_on_top(session,user)
-        text = await profile_creator(user.clan_member.clan if user.clan_member else None,user.profile,place_on_top, session)
+        place_on_top = await db.get_user_place_on_top(user)
+        text = await Text().profile_creator(user.clan_member.clan if user.clan_member else None,user.profile,place_on_top, session)
         profile_photo = await user_photo_link(message)
         if profile_photo:
             await message.reply_photo(photo=profile_photo,caption=text)
         else:
             await message.reply(text)
     else:
-        text = await not_user(message.from_user.full_name)
+        text = await Text().not_user(message.from_user.full_name)
         await message.reply(text)
 
 @router.message(Command("daily"))
 async def _(message: Message, command: CommandObject,session: AsyncSession):
-    messages = _load_messages()
+    messages = Text._load_messages()
     try:
         # Получаем ID текущей ежедневной вселенной из Redis
         verse_id = await RedisRequests.daily_verse()
 
         if verse_id:
             # Получаем информацию о вселенной из базы данных
-            verse = await session.scalar(select(Verse).filter_by(id=verse_id))
+            db = DB(session)
+            verse = await db.get_verse(verse_id)
 
             if verse:
                 # Форматируем сообщение с информацией о ежедневной вселенной

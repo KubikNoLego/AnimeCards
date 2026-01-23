@@ -17,23 +17,71 @@ from sqlalchemy.orm import selectinload, joinedload
 # Локальные импорты
 from app.StateGroups import ChangeDescribe,CreateClan
 from app.filters import ProfileFilter, Private
-from app.func import (card_formatter, not_user, nottime, profile_creator,
-                    profile_step2_tutorial, profile_tutorial,
-                    random_card, user_photo_link, _load_messages,
-                    top_players_formatter, create_qr)
+from app.func import random_card, user_photo_link, Text, create_qr
 from app.keyboards import profile_keyboard, shop_keyboard,create_clan
 from app.keyboards.utils import clan_create
-from db.models import Card, Clan, ClanMember, User
-from db.requests import RedisRequests, get_user, get_user_place_on_top, get_top_players_by_balance
+from db import Card, Clan, ClanMember, User,RedisRequests,DB
 
 router = Router()
 
 
 user_card_opens = []
 
+
+@router.message(F.text == ".пригласить")
+async def _(message: Message, session:AsyncSession,state:FSMContext):
+    messages = Text()._load_messages()
+    db = DB(session)
+    sender = await db.get_user(message.from_user.id)
+
+    # Проверка, является ли пользователь лидером клана
+    if not sender.clan_member or sender.clan_member.clan.leader_id != sender.id:
+        await message.reply(messages["not_clan_leader"])
+        return
+
+    # Проверка, что команда используется в групповом чате и как ответ на сообщение
+    if message.chat.type == "private":
+        await message.reply(messages["not_in_private_chat"])
+        return
+
+    if not message.reply_to_message:
+        await message.reply(messages["not_in_private_chat"])
+        return
+
+    # Получаем пользователя, которого приглашаем
+    user = await db.get_user(message.reply_to_message.from_user.id)
+    if not user:
+        await message.reply(messages["not_user"])
+        return
+
+    # Проверка, что пользователь не состоит в клане
+    if user.clan_member:
+        await message.reply(messages["user_already_in_clan"])
+        return
+
+    # Проверяем, не отправляли ли мы уже приглашение этому пользователю
+    existing_invitation = await db.get_clan_invitation(sender.clan_member.clan.id, user.id)
+    if existing_invitation:
+        await message.reply(messages["clan_invite_already_sent"])
+        return
+
+    # Создаем приглашение в базе данных
+    invitation = await db.create_clan_invitation(sender.clan_member.clan.id, sender.id, user.id)
+    if not invitation:
+        await message.reply(messages["clan_invite_already_sent"])
+        return
+
+    # Отправляем приглашение
+    try:
+        await message.reply(messages["clan_invite_success"])
+        await message.bot.send_message(user.id,text=messages["clan_invite_prompt"] % sender.clan_member.clan.name)
+    except Exception as e:
+        logger.error(f"Ошибка при отправке приглашения: {str(e)}", exc_info=True)
+        await message.answer(messages["invite_send_error"])
+
 @router.message(CreateClan.name)
 async def _(message: Message, session:AsyncSession,state:FSMContext):
-    messages = _load_messages()
+    messages = Text()._load_messages()
     clan = await session.scalar(select(Clan).filter_by(name = escape(message.text)))
     if len(message.text) <= 50 and not clan:
         await state.update_data(name=escape(message.text))
@@ -44,7 +92,7 @@ async def _(message: Message, session:AsyncSession,state:FSMContext):
 
 @router.message(CreateClan.tag)
 async def _(message: Message, session:AsyncSession,state:FSMContext):
-    messages = _load_messages()
+    messages = Text()._load_messages()
     clan = await session.scalar(select(Clan).filter_by(tag = escape(message.text)))
     if len(message.text) <= 5 and not clan:
         await state.update_data(tag=escape(message.text))
@@ -55,7 +103,7 @@ async def _(message: Message, session:AsyncSession,state:FSMContext):
 
 @router.message(CreateClan.description)
 async def _(message: Message, session:AsyncSession,state:FSMContext):
-    messages = _load_messages()
+    messages = Text()._load_messages()
     if len(message.text) <= 255:
         await state.update_data(description = escape(message.text))
         data = await state.get_data()
@@ -74,7 +122,7 @@ async def _(message:Message, session:AsyncSession, state:FSMContext):
             joinedload(User.clan_member).joinedload(ClanMember.clan)
         )
     )
-    messages = _load_messages()
+    messages = Text()._load_messages()
     if user and user.clan_member:
         await message.reply(f"Вы участник клана {user.clan_member.clan.name}\nТег клана: {user.clan_member.clan.tag}\nБаланс клана: {user.clan_member.clan.balance}\n\nОписание:\n{user.clan_member.clan.description}")
     else:
@@ -83,8 +131,9 @@ async def _(message:Message, session:AsyncSession, state:FSMContext):
 @router.message(F.text == "🛒 Магазин",Private())
 async def _(message:Message,session:AsyncSession):
     items = await RedisRequests.daily_items()
-    messages = _load_messages()
-    user = await get_user(session, message.from_user.id)
+    messages = Text()._load_messages()
+    db = DB(session)
+    user = await db.get_user(message.from_user.id)
     if items:
         try:
             items = items.decode("utf-8").split(",")
@@ -114,7 +163,8 @@ async def _(message:Message,session:AsyncSession):
 @router.message(F.text == "🔗 Реферальная ссылка")
 async def _(message: Message, session: AsyncSession):
     """Обработчик кнопки реферальной ссылки."""
-    user = await get_user(session, message.from_user.id)
+    db = DB(session)
+    user = await db.get_user(message.from_user.id)
     if user:
         total_reward = 0
         for i in user.referrals:
@@ -135,26 +185,29 @@ async def _(message: Message, session: AsyncSession):
 """
         try:
             qr_file = await create_qr(referral_link)
-            await message.reply_photo(qr_file, caption=stats_message, parse_mode="HTML")
-            # Удаляем временный файл после отправки
-            if hasattr(qr_file, 'path') and os.path.exists(qr_file.path):
-                os.unlink(qr_file.path)
+            try:
+                await message.reply_photo(qr_file, caption=stats_message, parse_mode="HTML")
+            finally:
+                # Удаляем временный файл в любом случае
+                if hasattr(qr_file, 'path') and os.path.exists(qr_file.path):
+                    os.unlink(qr_file.path)
         except Exception as e:
             # logger.error(f"Ошибка при генерации QR-кода: {e}")
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await message.reply(messages["qr_error"])
     else:
-        messages = _load_messages()
+        messages = Text()._load_messages()
         await message.reply(messages["not_registered"])
 
 
 @router.message(ChangeDescribe.text)
 async def _(message:Message, session: AsyncSession, state: FSMContext):
-    messages = _load_messages()
+    messages = Text()._load_messages()
     if len(message.text) > 70:
         await message.answer(messages["describe_too_long"] % len(message.text))
     else:
-        user = await get_user(session, message.from_user.id)
+        db = DB(session)
+        user = await db.get_user(message.from_user.id)
         user.profile.describe = escape(message.text)
         await session.commit()
         await message.answer(messages["describe_updated_success"] % escape(message.text))
@@ -168,7 +221,8 @@ async def _(message: Message, session: AsyncSession):
         return
     try:
         user_card_opens.append(message.from_user.id)
-        user = await get_user(session, message.from_user.id)
+        db = DB(session)
+        user = await db.get_user(message.from_user.id)
 
         # Нормализуем `last_open` на случай, если в БД хранится naive datetime
         last_open = user.last_open
@@ -181,7 +235,7 @@ async def _(message: Message, session: AsyncSession):
 
         if (last_open + timedelta(hours=hour) <= datetime.now(timezone.utc)) or free_open:
             card = await random_card(session, user.pity)
-            text = await card_formatter(card, user)
+            text = await Text().card_formatter(card, user)
             await message.answer_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
             if card not in user.inventory:
                 user.inventory.append(card)
@@ -197,10 +251,10 @@ async def _(message: Message, session: AsyncSession):
             user.yens += card.value + (math.ceil(card.value * 0.1) if user.vip else 0)
             await session.commit()
             if user.start:
-                tutorial = await profile_tutorial()
+                tutorial = await Text().profile_tutorial()
                 await message.answer(tutorial)
         else:
-            text = await nottime(user.last_open)
+            text = await Text().nottime(user.last_open)
             if text is None:
                 text = "<i>⏳ До следующего открытия осталось немного времени</i>"
             await message.reply(text)
@@ -209,16 +263,17 @@ async def _(message: Message, session: AsyncSession):
     
 @router.message(F.text == "🏆 Топ игроков", Private())
 async def _(message: Message, session: AsyncSession):
-    user = await get_user(session, message.from_user.id)
+    db = DB(session)
+    user = await db.get_user(message.from_user.id)
     if user:
         # Получаем топ игроков по балансу (10 человек)
-        top_players_balance = await get_top_players_by_balance(session)
-        text_balance = await top_players_formatter(top_players_balance, user.id)
+        top_players_balance = await db.get_top_players_by_balance()
+        text_balance = await Text().top_players_formatter(top_players_balance, user.id)
 
         # Отправляем только топ по балансу
         await message.answer(text_balance)
     else:
-        text = await not_user(message.from_user.full_name)
+        text = await Text().not_user(message.from_user.full_name)
         await message.reply(text)
 
 
@@ -231,7 +286,7 @@ async def _(message: Message, session: AsyncSession):
         match = re.search(pattern, message.text)
 
         if not match:
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await message.reply(messages["invalid_profile_command"])
             return
 
@@ -244,13 +299,14 @@ async def _(message: Message, session: AsyncSession):
         )
 
         if not user:
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await message.reply(messages["user_not_found"].format(target_username=target_username))
             return
 
+        db = DB(session)
         # Получаем информацию о профиле
-        place_on_top = await get_user_place_on_top(session, user)
-        text = await profile_creator(user.clan_member.clan if user.clan_member else None,user.clan_member.clan,user.profile, place_on_top, session)
+        place_on_top = await db.get_user_place_on_top(user)
+        text = await Text.profile_creator(user.clan_member.clan if user.clan_member else None,user.clan_member.clan,user.profile, place_on_top, session)
 
         target_profile_photo = None
         try:
@@ -267,19 +323,19 @@ async def _(message: Message, session: AsyncSession):
             await message.reply(text)
 
     except Exception as e:
-        messages = _load_messages()
+        messages = Text()._load_messages()
         await message.reply(messages["profile_error"])
 
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):
-
+    db = DB(session)
     is_reply = message.reply_to_message
     match is_reply:
         case None:
-            user = await get_user(session, message.from_user.id)
+            user = await db.get_user(message.from_user.id)
             if user:
-                place_on_top = await get_user_place_on_top(session,user)
-                text = await profile_creator(user.clan_member.clan if user.clan_member else None,user.profile,place_on_top, session)
+                place_on_top = await db.get_user_place_on_top(user)
+                text = await Text().profile_creator(user.clan_member.clan if user.clan_member else None,user.profile,place_on_top, session)
                 profile_photo = await user_photo_link(message)
                 keyboard = await profile_keyboard(user.profile.describe != "")
                 if profile_photo:
@@ -287,24 +343,24 @@ async def _(message: Message, session: AsyncSession):
                 else:
                     await message.reply(text,reply_markup=keyboard)
                 if user.start:
-                    tutorial = await profile_step2_tutorial()
+                    tutorial = await Text().profile_step2_tutorial()
                     await message.answer(tutorial)
                     user.start = False
                     await session.commit()
             else:
-                text = await not_user(message.from_user.full_name)
+                text = await Text().not_user(message.from_user.full_name)
                 await message.reply(text)
         case _:
-            user = await get_user(session, message.reply_to_message.from_user.id)
+            user = await db.get_user(message.reply_to_message.from_user.id)
             if user:
-                place_on_top = await get_user_place_on_top(session,user)
-                text = await profile_creator(user.clan_member.clan if user.clan_member else None,user.profile,place_on_top, session)
+                place_on_top = await db.get_user_place_on_top(user)
+                text = await Text().profile_creator(user.clan_member.clan if user.clan_member else None,user.profile,place_on_top, session)
                 profile_photo = await user_photo_link(message)
                 if profile_photo:
                     await message.reply_photo(photo=profile_photo,caption=text)
                 else:
                     await message.reply(text)
             else:
-                text = await not_user(
+                text = await Text().not_user(
                     message.reply_to_message.from_user.full_name)
                 await message.reply(text)

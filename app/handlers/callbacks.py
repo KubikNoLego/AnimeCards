@@ -10,11 +10,11 @@ from sqlalchemy import select
 from loguru import logger
 
 # Локальные импорты
-from db.models import Card, User, Verse, Rarity
-from app.func import _load_messages
+from db import Card, User, Verse, Rarity,RedisRequests,DB
+from app.func import Text
 from app.keyboards import Pagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilter, RarityFilterPagination, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
 from app.StateGroups.states import ChangeDescribe,CreateClan
-from db.requests import RedisRequests, create_clan, get_user
+
 
 router = Router()
 
@@ -22,42 +22,42 @@ router = Router()
 @router.callback_query(F.data == "accept_create_clan")
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     data = await state.get_data()
-    await state.set_state(None)
-    await create_clan(data['name'],data['tag'],data['description'],callback.from_user.id,session)
+    await DB(session).create_clan(data['name'],data['tag'],data['description'],callback.from_user.id)
     await callback.message.delete()
     await callback.answer("Клан успешно создан")
+    # Очищаем состояние пользователя после создания клана, не затрагивая другие состояния
+    await state.clear()
 
 @router.callback_query(F.data == "create_clan")
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     await state.set_state(CreateClan.name)
-    messages = _load_messages()
+    messages = Text()._load_messages()
     await callback.message.answer(messages["clan_name_prompt"])
 
 @router.callback_query(F.data == "delete_describe")
 async def delete_describe_user(callback: CallbackQuery,session : AsyncSession, state:FSMContext):
-    messages = _load_messages()
+    messages = Text()._load_messages()
     await callback.message.answer(messages["describe_updated_empty"])
-    user = await get_user(session, callback.from_user.id)
+    user = await DB(session).get_user(callback.from_user.id)
     user.profile.describe = ""
     await session.commit()
 
 @router.callback_query(F.data == "change_describe")
 async def change_describe_user(callback: CallbackQuery, session: AsyncSession, state:FSMContext):
     await state.set_state(ChangeDescribe.text)
-    messages = _load_messages()
+    messages = Text()._load_messages()
     await callback.message.answer(messages['change_describe_prompt'])
 
 @router.callback_query(F.data == "reset_sort_filters")
 async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext):
     """Обработчик callback для сброса фильтров сортировки."""
     try:
-        # logger.info(f"Сброс фильтров сортировки для пользователя {callback.from_user.id}")
 
         # Очищаем данные FSM
         await state.clear()
 
         # Получаем сообщение из messages.json
-        messages = _load_messages()
+        messages = Text()._load_messages()
 
         # Создаем клавиатуру для подтверждения сброса
         builder = InlineKeyboardBuilder()
@@ -72,16 +72,15 @@ async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext
         await callback.answer(messages["filters_reset_success"])
     except Exception as e:
             logger.error(f"Ошибка при сбросе фильтров сортировки: {e}")
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["filters_reset_error"], show_alert=True)
 
 @router.callback_query(F.data == "sort_inventory")
 async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора способа сортировки инвентаря."""
     try:
-        # logger.info(f"Обработка callback выбора способа сортировки инвентаря для пользователя {callback.from_user.id}")
 
-        messages = _load_messages()
+        messages = Text()._load_messages()
         select_sort_message = messages["select_sort"]
 
         # Создаем клавиатуру для выбора способа сортировки
@@ -132,40 +131,39 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
         await callback.answer()
     except Exception as e:
             logger.error(f"Ошибка при обработке callback выбора способа сортировки инвентаря: {e}")
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["processing_error"], show_alert=True)
 
 @router.callback_query(ShopItemCallback.filter())
 async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCallback, session: AsyncSession):
     """Обработчик callback для покупки карточки из магазина."""
     try:
-        # logger.info(f"Обработка callback покупки карточки {callback_data.item_id} для пользователя {callback.from_user.id}")
 
         # Получаем карточку из базы данных
         card = await session.scalar(select(Card).filter_by(id=callback_data.item_id))
 
         if not card:
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["card_not_found"], show_alert=True)
             return
 
         # Получаем пользователя
-        user = await get_user(session, callback.from_user.id)
+        user = await DB(session).get_user(callback.from_user.id)
 
         if not user:
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["user_not_found_short"], show_alert=True)
             return
 
         # Проверяем, достаточно ли у пользователя йен
         if user.yens < int(card.value*1.7):
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["not_enough_yens"], show_alert=True)
             return
 
         # Проверяем, есть ли уже эта карточка у пользователя
         if card in user.inventory:
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["card_already_owned"], show_alert=True)
             return
 
@@ -210,19 +208,18 @@ async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCal
 
     except Exception as e:
             logger.error(f"Ошибка при обработке покупки карточки: {str(e)}", exc_info=True)
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["purchase_error"], show_alert=True)
 
 @router.callback_query(F.data.startswith("buy_card_"))
 async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
     """Обработчик callback для подтверждения покупки карточки."""
     try:
-        # logger.info(f"Обработка подтверждения покупки карточки для пользователя {callback.from_user.id}")
         current_items = await RedisRequests.daily_items()
 
         # Проверяем, что current_items не None и не пустой
         if not current_items:
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.message.answer(messages['shop_items_changed'])
             return
 
@@ -231,30 +228,26 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
         # Извлекаем ID карточки из callback данных
         card_id = int(callback.data.split("_")[-1])
 
-        # Добавляем отладочный вывод для проверки
-        # logger.info(f"Текущие товары в магазине: {current_items}")
-        # logger.info(f"Покупаемая карточка ID: {card_id}")
-        # logger.info(f"Карточка в текущем ассортименте: {card_id in current_items}")
 
         if card_id in current_items:
             # Получаем карточку и пользователя
             card = await session.scalar(select(Card).filter_by(id=card_id))
-            user = await get_user(session, callback.from_user.id)
+            user = await DB(session).get_user(callback.from_user.id)
 
             if not card or not user:
-                messages = _load_messages()
+                messages = Text()._load_messages()
                 await callback.answer(messages["card_not_found"], show_alert=True)
                 return
 
             # Проверяем, достаточно ли у пользователя йен
             if user.yens < card.value:
-                messages = _load_messages()
+                messages = Text()._load_messages()
                 await callback.answer(messages["not_enough_yens"], show_alert=True)
                 return
 
             # Проверяем, есть ли уже эта карточка у пользователя
             if card in user.inventory:
-                messages = _load_messages()
+                messages = Text()._load_messages()
                 await callback.answer(messages["card_already_owned"], show_alert=True)
                 return
 
@@ -271,17 +264,17 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
                 logger.warning(f"Не удалось удалить сообщение с предложением покупки: {str(delete_error)}")
 
             # Отправляем подтверждение о покупке
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.message.answer(messages["purchase_success"].format(card_name=card.name, price=int(card.value*1.7)))
 
             await callback.answer(messages["purchase_success"].split('\n')[0])
         else:
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.message.answer(messages['shop_items_changed'])
 
     except Exception as e:
             logger.error(f"Ошибка при покупке карточки: {str(e)}", exc_info=True)
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["purchase_error"], show_alert=True)
 
 @router.callback_query(F.data == "cancel_buy")
@@ -295,19 +288,18 @@ async def cancel_buy_callback(callback: CallbackQuery):
             logger.warning(f"Не удалось удалить сообщение с предложением покупки: {str(delete_error)}")
 
         # Отправляем сообщение об отмене
-        messages = _load_messages()
+        messages = Text()._load_messages()
         await callback.message.answer(messages["purchase_cancelled"])
         await callback.answer(messages["purchase_cancelled"])
     except Exception as e:
             logger.error(f"Ошибка при отмене покупки: {str(e)}")
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["cancel_error"], show_alert=True)
 
 @router.callback_query(VerseFilterPagination.filter())
 async def verse_filter_pagination_callback(callback: CallbackQuery, callback_data: VerseFilterPagination, session: AsyncSession):
     """Обработчик callback для пагинации фильтра по вселенной."""
     try:
-        # logger.info(f"Обработка callback пагинации фильтра по вселенной для пользователя {callback.from_user.id}, страница {callback_data.p}")
 
         verses = await session.scalars(select(Verse))
         verses = verses.all()
@@ -318,7 +310,7 @@ async def verse_filter_pagination_callback(callback: CallbackQuery, callback_dat
             # Создаем клавиатуру с обновленными кнопками пагинации
             keyboard = await verse_filter_pagination_keyboard(current_page,verses=verses)
             # Получаем сообщение из messages.json
-            messages = _load_messages()
+            messages = Text()._load_messages()
             select_universe_message = messages["select_universe"]
 
             # Обновляем сообщение с новой клавиатурой, но сохраняем тот же текст
@@ -328,24 +320,23 @@ async def verse_filter_pagination_callback(callback: CallbackQuery, callback_dat
             )
             await callback.answer()
         else:
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["invalid_page"], show_alert=True)
     except Exception as e:
             logger.error(f"Ошибка при обработке callback пагинации фильтра по вселенной: {e}")
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["processing_error"], show_alert=True)
 
 @router.callback_query(VerseFilter.filter())
 async def verse_filter_callback(callback: CallbackQuery, callback_data: VerseFilter, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора конкретной вселенной."""
     try:
-        # logger.info(f"Обработка callback выбора вселенной {callback_data.verse_name} для пользователя {callback.from_user.id}")
 
         # Сохраняем выбранное название вселенной в FSM
         await state.update_data(selected_verse_name=callback_data.verse_name)
 
         # Получаем сообщение из messages.json
-        messages = _load_messages()
+        messages = Text()._load_messages()
         verse_selected_message = messages["verse_selected"].format(verse_name=callback_data.verse_name)
 
         # Создаем клавиатуру для подтверждения выбора
@@ -361,14 +352,13 @@ async def verse_filter_callback(callback: CallbackQuery, callback_data: VerseFil
         await callback.answer(messages["verse_selected_success"].format(verse_name=callback_data.verse_name))
     except Exception as e:
             logger.error(f"Ошибка при обработке callback выбора вселенной: {e}")
-            messages = _load_messages()
+            messages = Text._load_messages()
             await callback.answer(messages["processing_error"], show_alert=True)
 
 @router.callback_query(F.data == "sort_by_rarity")
 async def sort_by_rarity_callback(callback: CallbackQuery, session: AsyncSession):
     """Обработчик callback для сортировки по редкости."""
     try:
-        # logger.info(f"Обработка callback сортировки по редкости для пользователя {callback.from_user.id}")
 
         # Получаем все редкости из базы данных
         rarities = await session.scalars(select(Rarity))
@@ -378,7 +368,7 @@ async def sort_by_rarity_callback(callback: CallbackQuery, session: AsyncSession
         keyboard = await rarity_filter_pagination_keyboard(1, rarities=rarities)
 
         # Получаем сообщение из messages.json
-        messages = _load_messages()
+        messages = Text()._load_messages()
         select_rarity_message = messages["select_rarity"]
 
         # Обновляем сообщение с новой клавиатурой
@@ -389,14 +379,13 @@ async def sort_by_rarity_callback(callback: CallbackQuery, session: AsyncSession
         await callback.answer()
     except Exception as e:
             logger.error(f"Ошибка при обработке callback сортировки по редкости: {e}")
-            messages = _load_messages()
+            messages = Text._load_messages()
             await callback.answer(messages["processing_error"], show_alert=True)
 
 @router.callback_query(RarityFilterPagination.filter())
 async def rarity_filter_pagination_callback(callback: CallbackQuery, callback_data: RarityFilterPagination, session: AsyncSession):
     """Обработчик callback для пагинации фильтра по редкости."""
     try:
-        # logger.info(f"Обработка callback пагинации фильтра по редкости для пользователя {callback.from_user.id}, страница {callback_data.p}")
 
         rarities = await session.scalars(select(Rarity))
         rarities = rarities.all()
@@ -407,7 +396,7 @@ async def rarity_filter_pagination_callback(callback: CallbackQuery, callback_da
             # Создаем клавиатуру с обновленными кнопками пагинации
             keyboard = await rarity_filter_pagination_keyboard(current_page, rarities=rarities)
             # Получаем сообщение из messages.json
-            messages = _load_messages()
+            messages = Text()._load_messages()
             select_rarity_message = messages["select_rarity"]
 
             # Обновляем сообщение с новой клавиатурой, но сохраняем тот же текст
@@ -417,24 +406,23 @@ async def rarity_filter_pagination_callback(callback: CallbackQuery, callback_da
             )
             await callback.answer()
         else:
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["invalid_page"], show_alert=True)
     except Exception as e:
             logger.error(f"Ошибка при обработке callback пагинации фильтра по редкости: {e}")
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["processing_error"], show_alert=True)
 
 @router.callback_query(RarityFilter.filter())
 async def rarity_filter_callback(callback: CallbackQuery, callback_data: RarityFilter, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора конкретной редкости."""
     try:
-        # logger.info(f"Обработка callback выбора редкости {callback_data.rarity_name} для пользователя {callback.from_user.id}")
 
         # Сохраняем выбранное название редкости в FSM
         await state.update_data(selected_rarity_name=callback_data.rarity_name)
 
         # Получаем сообщение из messages.json
-        messages = _load_messages()
+        messages = Text()._load_messages()
         rarity_selected_message = messages["rarity_selected"].format(rarity_name=callback_data.rarity_name)
 
         # Создаем клавиатуру для подтверждения выбора
@@ -450,16 +438,15 @@ async def rarity_filter_callback(callback: CallbackQuery, callback_data: RarityF
         await callback.answer(messages["rarity_selected_success"].format(rarity_name=callback_data.rarity_name))
     except Exception as e:
             logger.error(f"Ошибка при обработке callback выбора редкости: {e}")
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["processing_error"], show_alert=True)
 
 @router.callback_query(Pagination.filter())
 async def inventory_pagination_callback(callback: CallbackQuery, callback_data: Pagination, session: AsyncSession, state: FSMContext):
     """Обработчик callback для пагинации инвентаря с фильтрацией."""
     try:
-        # logger.info(f"Обработка callback пагинации инвентаря для пользователя {callback.from_user.id}, страница {callback_data.p}")
 
-        user = await get_user(session, callback.from_user.id)
+        user = await DB(session).get_user(callback.from_user.id)
 
         if user and user.inventory and len(user.inventory) > 0:
             # Получаем текущие фильтры из FSM
@@ -480,7 +467,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
 
             if not filtered_cards:
                 # Если нет карт, соответствующих фильтрам
-                messages = _load_messages()
+                messages = Text()._load_messages()
                 filter_no_results_message = messages["filter_no_results"]
 
                 # Создаем клавиатуру с кнопкой возврата к сортировке
@@ -502,20 +489,18 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
 
             # Проверка валидности индекса карты для отфильтрованного списка
             if 0 <= card_index < len(filtered_cards):
-                # logger.info(f"Показ карты с индексом {card_index} для пользователя {user.id} (отфильтрованный список)")
                 await show_inventory_card(callback, user, card_index, filtered_cards)
             else:
                 logger.warning(f"Неверный индекс карты: {callback_data.p} для пользователя {user.id}")
-                messages = _load_messages()
+                messages = Text()._load_messages()
                 await callback.message.answer(messages["inventory_empty"])
         else:
-            # logger.info(f"У пользователя {callback.from_user.id} нет карт в инвентаре")
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.message.answer(messages["inventory_empty"])
 
     except Exception as e:
             logger.error(f"Ошибка при обработке callback пагинации инвентаря: {e}")
-            messages = _load_messages()
+            messages = Text()._load_messages()
             await callback.answer(messages["processing_error"], show_alert=True)
 
 async def show_inventory_card(callback: CallbackQuery, user: User, card_index: int, filtered_cards: list = None):
@@ -523,7 +508,6 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
     # Используем отфильтрованный список или полный инвентарь
     cards = filtered_cards if filtered_cards is not None else user.inventory
     card = cards[card_index]
-    # logger.info(f"Отображение карты {card.name} (ID: {card.id}) для пользователя {user.id}")
 
     # Форматирование информации о карте
     card_info = f"""
@@ -537,7 +521,6 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
     # Редактирование сообщения с информацией о карте
     if card.icon:
         keyboard = await pagination_keyboard(card_index + 1, len(cards))
-        # logger.info(f"Редактирование сообщения с картой {card.name} с иконкой")
         try:
             await callback.message.edit_media(
                 media=InputMediaPhoto(media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}")),
@@ -551,11 +534,9 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
         except Exception as e:
             logger.warning(f"Не удалось отредактировать сообщение: {e}")
     else:
-        # logger.info(f"У карты {card.name} нет иконки, редактирую текст сообщения")
         try:
             await callback.message.edit_text(
                 text=card_info
             )
         except Exception as e:
-            # logger.warning(f"Не удалось отредактировать сообщение, отправляю новое: {e}")
             await callback.message.answer(card_info)

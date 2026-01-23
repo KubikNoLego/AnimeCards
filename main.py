@@ -11,12 +11,10 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession,async_sessi
 from sqlalchemy import delete, select
 from loguru import logger
 
-from db import Base,Verse
 from configR import config
 from app.handlers import setup_routers
 from app.middlewares import DBSessionMiddleware
-from db.requests import get_random_verse, get_daily_shop_items
-from db.models import VipSubscription, User
+from db import Base,Verse,DB,RedisRequests,VipSubscription,User
 
 
 # Настройка логирования: записывать в файл `log.txt`, ротация при 10 МБ
@@ -77,7 +75,7 @@ async def _cleanup_expired_vip_subscriptions():
 
 async def _update_daily_verse(session, db_session, current_date):
     """Обновляем ежедневную вселенную."""
-    new_verse: Verse = await get_random_verse(db_session)
+    new_verse: Verse = await DB(db_session).get_random_verse()
     if new_verse:
         await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
         logger.info(f"Ежедневная вселенная обновлена. ID: {new_verse.id}, Дата: {current_date}")
@@ -88,7 +86,7 @@ async def _update_daily_verse(session, db_session, current_date):
 
 async def _update_daily_shop(session, db_session, current_date):
     """Обновляем ежедневный магазин."""
-    daily_items = await get_daily_shop_items(db_session)
+    daily_items = await DB(db_session).get_daily_shop_items()
     if daily_items and len(daily_items) > 0:
         shop_items_ids = [str(card.id) for card in daily_items]
         await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)

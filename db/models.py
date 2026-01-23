@@ -136,6 +136,19 @@ class ClanMember(Base):
     user: Mapped["User"] = relationship("User", back_populates="clan_member", lazy="selectin")
     clan: Mapped["Clan"] = relationship("Clan", back_populates="members", lazy="selectin")
 
+class ClanInvitation(Base):
+    __tablename__ = "clan_invitations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    clan_id: Mapped[int] = mapped_column(Integer, ForeignKey("clans.id", ondelete="CASCADE"))
+    sender_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
+    receiver_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
+    sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    clan: Mapped["Clan"] = relationship("Clan", back_populates="invitations", lazy="selectin")
+    sender: Mapped["User"] = relationship("User", foreign_keys=[sender_id], lazy="selectin")
+    receiver: Mapped["User"] = relationship("User", foreign_keys=[receiver_id], lazy="selectin")
+
 class Clan(Base):
     __tablename__ = "clans"
 
@@ -144,11 +157,12 @@ class Clan(Base):
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     tag: Mapped[str] = mapped_column(String(5),nullable=False,unique=True)
     description: Mapped[str] = mapped_column(String(255), default="")
-    
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False)
-    
+
     leader_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
     leader: Mapped["User"] = relationship("User", foreign_keys=[leader_id], lazy="selectin")
     members: Mapped[list["ClanMember"]] = relationship("ClanMember", back_populates="clan", lazy="selectin", cascade="all, delete-orphan")
+    invitations: Mapped[list["ClanInvitation"]] = relationship("ClanInvitation", back_populates="clan", lazy="selectin", cascade="all, delete-orphan")
 
     balance: Mapped[int] = mapped_column(Integer, default=0)
