@@ -19,6 +19,9 @@ from app.keyboards import main_kb
 from db.models import Referrals, User, Verse
 from db.requests import create_or_update_user, get_award, get_user_place_on_top, add_referral, RedisRequests, get_user
 
+# Глобальный список для отслеживания пользователей, которые открывают карты через команду
+user_card_opens = []
+
 router = Router()
 
 @router.message(CommandStart(),Private())
@@ -51,11 +54,11 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                         if referral:
                             # logger.info(f"Добавлен реферал: {inviter_id} -> {user.id}")
 
-                            # Случайная награда от 100 до 700 йен
-                            reward_amount = random.randint(100, 700) if not inviter.vip else random.randint(300, 1400)
+                            # Случайная награда от 50 до 300 йен
+                            reward_amount = random.randint(50, 300) if not inviter.vip else random.randint(150, 700)
 
                             # Награждаем реферрера за реферала
-                            reward_success = await get_award(session,inviter_id,reward_amount)
+                            reward_success = await get_award(session, inviter_id, reward_amount)
                             if reward_success:
                                 # logger.info(f"Пользователь {inviter_id} получил {reward_amount} йен за реферала")
 
@@ -113,46 +116,59 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
 @router.message(Command("card"))
 async def _(message: Message, command: CommandObject,session: AsyncSession):
-    user = await get_user(session, message.from_user.id)
-    if user:
-        last_open = user.last_open
+    user_id = message.from_user.id
 
-        if last_open.tzinfo is None:
-            # Предполагаем UTC для записей без timezone
-            last_open = last_open.replace(tzinfo=timezone.utc)
+    # Проверяем, не открывает ли пользователь карту в данный момент
+    if user_id not in user_card_opens:
+        user_card_opens.append(user_id)
 
-        hour = 2 if datetime.now(timezone.utc).weekday() >= 5 else 3
+        try:
+            user = await get_user(session, user_id)
+            if user:
+                last_open = user.last_open
 
-        if last_open + timedelta(hours=hour) <= datetime.now(timezone.utc):
-            card = await random_card(session, user.pity)
-            text = await card_formatter(card, user)
-            await message.reply_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
-            if card not in user.inventory:
-                user.inventory.append(card)
-            match user.pity:
-                case _ if user.pity <= 0:
-                    user.pity = 100
-                case _:
-                    user.pity -= 1
-            user.last_open = datetime.now(timezone.utc)
-            user.yens += card.value + (math.ceil(card.value * 0.1) if user.vip else 0)
-            await session.commit()
-        else:
-            text = await nottime(user.last_open)
-            if text is None:
+                if last_open.tzinfo is None:
+                    # Предполагаем UTC для записей без timezone
+                    last_open = last_open.replace(tzinfo=timezone.utc)
+
+                hour = 2 if datetime.now(timezone.utc).weekday() >= 5 else 3
+
+                if last_open + timedelta(hours=hour) <= datetime.now(timezone.utc):
+                    card = await random_card(session, user.pity)
+                    text = await card_formatter(card, user)
+                    await message.reply_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
+                    if card not in user.inventory:
+                        user.inventory.append(card)
+                    match user.pity:
+                        case _ if user.pity <= 0:
+                            user.pity = 100
+                        case _:
+                            user.pity -= 1
+                    user.last_open = datetime.now(timezone.utc)
+                    user.yens += card.value + (math.ceil(card.value * 0.1) if user.vip else 0)
+                    await session.commit()
+                else:
+                    text = await nottime(user.last_open)
+                    if text is None:
+                        messages = _load_messages()
+                        text = messages["not_enough_time"]
+                    await message.reply(text)
+            else:
                 messages = _load_messages()
-                text = messages["not_enough_time"]
-            await message.reply(text)
+                await message.reply(messages["not_registered"])
+        finally:
+            # Убираем пользователя из списка после завершения (даже если была ошибка)
+            if user_id in user_card_opens:
+                user_card_opens.remove(user_id)
     else:
-        messages = _load_messages()
-        await message.reply(messages["not_registered"])
+        await message.reply("⏳ Подождите, карта уже открывается!")
 
 @router.message(Command("profile"))
 async def _(message: Message, command: CommandObject,session: AsyncSession):
     user = await get_user(session, message.from_user.id)
     if user:
         place_on_top = await get_user_place_on_top(session,user)
-        text = await profile_creator(user.profile,place_on_top, session)
+        text = await profile_creator(user.clan_member.clan if user.clan_member else None,user.profile,place_on_top, session)
         profile_photo = await user_photo_link(message)
         if profile_photo:
             await message.reply_photo(photo=profile_photo,caption=text)

@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Локальные импорты
-from db.models import Card, User, Profile, Verse, Referrals
+from db.models import Card, Clan, ClanMember, User, Profile, Verse, Referrals
 
 async def get_user(session: AsyncSession, user_id: int) -> User | None:
     """Получает пользователя из базы данных по ID.
@@ -220,28 +220,41 @@ async def get_daily_shop_items(session: AsyncSession) -> list[Card]:
 
 async def add_referral(session:AsyncSession, referral_id: int, referrer_id: int) -> bool:
     if referral_id != referrer_id:
-        referrer = await get_user(session, referrer_id)
-        if referral_id not in referrer.referrals:
-                refferal_alredy = await session.scalar(select(Referrals).filter_by(referral_id=referral_id))
-                if refferal_alredy:
-                    referral_object = Referrals(
-                        user_id=referrer_id,
-                        referral_id = referral_id
-                    )
-                    session.add(referral_object)
-                    session.commit()
-                    return referral_object
+        existing_referral = await session.scalar(
+            select(Referrals).filter_by(user_id=referrer_id, referral_id=referral_id)
+        )
+        if not existing_referral:
+            referrer = await get_user(session, referrer_id)
+            if referrer:
+                referral_object = Referrals(
+                    user_id=referrer_id,
+                    referral_id=referral_id
+                )
+                session.add(referral_object)
+                await session.commit()
+                return referral_object
     return None
 
-async def get_award(session:AsyncSession, referral_object:Referrals ,award:int):
+async def get_award(session:AsyncSession, referrer_id:int, award:int) -> bool:
     try:
-        user = await get_user(session, referral_object.user_id)
-        user.yens+=award
-        referral_object.referrer_reward = award
-        await session.commit()
-    except:
-        pass
+        referrer = await get_user(session, referrer_id)
+        if referrer:
+            referrer.yens += award
+            await session.commit()
+            return True
+        return False
+    except Exception as e:
+        logger.error(f"Ошибка при начислении награды за реферала: {e}")
+        return False
 
+async def create_clan(name:str,tag:str,description:str,user_id:int,session: AsyncSession):
+    time = datetime.now(timezone.utc)
+    clan = Clan(name = name, tag = tag, description = description, created_at = time, leader_id = user_id)
+    member = ClanMember(user_id = user_id, clan_id = clan.id,joined_at= time, is_leader = True)
+    clan.members.append(member)
+    session.add(clan)
+    await session.commit()
+    logger.info(f"Создан клан {tag}")
 class RedisRequests:
     
     

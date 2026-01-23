@@ -1,8 +1,7 @@
-# Стандартные библиотеки
+
 import asyncio
 from datetime import timedelta,datetime, timezone
 
-# Сторонние библиотеки
 from aiogram import Bot,Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
@@ -12,7 +11,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession,async_sessi
 from sqlalchemy import delete, select
 from loguru import logger
 
-# Локальные импорты
 from db import Base,Verse
 from configR import config
 from app.handlers import setup_routers
@@ -38,7 +36,6 @@ _engine = create_async_engine(
     pool_pre_ping=True
 )
 _sessionmaker = async_sessionmaker(_engine,expire_on_commit=False)
-# Middleware проксирует сессию БД в обработчики сообщений и callback'и
 
 # Глобальные переменные для хранения ссылок на фоновые задачи
 _daily_coordinator_task = None
@@ -50,7 +47,6 @@ async def _cleanup_expired_vip_subscriptions():
     """Фоновая задача для очистки истекших VIP подписок."""
     while True:
         try:
-            # logger.info("Запуск проверки истекших VIP подписок")
             current_time = datetime.now(timezone.utc)
 
             async with _sessionmaker() as session:
@@ -75,10 +71,9 @@ async def _cleanup_expired_vip_subscriptions():
 
         except Exception as e:
             logger.error(f"Ошибка при очистке истекших VIP подписок: {str(e)}", exc_info=True)
-            # Продолжаем работу даже в случае ошибки
-            await asyncio.sleep(60)  # Ждем минуту перед повторной попыткой
+            await asyncio.sleep(60)
 
-        await asyncio.sleep(3600)  # Проверяем каждые 60 минут
+        await asyncio.sleep(3600)
 
 async def _update_daily_verse(session, db_session, current_date):
     """Обновляем ежедневную вселенную."""
@@ -127,11 +122,9 @@ async def _daily_coordinator():
     """Главная координирующая функция для всех ежедневных задач."""
     while True:
         try:
-            # logger.info("Запуск координатора ежедневных задач")
             current_date = datetime.now(timezone.utc).date()
             session = Redis()
 
-            # Проверяем, выполняли ли мы уже ежедневные задачи сегодня
             last_update_date_str = await session.get("last_update")
 
             if last_update_date_str:
@@ -143,7 +136,6 @@ async def _daily_coordinator():
             # Если сегодня еще не обновляли, выполняем все ежедневные задачи
             if not last_update_date or last_update_date < current_date:
                 async with _sessionmaker() as db_session:
-                    # Выполняем все ежедневные задачи
                     verse_updated = await _update_daily_verse(session, db_session, current_date)
                     shop_updated = await _update_daily_shop(session, db_session, current_date)
                     vip_updated = await _add_vip_free_opens(db_session, current_date)
@@ -156,14 +148,14 @@ async def _daily_coordinator():
             await session.aclose()
         except Exception as e:
             logger.error(f"Ошибка в _daily_coordinator: {str(e)}", exc_info=True)
-            # Продолжаем работу даже в случае ошибки
-            await asyncio.sleep(60)  # Ждем минуту перед повторной попыткой
+            await asyncio.sleep(60)
 
         await asyncio.sleep(3600)  # Проверяем каждые 60 минут
 
 dp.message.middleware(DBSessionMiddleware(_sessionmaker))
 dp.callback_query.middleware(DBSessionMiddleware(_sessionmaker))
 dp.include_router(router=setup_routers())
+
 @dp.startup()
 async def on_startup():
     await bot.delete_webhook(True)

@@ -9,3 +9,9 @@ class CardViewStates(StatesGroup):
 
 class ChangeDescribe(StatesGroup):
     text = State()
+
+class CreateClan(StatesGroup):
+    name = State()
+    tag = State()
+    description = State()
+    accept = State()

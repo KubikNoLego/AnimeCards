@@ -13,11 +13,25 @@ from loguru import logger
 from db.models import Card, User, Verse, Rarity
 from app.func import _load_messages
 from app.keyboards import Pagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilter, RarityFilterPagination, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
-from app.StateGroups.states import ChangeDescribe
-from db.requests import RedisRequests, get_user
+from app.StateGroups.states import ChangeDescribe,CreateClan
+from db.requests import RedisRequests, create_clan, get_user
 
 router = Router()
 
+
+@router.callback_query(F.data == "accept_create_clan")
+async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
+    data = await state.get_data()
+    await state.set_state(None)
+    await create_clan(data['name'],data['tag'],data['description'],callback.from_user.id,session)
+    await callback.message.delete()
+    await callback.answer("Клан успешно создан")
+
+@router.callback_query(F.data == "create_clan")
+async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
+    await state.set_state(CreateClan.name)
+    messages = _load_messages()
+    await callback.message.answer(messages["clan_name_prompt"])
 
 @router.callback_query(F.data == "delete_describe")
 async def delete_describe_user(callback: CallbackQuery,session : AsyncSession, state:FSMContext):

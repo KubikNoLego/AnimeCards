@@ -16,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Локальные импорты
-from db.models import Card, Profile, User, Verse
+from db.models import Card, Clan, Profile, User, Verse
 from db.requests import RedisRequests, get_user_collections_count
 import redis.asyncio as redis
 
@@ -247,7 +247,7 @@ async def nottime(openc: datetime):
         return "<i>⏳ До следующего открытия осталось немного времени</i>"
 
 @logger.catch
-async def profile_creator(profile: Profile, place_on_top: int, session: AsyncSession):
+async def profile_creator(clan: Clan,profile: Profile, place_on_top: int, session: AsyncSession):
     """Создать отображение профиля пользователя.
 
     Args:
@@ -266,7 +266,7 @@ async def profile_creator(profile: Profile, place_on_top: int, session: AsyncSes
     collections_count = await get_user_collections_count(session, owner)
 
     return messages["profile"] % (
-        escape(owner.name) + (" 👑" if owner.vip else ""),
+        ((f"<b>[{clan.tag}]</b> ") if clan else "") + escape(owner.name) + (" 👑" if owner.vip else ""),
         profile.yens,
         place_on_top,
         len(owner.inventory),

@@ -216,3 +216,13 @@ async def create_clan():
     builder.button(text="📝 Создать клан",callback_data="create_clan")
 
     return builder.as_markup()
+
+async def clan_create():
+    
+    builder = InlineKeyboardBuilder()
+    
+
+    builder.button(text="✅ Создать клан",callback_data="accept_create_clan")
+    builder.button(text="🔄 Начать заного",callback_data="create_clan")
+
+    return builder.as_markup()
