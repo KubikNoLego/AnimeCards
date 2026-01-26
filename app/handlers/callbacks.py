@@ -12,12 +12,34 @@ from loguru import logger
 # Локальные импорты
 from db import Card, User, Verse, Rarity,RedisRequests,DB
 from app.func import Text
-from app.keyboards import Pagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilter, RarityFilterPagination, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
+from app.keyboards import Pagination, ClanInvite, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilter, RarityFilterPagination, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
 from app.StateGroups.states import ChangeDescribe,CreateClan
 
 
 router = Router()
 
+
+@router.callback_query(ClanInvite.filter())
+async def _(callback:CallbackQuery,callback_data: ClanInvite, session: AsyncSession, state: FSMContext):
+    clan_id,action = callback_data.clan_id,callback_data.act
+
+    db = DB(session)
+
+    match action:
+        case 1:
+            member = await db.create_clan_member(callback.from_user.id, clan_id)
+            
+            await callback.message.delete()
+            await callback.message.answer("Приглашение принято")
+
+        case 0:
+            invite = await db.get_clan_invitation(clan_id,callback.from_user.id)
+            
+            await session.delete(invite)
+            await session.commit()
+            
+            await callback.message.delete()
+            await callback.answer("Приглашение отклонено")
 
 @router.callback_query(F.data == "accept_create_clan")
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):

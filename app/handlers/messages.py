@@ -1,9 +1,12 @@
 # Стандартные библиотеки
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, timedelta
 import math
 from html import escape
 import re
 import os
+
+# Создаем таймзону для Москвы (UTC+3)
+MSK_TIMEZONE = timezone(timedelta(hours=3))
 
 # Сторонние библиотеки
 from aiogram import Router,F
@@ -18,8 +21,7 @@ from sqlalchemy.orm import selectinload, joinedload
 from app.StateGroups import ChangeDescribe,CreateClan
 from app.filters import ProfileFilter, Private
 from app.func import random_card, user_photo_link, Text, create_qr
-from app.keyboards import profile_keyboard, shop_keyboard,create_clan
-from app.keyboards.utils import clan_create
+from app.keyboards import profile_keyboard, shop_keyboard,create_clan,clan_invite_kb,clan_create
 from db import Card, Clan, ClanMember, User,RedisRequests,DB
 
 router = Router()
@@ -74,7 +76,7 @@ async def _(message: Message, session:AsyncSession,state:FSMContext):
     # Отправляем приглашение
     try:
         await message.reply(messages["clan_invite_success"])
-        await message.bot.send_message(user.id,text=messages["clan_invite_prompt"] % sender.clan_member.clan.name)
+        await message.bot.send_message(user.id,text=messages["clan_invite_prompt"] % sender.clan_member.clan.name,reply_markup= await clan_invite_kb(sender.clan_member.clan_id))
     except Exception as e:
         logger.error(f"Ошибка при отправке приглашения: {str(e)}", exc_info=True)
         await message.answer(messages["invite_send_error"])
@@ -114,17 +116,32 @@ async def _(message: Message, session:AsyncSession,state:FSMContext):
 
 @router.message(F.text == "🛡️ Клан",Private())
 async def _(message:Message, session:AsyncSession, state:FSMContext):
-    # Используем eager loading для загрузки связанных объектов
-    user = await session.scalar(
-        select(User)
-        .where(User.id == message.from_user.id)
-        .options(
-            joinedload(User.clan_member).joinedload(ClanMember.clan)
-        )
-    )
+    db = DB(session)
+
+    user = await db.get_user(message.from_user.id)
+    
     messages = Text()._load_messages()
     if user and user.clan_member:
-        await message.reply(f"Вы участник клана {user.clan_member.clan.name}\nТег клана: {user.clan_member.clan.tag}\nБаланс клана: {user.clan_member.clan.balance}\n\nОписание:\n{user.clan_member.clan.description}")
+        clan = await db.get_clan(user.clan_member.clan_id)
+        member = user.clan_member
+
+        # Собираем информацию о клане
+        clan_info = f"""🏰 <b>{clan.name}</b> [{clan.tag}]
+👥 Участников: {len(clan.members)}
+💰 Баланс клана: {clan.balance} ¥
+📅 Создан: {clan.created_at.strftime('%d.%m.%Y %H:%M')}
+👑 Лидер: {clan.leader.name if clan.leader else 'Неизвестно'}
+
+📝 <b>Ваш статус:</b>
+👤 Роль: {'👑 Лидер' if member.is_leader else '👥 Участник'}
+💎 Вклад: {member.contribution} ¥
+📅 Присоединился: {member.joined_at.strftime('%d.%m.%Y %H:%M')}
+
+📋 <b>Описание клана:</b>
+{clan.description if clan.description else 'Нет описания'}
+"""
+        
+        await message.reply(clan_info)
     else:
         await message.reply(messages["not_in_clan"], reply_markup= None if not user.vip else await create_clan())
 
@@ -228,12 +245,12 @@ async def _(message: Message, session: AsyncSession):
         last_open = user.last_open
         free_open = user.free_open > 0
         if last_open.tzinfo is None:
-            # Предполагаем UTC для записей без timezone
-            last_open = last_open.replace(tzinfo=timezone.utc)
+            # Предполагаем MSK для записей без timezone
+            last_open = last_open.replace(tzinfo=MSK_TIMEZONE)
 
-        hour = 2 if datetime.now(timezone.utc).weekday() >= 5 else 3
+        hour = 2 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 3
 
-        if (last_open + timedelta(hours=hour) <= datetime.now(timezone.utc)) or free_open:
+        if (last_open + timedelta(hours=hour) <= datetime.now(MSK_TIMEZONE)) or free_open:
             card = await random_card(session, user.pity)
             text = await Text().card_formatter(card, user)
             await message.answer_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
@@ -247,8 +264,11 @@ async def _(message: Message, session: AsyncSession):
             if free_open: 
                 user.free_open -= 1
             else: 
-                user.last_open = datetime.now(timezone.utc)
-            user.yens += card.value + (math.ceil(card.value * 0.1) if user.vip else 0)
+                user.last_open = datetime.now(MSK_TIMEZONE)
+            added_sum = int(card.value + (math.ceil(card.value * 0.1) if user.vip else 0))
+            user.yens += added_sum
+            user.clan_member.contribution += int(added_sum*0.3)
+            user.clan_member.clan.balance += int(added_sum*0.3)
             await session.commit()
             if user.start:
                 tutorial = await Text().profile_tutorial()

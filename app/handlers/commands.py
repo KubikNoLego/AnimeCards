@@ -1,7 +1,10 @@
 # Стандартные библиотеки
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, timedelta
 import math
 import random
+
+# Создаем таймзону для Москвы (UTC+3)
+MSK_TIMEZONE = timezone(timedelta(hours=3))
 
 # Сторонние библиотеки
 from aiogram import Router,F
@@ -50,7 +53,6 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                         # Добавляем реферальную связь
                         referral = await db.add_referral(referral_id=user.id, referrer_id=inviter_id)
                         if referral:
-                            # logger.info(f"Добавлен реферал: {inviter_id} -> {user.id}")
 
                             # Случайная награда от 50 до 300 йен
                             reward_amount = random.randint(50, 300) if not inviter.vip else random.randint(150, 700)
@@ -58,7 +60,6 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                             # Награждаем реферрера за реферала
                             reward_success = await db.get_award(inviter_id, reward_amount)
                             if reward_success:
-                                # logger.info(f"Пользователь {inviter_id} получил {reward_amount} йен за реферала")
 
                                 # Создаем кликабельную ссылку на профиль реферрера
                                 referrer_link = f'<a href="tg://user?id={inviter.id}">{html_decoration.quote(inviter.name)}</a>'
@@ -86,7 +87,6 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
                                 await message.reply(messages["referral_reward_sent"].format(referrer_link=referrer_link, reward_amount=reward_amount))
                             else:
-                                # logger.info(f"Пользователь {inviter_id} уже получил награду за этого реферала")
 
                                 # Создаем кликабельную ссылку на профиль реферрера
                                 referrer_link = f'<a href="tg://user?id={inviter.id}">{html_decoration.quote(inviter.name)}</a>'
@@ -130,12 +130,12 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                 last_open = user.last_open
 
                 if last_open.tzinfo is None:
-                    # Предполагаем UTC для записей без timezone
-                    last_open = last_open.replace(tzinfo=timezone.utc)
+                    # Предполагаем MSK для записей без timezone
+                    last_open = last_open.replace(tzinfo=MSK_TIMEZONE)
 
-                hour = 2 if datetime.now(timezone.utc).weekday() >= 5 else 3
+                hour = 2 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 3
 
-                if last_open + timedelta(hours=hour) <= datetime.now(timezone.utc):
+                if last_open + timedelta(hours=hour) <= datetime.now(MSK_TIMEZONE):
                     card = await random_card( user.pity)
                     text = await Text().card_formatter(card, user)
                     await message.reply_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
@@ -146,7 +146,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                             user.pity = 100
                         case _:
                             user.pity -= 1
-                    user.last_open = datetime.now(timezone.utc)
+                    user.last_open = datetime.now(MSK_TIMEZONE)
                     user.yens += card.value + (math.ceil(card.value * 0.1) if user.vip else 0)
                     await session.commit()
                 else:
@@ -183,7 +183,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
 @router.message(Command("daily"))
 async def _(message: Message, command: CommandObject,session: AsyncSession):
-    messages = Text._load_messages()
+    messages = Text()._load_messages()
     try:
         # Получаем ID текущей ежедневной вселенной из Redis
         verse_id = await RedisRequests.daily_verse()

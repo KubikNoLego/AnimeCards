@@ -1,6 +1,9 @@
 
 import asyncio
-from datetime import timedelta,datetime, timezone
+from datetime import timedelta,datetime, timezone, timedelta
+
+# Создаем таймзону для Москвы (UTC+3)
+MSK_TIMEZONE = timezone(timedelta(hours=3))
 
 from aiogram import Bot,Dispatcher
 from aiogram.enums import ParseMode
@@ -45,7 +48,7 @@ async def _cleanup_expired_vip_subscriptions():
     """Фоновая задача для очистки истекших VIP подписок."""
     while True:
         try:
-            current_time = datetime.now(timezone.utc)
+            current_time = datetime.now(MSK_TIMEZONE)
 
             async with _sessionmaker() as session:
                 # Получаем все активные VIP подписки
@@ -98,7 +101,7 @@ async def _update_daily_shop(session, db_session, current_date):
 
 async def _add_vip_free_opens(db_session, current_date):
     """Добавляем бесплатные открытия VIP пользователям."""
-    current_time = datetime.now(timezone.utc)
+    current_time = datetime.now(MSK_TIMEZONE)
     result = await db_session.execute(
         select(User)
         .join(User.vip)
@@ -120,7 +123,7 @@ async def _daily_coordinator():
     """Главная координирующая функция для всех ежедневных задач."""
     while True:
         try:
-            current_date = datetime.now(timezone.utc).date()
+            current_date = datetime.now(MSK_TIMEZONE).date()
             session = Redis()
 
             last_update_date_str = await session.get("last_update")

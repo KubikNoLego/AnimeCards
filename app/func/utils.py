@@ -4,9 +4,12 @@ import math
 import os
 import random
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, timedelta
 from html import escape
 from typing import Optional
+
+# Создаем таймзону для Москвы (UTC+3)
+MSK_TIMEZONE = timezone(timedelta(hours=3))
 
 # Сторонние библиотеки
 import qrcode
@@ -61,11 +64,11 @@ class Text:
             messages = self._load_messages()
 
             # Используем ту же логику, что и в messages.py: 2 часа в будни, 3 часа в выходные
-            hour = 2 if datetime.now(timezone.utc).weekday() >= 5 else 3
+            hour = 2 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 3
             # Целевое время — открытие + hour часов (локальная корректировка)
             target_time = openc + timedelta(hours=hour)
 
-            time_left = target_time - datetime.now(timezone.utc)
+            time_left = target_time - datetime.now(MSK_TIMEZONE)
             total_seconds = int(time_left.total_seconds())
 
             if total_seconds < 0:
@@ -145,11 +148,11 @@ class Text:
             vip_bonus = f" (+{bonus_amount} ¥)"
 
         return f"""
-    📄 <b>{card.name}</b>
-    📚 Вселенная: {card.verse.name}
-    🎨 Редкость: {card.rarity.name}
-    💰 Ценность: {card.value} ¥{vip_bonus}
-    {"✨ Shiny" if card.shiny else ""}
+📄 <b>{card.name}</b>
+📚 Вселенная: {card.verse.name}
+🎨 Редкость: {card.rarity.name}
+💰 Ценность: {card.value} ¥{vip_bonus}
+{"✨ Shiny" if card.shiny else ""}
     """
 
 async def create_qr(link:str) -> FSInputFile:

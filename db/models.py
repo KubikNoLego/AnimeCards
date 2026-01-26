@@ -45,7 +45,7 @@ class User(Base):
     username: Mapped[str | None] = mapped_column(String(32), default=None)
     name: Mapped[str] = mapped_column(String(100))
 
-    # Храним UTC-времена с timezone=True
+    # Храним MSK-времена с timezone=True
     last_open: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     joined: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -105,7 +105,6 @@ class VipSubscription(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    email: Mapped[str | None] = mapped_column(String(100), default=None)
 
     user: Mapped["User"] = relationship("User", back_populates="vip", lazy="selectin")
 

@@ -9,7 +9,6 @@ class Config(BaseSettings):
     BOT_TOKEN: SecretStr
     DB_URL: SecretStr
     REDIS_URL: SecretStr
-    PAYMENT_PROVIDER: SecretStr
 
     model_config = SettingsConfigDict(
         env_file=join(dirname(__file__),".env"),

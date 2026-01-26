@@ -1,12 +1,16 @@
 # Стандартные библиотеки
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, timedelta
+
+# Создаем таймзону для Москвы (UTC+3)
+MSK_TIMEZONE = timezone(timedelta(hours=3))
 
 # Сторонние библиотеки
 from loguru import logger
 from redis.asyncio import Redis
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 # Локальные импорты
 from db.models import (Card, Clan, ClanMember,
@@ -14,7 +18,15 @@ from db.models import (Card, Clan, ClanMember,
 
 class DB:
     def __init__(self, session):
-        self.__session = session
+        self.__session: AsyncSession = session
+
+    async def get_clan(self,clan_id: int) -> Clan | None:
+        """Получает пользователя из БД, если он есть"""
+        try:
+            return await self.__session.scalar(select(Clan).filter_by(id=clan_id))
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении пользователя id={clan_id}: {exc}")
+            return None
 
     async def get_user(self,user_id: int) -> User | None:
         """Получает пользователя из БД, если он есть"""
@@ -29,7 +41,7 @@ class DB:
                                     name: str,
                                     describe: str):
         """Создаёт пользователя, если нет, иначе обновляет поля."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(MSK_TIMEZONE)
         try:
             user = await self.get_user(id)
             if user is None:
@@ -110,14 +122,29 @@ class DB:
 
 
     async def get_random_verse(self) -> Verse:
-        """Возвращает случайную вселенную из БД"""
+        """Возвращает случайную вселенную, в которой есть хотя бы одна карта, которая может выпадать"""
         try:
-            verses = await self.__session.scalars(select(Verse))
+            # Получаем все вселенные с их картами
+            verses = await self.__session.scalars(select(Verse).options(selectinload(Verse.cards)))
             verses = verses.all()
-            if verses:
-                random_verse = random.choice(verses)
+
+            if not verses:
+                logger.warning("Нет доступных вселенных в базе данных")
+                return None
+
+            # Фильтруем вселенные
+            valid_verses = []
+            for verse in verses:
+                # Проверяем, есть ли хотя бы одна карта, которая может выпадать
+                has_droppable_card = any(card.can_drop for card in verse.cards)
+                if has_droppable_card:
+                    valid_verses.append(verse)
+
+            if valid_verses:
+                random_verse = random.choice(valid_verses)
                 return random_verse
-            logger.warning("Нет доступных вселенных в базе данных")
+
+            logger.warning("Нет вселенных с картами, которые могут выпадать")
             return None
         except Exception as exc:
             logger.exception(f"Ошибка при получении случайной вселенной: {exc}")
@@ -218,7 +245,7 @@ class DB:
     async def create_clan(self, name: str, tag: str, description: str,
                         user_id: int):
         """Создаёт клан по данным юзера"""
-        time = datetime.now(timezone.utc)
+        time = datetime.now(MSK_TIMEZONE)
         clan = Clan(name=name, tag=tag, description=description,
                     created_at=time, leader_id=user_id)
         self.__session.add(clan)
@@ -254,7 +281,7 @@ class DB:
                 clan_id=clan_id,
                 sender_id=sender_id,
                 receiver_id=receiver_id,
-                sent_at=datetime.now(timezone.utc)
+                sent_at=datetime.now(MSK_TIMEZONE)
             )
             self.__session.add(invitation)
             await self.__session.commit()
@@ -263,6 +290,25 @@ class DB:
         except Exception as exc:
             logger.exception(f"Ошибка при создании приглашения в клан для пользователя id={receiver_id}: {exc}")
             return None
+    
+    async def create_clan_member(self,user_id:int, clan_id: int) -> ClanMember:
+        user: User = await self.get_user(user_id)
+        clan: Clan = await self.get_clan(clan_id)
+
+        clan_member = ClanMember(user_id=user_id,
+                                clan_id=clan_id,
+                                joined_at=datetime.now(MSK_TIMEZONE),
+                                contribution=0,
+                                is_leader=False)
+        self.__session.add(clan_member)
+
+        user.clan_member = clan_member
+        clan.members.append(clan_member)
+
+        await self.__session.commit()
+        return clan_member
+
+
 class RedisRequests:
 
     async def daily_verse() -> int:

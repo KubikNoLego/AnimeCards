@@ -5,6 +5,10 @@ from random import randint
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 from aiogram.filters.callback_data import CallbackData
 
+class ClanInvite(CallbackData,prefix = "clan"):
+    clan_id: int
+    act: int
+
 class ShopItemCallback(CallbackData, prefix="shop"):
     """Данные обратного вызова для кнопок товаров магазина."""
     item_id: int
@@ -43,18 +47,16 @@ async def main_kb():
     return builder.as_markup(resize_keyboard=True, input_field="Привет!" if randint(1, 1000) == 777 else "...")
 
 
-async def clan_invite_kb():
-    ...
+async def clan_invite_kb(clan_id: int):
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text="✅ Принять", callback_data= ClanInvite(clan_id=clan_id, act=1).pack())
+    builder.button(text="❎ Отклонить", callback_data= ClanInvite(clan_id=clan_id, act=0).pack())
+
+    return builder.as_markup()
+
 async def pagination_keyboard(current_page: int, total_pages: int):
-    """Создать инлайн-клавиатуру пагинации.
-
-    Args:
-        current_page: Текущий номер страницы
-        total_pages: Общее количество страниц
-
-    Returns:
-        InlineKeyboardMarkup с кнопками пагинации
-    """
+    """Инлайн-клавиатура пагинации."""
     builder = InlineKeyboardBuilder()
 
     prev_100_active = current_page > 100
@@ -95,14 +97,7 @@ async def pagination_keyboard(current_page: int, total_pages: int):
     return builder.as_markup()
 
 async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
-    """Создать инлайн-клавиатуру пагинации для фильтра по редкости.
-
-    Args:
-        current_page: Текущий номер страницы
-        rarities: Список редкостей
-    Returns:
-        InlineKeyboardMarkup с кнопками пагинации
-    """
+    """Создать инлайн-клавиатуру пагинации для фильтра по редкости"""
     builder = InlineKeyboardBuilder()
 
     rarities_names: list
@@ -150,14 +145,7 @@ async def profile_keyboard(has_describe: bool):
     return builder.as_markup()
 
 async def verse_filter_pagination_keyboard(current_page: int, verses: list):
-    """Создать инлайн-клавиатуру пагинации для фильтра по вселенной.
-
-    Args:
-        current_page: Текущий номер страницы
-        verses: Список вселенных
-    Returns:
-        InlineKeyboardMarkup с кнопками пагинации
-    """
+    """Создать инлайн-клавиатуру пагинации для фильтра по вселенной"""
     builder = InlineKeyboardBuilder()
 
     verses_names: list
@@ -195,14 +183,7 @@ async def verse_filter_pagination_keyboard(current_page: int, verses: list):
 
 
 async def shop_keyboard(cards: list):
-    """Создать инлайн-клавиатуру для магазина.
-
-    Args:
-        cards: Список карточек для отображения
-
-    Returns:
-        InlineKeyboardMarkup с кнопками товаров
-    """
+    """Создать инлайн-клавиатуру для магазина"""
     builder = InlineKeyboardBuilder()
 
     for card in cards:

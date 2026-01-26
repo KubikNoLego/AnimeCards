@@ -1,6 +1,9 @@
 # Стандартные библиотеки
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, timedelta
 import json
+
+# Создаем таймзону для Москвы (UTC+3)
+MSK_TIMEZONE = timezone(timedelta(hours=3))
 
 # Сторонние библиотеки
 from aiogram import Router,F
@@ -11,7 +14,6 @@ from aiogram.fsm.state import StatesGroup, State
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
-import validate_email
 
 # Локальные импорты
 from app.filters import Private
@@ -19,13 +21,6 @@ from app.func import Text
 from db import User, VipSubscription, DB
 from configR import config
 
-def validate_email(email: str) -> bool:
-    """Проверка валидности email адреса."""
-    return validate_email.validate_email(email)
-
-
-class PushareState(StatesGroup):
-    email: State
 
 router = Router()
 
@@ -47,7 +42,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
         # Проверяем, есть ли у пользователя VIP подписка
         if user.vip:
-            current_time = datetime.now(timezone.utc)
+            current_time = datetime.now(MSK_TIMEZONE)
 
             # Если подписка истекла, удаляем ее
             if user.vip.end_date <= current_time:
@@ -55,7 +50,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
                 user.vip = None  # Обновляем объект пользователя
             else:
                 # Если подписка еще активна, сообщаем пользователю
-                end_date = user.vip.end_date.astimezone(timezone.utc)
+                end_date = user.vip.end_date.astimezone(MSK_TIMEZONE)
                 await message.answer(messages["vip_already_active"].format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
                 return
 
@@ -64,7 +59,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
         # Создаем инлайн-клавиатуру с кнопкой покупки
         builder = InlineKeyboardBuilder()
-        builder.button(text="💰 Купить VIP за 299 ₽", callback_data="buy_vip")
+        builder.button(text="💰 Купить VIP за 320 ⭐", callback_data="buy_vip")
         builder.adjust(1)
 
         # Отправляем сообщение с предложением VIP
@@ -84,38 +79,22 @@ async def buy_vip(callback: CallbackQuery, state: FSMContext, session: AsyncSess
         return
 
     if user.vip:
-        end_date = user.vip.end_date.astimezone(timezone.utc)
+        end_date = user.vip.end_date.astimezone(MSK_TIMEZONE)
         await callback.message.answer(messages["vip_already_active"].format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
         return
 
 
-    # Отправляем invoice для оплаты
     try:
-        # Пробуем без provider_data для диагностики проблемы
-        vip_price_rub = 299.00  # Цена в рублях
+        vip_price_stars = 320
 
         await callback.message.bot.send_invoice(
             chat_id=callback.from_user.id,
             title="💎 VIP Подписка на 30 дней",
             description="Получите эксклюзивные преимущества: увеличенные награды, больше бонусов за рефералов, полный доступ к магазину и специальный символ 👑 в профиле!",
             payload=f"vip_subscription_{user.id}",
-            provider_token=config.PAYMENT_PROVIDER.get_secret_value(),
-            currency="RUB",
-            prices=[LabeledPrice(label="VIP Подписка", amount=int(vip_price_rub * 100))],  # Цена в копейках для Telegram
-            need_email=True,
-            send_email_to_provider=True,
-            is_flexible=False,
-        provider_data=json.dumps({"receipt": {
-        "items": [
-        {
-            "description": "Подписка VIP на месяц",
-            "quantity": "1.00",
-            "amount": {
-                "value": f"{vip_price_rub:.2f}",
-                "currency": "RUB"
-            },
-            "vat_code": 1}]}}))
-
+            currency="XTR",
+            prices=[LabeledPrice(label="VIP Подписка", amount=vip_price_stars)],
+            is_flexible=False)
 
     except Exception as e:
         logger.error(f"Ошибка при отправке invoice для VIP подписки: {e}")
@@ -150,16 +129,7 @@ async def process_successful_payment(message: Message, state: FSMContext, sessio
     """Обработчик успешной оплаты - создание VIP подписки."""
     messages = Text()._load_messages()
     try:
-        # logger.info(f"Успешная оплата от пользователя {message.from_user.id}")
-
-        # Получаем email из successful_payment (Telegram запросил его во время оплаты)
-        email = message.successful_payment.order_info.email
-        if not email:
-            logger.error(f"Email не найден в successful_payment для пользователя {message.from_user.id}")
-            await message.answer(messages["payment_error_no_email"])
-            await state.clear()
-            return
-
+        
         # Получаем пользователя
         user = await DB(session).get_user(message.from_user.id)
 
@@ -170,23 +140,25 @@ async def process_successful_payment(message: Message, state: FSMContext, sessio
 
         # Проверяем, есть ли уже VIP подписка
         if user.vip:
-            end_date = user.vip.end_date.astimezone(timezone.utc)
+            end_date = user.vip.end_date.astimezone(MSK_TIMEZONE)
             await message.answer(messages["vip_already_active"].format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
             await state.clear()
             return
 
         # Создаем VIP подписку на 30 дней
-        start_date = datetime.now(timezone.utc)
+        start_date = datetime.now(MSK_TIMEZONE)
         end_date = start_date + timedelta(days=30)
 
         new_vip = VipSubscription(
             user_id=user.id,
             start_date=start_date,
-            end_date=end_date,
-            email=email
+            end_date=end_date
         )
 
         session.add(new_vip)
+
+        user.free_open += 4
+
         await session.commit()
 
         # Сбрасываем состояние
