@@ -54,12 +54,13 @@ class DB:
                 )
                 user.profile = Profile(user_id=id, describe=describe)
                 self.__session.add(user)
+                action = True
             else:
                 user.username = username
                 user.name = name
-
+                action = False
             await self.__session.commit()
-            return user
+            return (user,action) # возвращает пользователя и True если он создан, False - обновлён
         except Exception as exc:
             logger.exception(f"Ошибка при сохранении пользователя id={id}: {exc}")
 
@@ -249,7 +250,6 @@ class DB:
         clan = Clan(name=name, tag=tag, description=description,
                     created_at=time, leader_id=user_id)
         self.__session.add(clan)
-        await self.__session.commit()
         member = ClanMember(user_id=user_id, clan_id=clan.id,
                             joined_at=time, is_leader=True)
         clan.members.append(member)
@@ -292,8 +292,8 @@ class DB:
             return None
     
     async def create_clan_member(self,user_id:int, clan_id: int) -> ClanMember:
-        user: User = await self.get_user(user_id)
-        clan: Clan = await self.get_clan(clan_id)
+        user = await self.get_user(user_id)
+        clan = await self.get_clan(clan_id)
 
         clan_member = ClanMember(user_id=user_id,
                                 clan_id=clan_id,
@@ -307,6 +307,24 @@ class DB:
 
         await self.__session.commit()
         return clan_member
+
+    async def delete_member(self, user_id: int):
+        user = await self.get_user(user_id)
+        
+        clan_member = user.clan_member
+        user.clan_member = None
+        await self.__session.delete(clan_member)
+        await self.__session.commit()
+    
+
+    async def delete_clan(self,clan_id):
+        clan = await self.get_clan(clan_id)
+
+        [await self.delete_member(member.user_id) for member in clan.members]
+        
+        await self.__session.delete(clan)
+        await self.__session.commit()
+
 
 
 class RedisRequests:

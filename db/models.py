@@ -60,7 +60,6 @@ class User(Base):
     referrals: Mapped[list["Referrals"]] = relationship("Referrals", back_populates="referrer", foreign_keys="[Referrals.user_id]", lazy="selectin")
 
     clan_member: Mapped["ClanMember"] = relationship("ClanMember", back_populates="user", lazy="selectin", uselist=False)
-    start: Mapped[bool] = mapped_column(Boolean, default=True)
 
 class Card(Base):
     __tablename__ = "cards"

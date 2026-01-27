@@ -13,6 +13,10 @@ class ShopItemCallback(CallbackData, prefix="shop"):
     """Данные обратного вызова для кнопок товаров магазина."""
     item_id: int
 
+class MemberPagination(CallbackData, prefix="pc"):
+    """Данные обратного вызова для кнопок пагинации."""
+    p: int
+
 class Pagination(CallbackData, prefix="p"):
     """Данные обратного вызова для кнопок пагинации."""
     p: int
@@ -208,5 +212,73 @@ async def clan_create():
 
     builder.button(text="✅ Создать клан",callback_data="accept_create_clan")
     builder.button(text="🔄 Начать заного",callback_data="create_clan")
+    builder.button(text="❌ Отмена",callback_data="cancel_create_clan")
+
+    return builder.as_markup()
+
+async def clan_create_exit():
+    
+    builder = InlineKeyboardBuilder()
+    
+
+    builder.button(text="❌ Отмена",callback_data="cancel_create_clan")
+
+    return builder.as_markup()
+
+async def clan_member():
+    builder = InlineKeyboardBuilder()
+    
+
+    builder.button(text="👤 Участники",callback_data=MemberPagination(p=1).pack())
+    builder.button(text="🚪 Покинуть",callback_data="leave_clan")
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+async def clan_leader():
+    builder = InlineKeyboardBuilder()
+    
+
+    builder.button(text="👤 Участники",callback_data=MemberPagination(p=1).pack())
+    builder.button(text="🚪 Покинуть",callback_data="leave_clan")
+    builder.button(text="🗑️ Удалить клан",callback_data="delete_clan")
+
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+async def member_pagination_keyboard(current_page: int, total_pages: int, id:int, leader = False):
+    """Инлайн-клавиатура пагинации."""
+    builder = InlineKeyboardBuilder()
+
+    prev_10_active = current_page > 10
+    prev_1_active = current_page > 1
+    next_1_active = current_page < total_pages
+    next_10_active = current_page <= total_pages - 10
+
+    buttons = []
+
+    if prev_10_active:
+        buttons.append(("‹", MemberPagination(p=current_page-10).pack()))
+
+    if prev_1_active:
+        buttons.append(("←", MemberPagination(p=current_page-1).pack()))
+
+    buttons.append((f"{current_page}/{total_pages}", "pass"))
+
+    if next_1_active:
+        buttons.append(("→", MemberPagination(p=current_page+1).pack()))
+
+    if next_10_active:
+        buttons.append(("›", MemberPagination(p=current_page+10).pack()))
+
+    for text, callback_data in buttons:
+        builder.button(text=text, callback_data=callback_data)
+
+    if leader:
+        builder.button(text="Выгнать", callback_data=f"kick_{id}")
+        builder.adjust(len(buttons),1)
 
     return builder.as_markup()
