@@ -32,7 +32,7 @@ success_messages:
     
     ⌛️ Присоединился: <i>{date}</i>
     
-    <i>{describe}</i>
+    <i>«{describe}»</i>
   
   # Ежедневная вселенная
   daily_verse: |-

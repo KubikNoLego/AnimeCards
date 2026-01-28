@@ -1,4 +1,5 @@
 # Стандартные библиотеки
+import math
 
 # Сторонние библиотеки
 from html import escape
@@ -590,7 +591,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
             else:
                 logger.warning(f"Неверный индекс карты: {callback_data.p} для пользователя {user.id}")
                 await callback.message.answer(MText.get("inventory_empty"))
-
+        else:
             await callback.message.answer(MText.get("inventory_empty"))
 
     except Exception as e:
@@ -607,8 +608,8 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
     card_info = MText.get("card").format(name=card.name,
                                             verse=card.verse_name,
                                             rarity=card.rarity_name,
-                                            value=card.value if not user.vip else f"{card.value} (+{math.ceil(card.value * 0.1)})")
-    card_info = card_info + "✨ Shiny" if card.shiny else ""
+                                            value=card.value)
+    card_info = card_info + ("✨ Shiny" if card.shiny else "")
 
     keyboard = await pagination_keyboard(card_index + 1, len(cards))
     try:
