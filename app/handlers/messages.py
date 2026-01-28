@@ -208,7 +208,6 @@ async def _(message: Message, session: AsyncSession):
     else:
         await message.reply(MText.get("qr_error"))
 
-
 @router.message(ChangeDescribe.text)
 async def _(message:Message, session: AsyncSession, state: FSMContext):
     if len(message.text) > 70:
@@ -335,9 +334,8 @@ async def _(message: Message, session: AsyncSession):
             place = place_on_top,
             cards = len(user.inventory),
             collections = collections,
-            date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y"),
-            describe = user.profile.describe
-        )
+            date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
+        ) + ("\n\n<i>«{describe}»</i>" if user.profile.describe else "")
         target_profile_photo = None
         try:
             profile_photos = await message.bot.get_user_profile_photos(user.id, limit=1)
@@ -372,9 +370,8 @@ async def _(message: Message, session: AsyncSession):
                     place = place_on_top,
                     cards = len(user.inventory),
                     collections = collections,
-                    date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y"),
-                    describe = user.profile.describe
-                    )
+                    date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
+        ) + ("\n\n<i>«{describe}»</i>" if user.profile.describe else "")
                 profile_photo = await user_photo_link(message)
                 keyboard = await profile_keyboard(user.profile.describe != "")
                 if profile_photo:
@@ -396,9 +393,8 @@ async def _(message: Message, session: AsyncSession):
                     place = place_on_top,
                     cards = len(user.inventory),
                     collections = collections,
-                    date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y"),
-                    describe = user.profile.describe
-                    )
+                    date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
+        ) + ("\n\n<i>«{describe}»</i>" if user.profile.describe else "")
                 profile_photo = await user_photo_link(message)
                 if profile_photo:
                     await message.reply_photo(photo=profile_photo,caption=text)

@@ -178,9 +178,8 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
             place = place_on_top,
             cards = len(user.inventory),
             collections = collections,
-            date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y"),
-            describe = user.profile.describe
-        )
+            date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
+        ) + ("\n\n<i>«{describe}»</i>" if user.profile.describe else "")
 
         profile_photo = await user_photo_link(message)
         if profile_photo:

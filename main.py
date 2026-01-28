@@ -2,6 +2,8 @@
 import asyncio
 from datetime import timedelta,datetime, timezone, timedelta
 
+from db.models import Clan
+
 # Создаем таймзону для Москвы (UTC+3)
 MSK_TIMEZONE = timezone(timedelta(hours=3))
 
@@ -119,6 +121,23 @@ async def _add_vip_free_opens(db_session, current_date):
         logger.info(f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
     return updated_count > 0
 
+async def _rebalance_clans(db_session: AsyncSession):
+    clans = await db_session.scalars(select(Clan))
+    clans_result = clans.all()
+    for clan in clans_result:
+        
+        added_sum = clan.balance // len(clan.members)
+        
+        users = clan.members
+        for user in users:
+            user.contribution = 0
+            user = user.user
+            user.yens += added_sum
+        clan.balance = 0
+    
+    await db_session.commit()
+
+
 async def _daily_coordinator():
     """Главная координирующая функция для всех ежедневных задач."""
     while True:
@@ -140,6 +159,10 @@ async def _daily_coordinator():
                     verse_updated = await _update_daily_verse(session, db_session, current_date)
                     shop_updated = await _update_daily_shop(session, db_session, current_date)
                     vip_updated = await _add_vip_free_opens(db_session, current_date)
+
+                    if current_date.weekday() != 0:
+                        await _rebalance_clans(db_session)
+
 
                     # Обновляем дату последнего обновления только если хотя бы одна задача выполнилась успешно
                     if verse_updated or shop_updated or vip_updated:

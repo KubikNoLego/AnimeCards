@@ -13,7 +13,7 @@ from sqlalchemy import select
 from loguru import logger
 
 # Локальные импорты
-from app.keyboards.utils import member_pagination_keyboard
+from app.keyboards.utils import clan_create_exit, member_pagination_keyboard
 from db import Card, User, Verse, Rarity,RedisRequests,DB
 from app.messages import MText
 from app.keyboards import Pagination, ClanInvite,MemberPagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilter, RarityFilterPagination, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
