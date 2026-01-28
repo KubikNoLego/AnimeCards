@@ -23,7 +23,7 @@ from app.StateGroups import ChangeDescribe,CreateClan
 from app.filters import ProfileFilter, Private
 from app.func import random_card, user_photo_link, create_qr
 from app.messages import MText
-from app.keyboards import profile_keyboard, shop_keyboard,create_clan,clan_invite_kb,clan_create,clan_leader,clan_member
+from app.keyboards import profile_keyboard, shop_keyboard,clan_create_exit,create_clan,clan_invite_kb,clan_create,clan_leader,clan_member
 from db import Card, Clan, ClanMember, User,RedisRequests,DB
 
 router = Router()
