@@ -160,7 +160,7 @@ async def _daily_coordinator():
                     shop_updated = await _update_daily_shop(session, db_session, current_date)
                     vip_updated = await _add_vip_free_opens(db_session, current_date)
 
-                    if current_date.weekday() != 0:
+                    if current_date.weekday() == 0:
                         await _rebalance_clans(db_session)
 
 
