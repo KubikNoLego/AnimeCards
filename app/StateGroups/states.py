@@ -15,3 +15,6 @@ class CreateClan(StatesGroup):
     tag = State()
     description = State()
     accept = State()
+
+class ClanLeader(StatesGroup):
+    desc = State()

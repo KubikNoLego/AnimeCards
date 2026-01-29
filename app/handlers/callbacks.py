@@ -1,5 +1,8 @@
 # Стандартные библиотеки
 import math
+from datetime import timedelta,timezone
+
+MSK_TIMEZONE = timezone(timedelta(hours=3))
 
 # Сторонние библиотеки
 from html import escape
@@ -17,7 +20,7 @@ from app.keyboards.utils import clan_create_exit, member_pagination_keyboard
 from db import Card, User, Verse, Rarity,RedisRequests,DB
 from app.messages import MText
 from app.keyboards import Pagination, ClanInvite,MemberPagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilter, RarityFilterPagination, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
-from app.StateGroups.states import ChangeDescribe,CreateClan
+from app.StateGroups.states import ChangeDescribe,CreateClan,ClanLeader
 
 
 router = Router()
@@ -31,6 +34,12 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
         
         await callback.message.delete()
         await callback.answer("Вы удалили клан")
+
+@router.callback_query(F.data == "change_desc_clan")
+async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
+    await callback.message.delete()
+    await callback.message.answer(MText.get("clan_change_desc"))
+    await state.set_state(ClanLeader.desc)
 
 @router.callback_query(F.data.startswith("leave_clan"))
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
@@ -99,7 +108,7 @@ async def _(callback:CallbackQuery,callback_data: MemberPagination, session: Asy
     # Форматируем информацию об участнике
     member_info = MText.get("clan_member_info").format(
         member_name=escape(current_member[0].name),
-        join_date=current_member[1].joined_at.strftime('%d.%m.%Y %H:%M'),
+        join_date=current_member[1].joined_at.astimezone(MSK_TIMEZONE).strftime('%d.%m.%Y %H:%M'),
         contribution=current_member[1].contribution
     )
 
@@ -314,7 +323,7 @@ async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCal
         card_info = MText.get("card").format(name=card.name,
                                             verse=card.verse_name,
                                             rarity=card.rarity_name,
-                                            value=card.value)
+                                            value=math.ceil(card.value*1.7))
 
         try:
             await callback.message.answer_photo(

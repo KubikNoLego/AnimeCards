@@ -19,7 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload, joinedload
 
 # Локальные импорты
-from app.StateGroups import ChangeDescribe,CreateClan
+from app.StateGroups.states import ChangeDescribe,CreateClan,ClanLeader
 from app.filters import ProfileFilter, Private
 from app.func import random_card, user_photo_link, create_qr
 from app.messages import MText
@@ -84,6 +84,20 @@ async def _(message: Message, session:AsyncSession,state:FSMContext):
     except Exception as e:
         logger.error(f"Ошибка при отправке приглашения: {str(e)}", exc_info=True)
         await message.answer(MText.get("invite_send_error"))
+
+@router.message(ClanLeader.desc)
+async def _(message: Message, session:AsyncSession,state:FSMContext):
+    db = DB(session)
+    user = await db.get_user(message.from_user.id)
+    if len(message.text) <= 255:
+        clan = await db.get_clan(user.clan_member.clan_id)
+        clan.description = message.text
+        await session.commit()
+        await state.clear()
+        await message.delete()
+        await message.answer(MText.get("clan_change_desc_succses"))
+    else:
+        await message.answer(MText.get("clan_description_too_long").format(desc=len(message.text)))
 
 @router.message(CreateClan.name)
 async def _(message: Message, session:AsyncSession,state:FSMContext):
@@ -335,7 +349,7 @@ async def _(message: Message, session: AsyncSession):
             cards = len(user.inventory),
             collections = collections,
             date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
-        ) + ("\n\n<i>«{describe}»</i>" if user.profile.describe else "")
+        ) + (f"\n\n<i>«{user.profile.describe}»</i>" if user.profile.describe else "")
         target_profile_photo = None
         try:
             profile_photos = await message.bot.get_user_profile_photos(user.id, limit=1)
@@ -371,7 +385,7 @@ async def _(message: Message, session: AsyncSession):
                     cards = len(user.inventory),
                     collections = collections,
                     date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
-        ) + ("\n\n<i>«{describe}»</i>" if user.profile.describe else "")
+        ) + (f"\n\n<i>«{user.profile.describe}»</i>" if user.profile.describe else "")
                 profile_photo = await user_photo_link(message)
                 keyboard = await profile_keyboard(user.profile.describe != "")
                 if profile_photo:
@@ -394,7 +408,7 @@ async def _(message: Message, session: AsyncSession):
                     cards = len(user.inventory),
                     collections = collections,
                     date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
-        ) + ("\n\n<i>«{describe}»</i>" if user.profile.describe else "")
+        ) + (f"\n\n<i>«{user.profile.describe}»</i>" if user.profile.describe else "")
                 profile_photo = await user_photo_link(message)
                 if profile_photo:
                     await message.reply_photo(photo=profile_photo,caption=text)

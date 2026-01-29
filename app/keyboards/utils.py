@@ -241,6 +241,7 @@ async def clan_leader():
     
 
     builder.button(text="👤 Участники",callback_data=MemberPagination(p=1).pack())
+    builder.button(text="🖋️ Сменить описание", callback_data="change_desc_clan")
     builder.button(text="🚪 Покинуть",callback_data="leave_clan")
     builder.button(text="🗑️ Удалить клан",callback_data="delete_clan")
 
