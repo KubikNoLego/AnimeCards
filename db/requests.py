@@ -73,36 +73,6 @@ class DB:
         place = (count_higher or 0) + 1
         return place
 
-    async def get_user_collections_count(self, user: User) -> int:
-        """Возвращает количество полных коллекций юзера"""
-        try:
-            from sqlalchemy.orm import selectinload
-
-            # Загружаем пользователя с инвентарем, вселенными и картами вселенных
-            user_with_data = await self.__session.scalar(
-                select(User)
-                .filter_by(id=user.id)
-                .options(
-                    selectinload(User.inventory).selectinload(Card.verse).selectinload(Verse.cards)
-                )
-            )
-
-            collections = 0
-            user_verses = set()
-            user_cards = set()
-
-            for card in user_with_data.inventory:
-                user_verses.add(card.verse)
-                user_cards.add(card.id)
-
-            for verse in user_verses:
-                if all(card.id in user_cards for card in verse.cards):
-                    collections += 1
-
-            return collections
-        except Exception as exc:
-            logger.exception(f"Ошибка при подсчёте коллекций для пользователя id={getattr(user, 'id', None)}: {exc}")
-            return 0
 
     async def get_top_players_by_balance(self,
                                         limit: int = 10) -> list[User]:

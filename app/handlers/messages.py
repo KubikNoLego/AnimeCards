@@ -340,15 +340,13 @@ async def _(message: Message, session: AsyncSession):
         db = DB(session)
         # Получаем информацию о профиле
         place_on_top = await db.get_user_place_on_top(user)
-        collections = await db.get_user_collections_count(user)
         text = MText.get("profile").format(
             tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
             name =  escape(user.name),
             balance = user.balance,
             place = place_on_top,
             cards = len(user.inventory),
-            collections = collections,
-            date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
+            date = user.profile.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
         ) + (f"\n\n<i>«{user.profile.describe}»</i>" if user.profile.describe else "")
         target_profile_photo = None
         try:
@@ -376,15 +374,13 @@ async def _(message: Message, session: AsyncSession):
             user = await db.get_user(message.from_user.id)
             if user:
                 place_on_top = await db.get_user_place_on_top(user)
-                collections = await db.get_user_collections_count(user)
                 text = MText.get("profile").format(
                     tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
                     name =  escape(user.name),
                     balance = user.balance,
                     place = place_on_top,
                     cards = len(user.inventory),
-                    collections = collections,
-                    date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
+                    date = user.profile.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
         ) + (f"\n\n<i>«{user.profile.describe}»</i>" if user.profile.describe else "")
                 profile_photo = await user_photo_link(message)
                 keyboard = await profile_keyboard(user.profile.describe != "")
@@ -399,15 +395,13 @@ async def _(message: Message, session: AsyncSession):
             user = await db.get_user(message.reply_to_message.from_user.id)
             if user:
                 place_on_top = await db.get_user_place_on_top(user)
-                collections = await db.get_user_collections_count(user)
                 text = MText.get("profile").format(
                     tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
                     name =  escape(user.name),
                     balance = user.balance,
                     place = place_on_top,
                     cards = len(user.inventory),
-                    collections = collections,
-                    date = user.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
+                    date = user.profile.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
         ) + (f"\n\n<i>«{user.profile.describe}»</i>" if user.profile.describe else "")
                 profile_photo = await user_photo_link(message)
                 if profile_photo:

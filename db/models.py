@@ -23,6 +23,7 @@ class Referrals(Base):
     id: Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
     referral_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
+    referrer_reward: Mapped[int] = mapped_column(Integer, default=0)
 
     referrer: Mapped["User"] = relationship("User",back_populates="referrals",foreign_keys=[user_id],lazy="selectin")
 

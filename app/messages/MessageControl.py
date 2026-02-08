@@ -68,7 +68,7 @@ class Messages:
 
             # Создаем кликабельную ссылку на профиль пользователя
             player_link = f'<a href="tg://user?id={player.id}">{escape(player.name)}</a>'
-            player_info = f"{place_emoji} {highlight}{player_link} — {player.yens} ¥{end_highlight}"
+            player_info = f"{place_emoji} {highlight}{player_link} — {player.balance} ¥{end_highlight}"
             players_text.append(player_info)
 
         return header + "\n".join(players_text)

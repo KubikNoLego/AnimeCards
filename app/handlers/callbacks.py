@@ -12,12 +12,12 @@ from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from loguru import logger
 
 # Локальные импорты
 from app.keyboards.utils import clan_create_exit, member_pagination_keyboard
-from db import Card, User, Verse, Rarity,RedisRequests,DB
+from db import Card, User, Verse, Rarity,RedisRequests,DB, UserCards
 from app.messages import MText
 from app.keyboards import Pagination, ClanInvite,MemberPagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilter, RarityFilterPagination, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
 from app.StateGroups.states import ChangeDescribe,CreateClan,ClanLeader
@@ -561,17 +561,16 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
             data = await state.get_data()
             selected_verse_name = data.get('selected_verse_name', None)
             selected_rarity_name = data.get('selected_rarity_name', None)
-
-            # Фильтруем карты по выбранным фильтрам
-            filtered_cards = []
-            for card in user.inventory:
-                # Проверяем фильтр по вселенной
-                verse_match = not selected_verse_name or card.verse.name == selected_verse_name
-                # Проверяем фильтр по редкости
-                rarity_match = not selected_rarity_name or card.rarity.name == selected_rarity_name
-
-                if verse_match and rarity_match:
-                    filtered_cards.append(card)
+            
+            conditions = [UserCards.user_id == user.id]
+            if selected_rarity_name:
+                conditions.append(Card.rarity_name == selected_rarity_name)
+            if selected_verse_name:
+                conditions.append(Card.verse_name == selected_verse_name)
+            
+            stmt = select(Card).join(UserCards).where(and_(*conditions))
+            filtered_cards = await session.scalars(stmt)
+            filtered_cards = filtered_cards.all()
 
             if not filtered_cards:
                 # Если нет карт, соответствующих фильтрам
