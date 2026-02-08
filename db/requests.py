@@ -90,14 +90,15 @@ class DB:
     async def get_random_verse(self) -> Verse:
         """Возвращает случайную вселенную, в которой есть хотя бы одна карта, которая может выпадать"""
         try:
-            valid_verse_ids_subquery = (
-                select(Card.verse_id)
+            
+            valid_verse_names_subquery = (
+                select(Card.verse_name)
                 .where(Card.can_drop == True)
                 .distinct()
             )
             
             verses = await self.__session.scalars(
-                select(Verse).where(Verse.id.in_(valid_verse_ids_subquery))
+                select(Verse).where(Verse.name.in_(valid_verse_names_subquery))
             )
             verses = verses.all()
 
