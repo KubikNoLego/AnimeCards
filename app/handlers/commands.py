@@ -172,7 +172,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
         place_on_top = await db.get_user_place_on_top(user)
         text = MText.get("profile").format(
             tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
-            name =  escape(user.name),
+            name =  escape(user.name) + " 👑" if user.vip else escape(user.name),
             balance = user.balance,
             place = place_on_top,
             cards = len(user.inventory),

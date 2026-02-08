@@ -617,7 +617,7 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
                                             verse=card.verse_name,
                                             rarity=card.rarity_name,
                                             value=card.value)
-    card_info = card_info + ("✨ Shiny" if card.shiny else "")
+    card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
     keyboard = await pagination_keyboard(card_index + 1, len(cards))
     try:

@@ -110,7 +110,7 @@ async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
         await pre_checkout_query.answer(ok=True)
     except Exception as e:
         logger.error(f"Ошибка при обработке PreCheckoutQuery: {e}")
-        await pre_checkout_query.answer(ok=False, error_message=messages["processing_error"])
+        await pre_checkout_query.answer(ok=False, error_message=MText.get("processing_error"))
 
 @router.message(F.successful_payment)
 async def process_successful_payment(message: Message, state: FSMContext, session: AsyncSession):

@@ -211,7 +211,7 @@ async def clan_create():
     
 
     builder.button(text="✅ Создать клан",callback_data="accept_create_clan")
-    builder.button(text="🔄 Начать заного",callback_data="create_clan")
+    builder.button(text="🔄 Начать заново",callback_data="create_clan")
     builder.button(text="❌ Отмена",callback_data="cancel_create_clan")
 
     return builder.as_markup()
