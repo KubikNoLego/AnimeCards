@@ -93,7 +93,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                             inviter.id,
                             MText.get("reward_message").format(
                                 reward=reward_amount,
-                                yens=inviter.yens+reward_amount)
+                                yens=inviter.balance+reward_amount)
                             )
                 except Exception as e:
                     logger.error(f"Не удалось отправить сообщение реферреру {inviter.id}: {e}")
@@ -150,7 +150,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
             else:
                 user.last_open = datetime.now(MSK_TIMEZONE)
             added_sum = int(card.value + (math.ceil(card.value * 0.1) if user.vip else 0))
-            user.yens += added_sum
+            user.balance += added_sum
             if user.clan_member:
                 user.clan_member.contribution += int(added_sum*0.3)
                 user.clan_member.clan.balance += int(added_sum*0.3)
@@ -174,7 +174,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
         text = MText.get("profile").format(
             tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
             name =  escape(user.name),
-            balance = user.yens,
+            balance = user.balance,
             place = place_on_top,
             cards = len(user.inventory),
             collections = collections,

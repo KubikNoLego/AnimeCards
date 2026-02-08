@@ -132,7 +132,7 @@ async def _rebalance_clans(db_session: AsyncSession):
         for user in users:
             user.contribution = 0
             user = user.user
-            user.yens += added_sum
+            user.balance += added_sum
         clan.balance = 0
     
     await db_session.commit()

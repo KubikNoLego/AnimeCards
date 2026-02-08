@@ -156,14 +156,14 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
 
     # Проверяем, достаточно ли у пользователя йен для создания клана
     clan_creation_cost = 1000
-    if user.yens < clan_creation_cost:
+    if user.balance < clan_creation_cost:
         await callback.answer(MText.get("not_enough_yens_clan"), show_alert=True)
         return
 
     data = await state.get_data()
 
     # Списываем йены за создание клана
-    user.yens -= clan_creation_cost
+    user.balance -= clan_creation_cost
     await session.commit()
 
     await db.create_clan(data['name'],data['tag'],data['description'],callback.from_user.id)
@@ -187,7 +187,7 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
 
     # Проверяем баланс пользователя перед созданием клана
     clan_creation_cost = 1000
-    if user.yens < clan_creation_cost:
+    if user.balance < clan_creation_cost:
         await callback.answer(MText.get("not_enough_yens_clan"), show_alert=True)
         return
 
@@ -304,7 +304,7 @@ async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCal
             return
 
         # Проверяем, достаточно ли у пользователя йен
-        if user.yens < int(card.value*1.7):
+        if user.balance < int(card.value*1.7):
             await callback.answer(MText.get("not_enough_yens"), show_alert=True)
             return
 
@@ -371,7 +371,7 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
                 return
 
             # Проверяем, достаточно ли у пользователя йен
-            if user.yens < card.value:
+            if user.balance < card.value:
                 await callback.answer(MText.get("not_enough_yens"), show_alert=True)
                 return
 
@@ -381,7 +381,7 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
                 return
 
             # Выполняем покупку
-            user.yens -= int(card.value*1.7)
+            user.balance -= int(card.value*1.7)
             user.inventory.append(card)
 
             await session.commit()

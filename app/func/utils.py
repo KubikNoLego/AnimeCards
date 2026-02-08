@@ -19,7 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Локальные импорты
-from db import Card, Clan, Profile, User, Verse,RedisRequests,DB
+from db import Card, Clan, Profile, User, Verse, RedisRequests, DB, Rarity
 
 # Константы для генерации случайных карт
 RARITIES = [1, 2, 3, 4, 5]
@@ -58,10 +58,10 @@ async def random_card(session: AsyncSession, pity: int) -> Card:
     daily_verse_task = RedisRequests.daily_verse()
 
     cards_result = await session.scalars(
-        select(Card).where(
+        select(Card).join(Rarity).where(
             Card.shiny == is_shiny,
             Card.can_drop == True,
-            Card.rarity.has(id=random_rarity),
+            Rarity.id == random_rarity,
         )
     )
     cards = cards_result.all()

@@ -23,7 +23,6 @@ class Referrals(Base):
     id: Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
     referral_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
-    referrer_reward: Mapped[int] = mapped_column(default=0)
 
     referrer: Mapped["User"] = relationship("User",back_populates="referrals",foreign_keys=[user_id],lazy="selectin")
 
@@ -38,7 +37,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    yens: Mapped[int] = mapped_column(default=0)
+    balance: Mapped[int] = mapped_column(default=0)
     pity: Mapped[int] = mapped_column(default=100)
     free_open: Mapped[int] = mapped_column(default=0)
 
@@ -47,7 +46,6 @@ class User(Base):
 
     # Храним MSK-времена с timezone=True
     last_open: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    joined: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     # Инвентарь — карточки пользователя (many-to-many)
     inventory: Mapped[list["Card"]] = relationship("Card", back_populates="owners", secondary="usercards", lazy="selectin")
@@ -113,13 +111,10 @@ class Profile(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
 
+    joined: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     describe: Mapped[str] = mapped_column(String(70), default="", nullable=False)
 
     owner: Mapped["User"] = relationship("User", back_populates="profile", lazy="selectin")
-
-    @property
-    def yens(self) -> int:
-        return self.owner.yens if self.owner else 0
 
 class ClanMember(Base):
     __tablename__ = "clan_members"

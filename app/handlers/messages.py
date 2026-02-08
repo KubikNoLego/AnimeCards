@@ -283,7 +283,7 @@ async def _(message: Message, session: AsyncSession):
             else:
                 user.last_open = datetime.now(MSK_TIMEZONE)
             added_sum = int(card.value + (math.ceil(card.value * 0.1) if user.vip else 0))
-            user.yens += added_sum
+            user.balance += added_sum
             if user.clan_member:
                 user.clan_member.contribution += int(added_sum*0.3)
                 user.clan_member.clan.balance += int(added_sum*0.3)
@@ -344,7 +344,7 @@ async def _(message: Message, session: AsyncSession):
         text = MText.get("profile").format(
             tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
             name =  escape(user.name),
-            balance = user.yens,
+            balance = user.balance,
             place = place_on_top,
             cards = len(user.inventory),
             collections = collections,
@@ -380,7 +380,7 @@ async def _(message: Message, session: AsyncSession):
                 text = MText.get("profile").format(
                     tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
                     name =  escape(user.name),
-                    balance = user.yens,
+                    balance = user.balance,
                     place = place_on_top,
                     cards = len(user.inventory),
                     collections = collections,
@@ -403,7 +403,7 @@ async def _(message: Message, session: AsyncSession):
                 text = MText.get("profile").format(
                     tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
                     name =  escape(user.name),
-                    balance = user.yens,
+                    balance = user.balance,
                     place = place_on_top,
                     cards = len(user.inventory),
                     collections = collections,

@@ -66,7 +66,7 @@ class DB:
 
     async def get_user_place_on_top(self,user: User):
         """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
-        stmt = select(func.count(User.id)).where(User.yens > user.yens)
+        stmt = select(func.count(User.id)).where(User.balance > user.balance)
         result = await self.__session.execute(stmt)
         count_higher = result.scalar()
 
@@ -88,19 +88,14 @@ class DB:
             )
 
             collections = 0
-            # Используем множество для более эффективного хранения уникальных вселенных и карт
             user_verses = set()
             user_cards = set()
 
-            # Собираем все уникальные вселенные и ID карт из инвентаря пользователя
             for card in user_with_data.inventory:
                 user_verses.add(card.verse)
                 user_cards.add(card.id)
 
-            # Для каждой вселенной проверяем, собрана ли она полностью
             for verse in user_verses:
-                # Проверяем, есть ли у пользователя все карты этой вселенной
-                # Используем генератор для более эффективной проверки
                 if all(card.id in user_cards for card in verse.cards):
                     collections += 1
 
@@ -113,7 +108,7 @@ class DB:
                                         limit: int = 10) -> list[User]:
         """Возвращает топ юзеров по балансу"""
         try:
-            stmt = select(User).order_by(User.yens.desc()).limit(limit)
+            stmt = select(User).order_by(User.balance.desc()).limit(limit)
             result = await self.__session.execute(stmt)
             top_players = result.scalars().all()
             return top_players
@@ -125,28 +120,22 @@ class DB:
     async def get_random_verse(self) -> Verse:
         """Возвращает случайную вселенную, в которой есть хотя бы одна карта, которая может выпадать"""
         try:
-            # Получаем все вселенные с их картами
-            verses = await self.__session.scalars(select(Verse).options(selectinload(Verse.cards)))
+            valid_verse_ids_subquery = (
+                select(Card.verse_id)
+                .where(Card.can_drop == True)
+                .distinct()
+            )
+            
+            verses = await self.__session.scalars(
+                select(Verse).where(Verse.id.in_(valid_verse_ids_subquery))
+            )
             verses = verses.all()
 
             if not verses:
                 logger.warning("Нет доступных вселенных в базе данных")
                 return None
 
-            # Фильтруем вселенные
-            valid_verses = []
-            for verse in verses:
-                # Проверяем, есть ли хотя бы одна карта, которая может выпадать
-                has_droppable_card = any(card.can_drop for card in verse.cards)
-                if has_droppable_card:
-                    valid_verses.append(verse)
-
-            if valid_verses:
-                random_verse = random.choice(valid_verses)
-                return random_verse
-
-            logger.warning("Нет вселенных с картами, которые могут выпадать")
-            return None
+            return random.choice(verses)
         except Exception as exc:
             logger.exception(f"Ошибка при получении случайной вселенной: {exc}")
             return None
@@ -235,7 +224,7 @@ class DB:
         try:
             referrer = await self.get_user(referrer_id)
             if referrer:
-                referrer.yens += award
+                referrer.balance += award
                 await self.__session.commit()
                 return True
             return False
@@ -272,7 +261,6 @@ class DB:
                                     receiver_id: int) -> ClanInvitation | None:
         """Создает новое приглашение в клан"""
         try:
-            # Проверяем, что приглашение еще не существует
             existing_invitation = await self.get_clan_invitation(clan_id, receiver_id)
             if existing_invitation:
                 return None
