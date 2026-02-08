@@ -100,7 +100,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
     message_text = MText.get("start")
     keyboard = await main_kb()
-    await message.reply(message_text, reply_markup=keyboard)
+    await message.reply(message_text, reply_markup=keyboard,disable_web_page_preview=True)
 
 
 @router.message(Command("card"))
