@@ -8,6 +8,7 @@ import random
 MSK_TIMEZONE = timezone(timedelta(hours=3))
 
 # Сторонние библиотеки
+from aiogram.fsm.context import FSMContext
 from aiogram import Router,F
 from aiogram.filters import CommandStart,CommandObject,Command
 from aiogram.types import Message,FSInputFile
@@ -29,7 +30,7 @@ user_card_opens = []
 router = Router()
 
 @router.message(CommandStart(),Private())
-async def _(message: Message, command: CommandObject,session: AsyncSession):
+async def _(message: Message, command: CommandObject,session: AsyncSession,state: FSMContext):
     user = await message.bot.get_chat(message.from_user.id)
     
     
@@ -100,6 +101,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 
     message_text = MText.get("start")
     keyboard = await main_kb()
+    await state.clear()
     await message.reply(message_text, reply_markup=keyboard,disable_web_page_preview=True)
 
 

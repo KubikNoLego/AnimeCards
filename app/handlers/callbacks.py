@@ -1,5 +1,4 @@
 # Стандартные библиотеки
-import math
 from datetime import timedelta,timezone
 
 MSK_TIMEZONE = timezone(timedelta(hours=3))
@@ -323,7 +322,7 @@ async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCal
         card_info = MText.get("card").format(name=card.name,
                                             verse=card.verse_name,
                                             rarity=card.rarity_name,
-                                            value=math.ceil(card.value*1.7))
+                                            value=str(card.value)+f"\n\nЦена покупки: {int(card.value * 1.7)}")
 
         try:
             await callback.message.answer_photo(
@@ -371,7 +370,7 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
                 return
 
             # Проверяем, достаточно ли у пользователя йен
-            if user.balance < card.value:
+            if user.balance < int(card.value*1.7):
                 await callback.answer(MText.get("not_enough_yens"), show_alert=True)
                 return
 

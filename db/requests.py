@@ -14,7 +14,7 @@ from sqlalchemy.orm import selectinload
 
 # Локальные импорты
 from db.models import (Card, Clan, ClanMember,
-                    User, Profile, Verse, Referrals,ClanInvitation)
+                    User, Profile, UserCards, Verse, Referrals,ClanInvitation)
 
 class DB:
     def __init__(self, session):
@@ -284,6 +284,80 @@ class DB:
         await self.__session.delete(clan)
         await self.__session.commit()
 
+    async def get_cards_with_shiny(self, user_id: int) -> list[tuple[Card, Card]]:
+        """
+        Возвращает список кортежей (обычная карта, её шайни версия)
+        для карт пользователя, у которых есть шайни версия в базе.
+        """
+        try:
+            cards = await self.__session.scalars(
+                select(Card)
+                .join(UserCards)
+                .filter(UserCards.user_id == user_id, Card.shiny == False)
+            )
+            
+            cards_with_shiny = []
+            for card in cards.all():
+                shiny_exists = await self.__session.scalar(
+                    select(Card).filter(
+                        Card.name == card.name,
+                        Card.verse_name == card.verse_name,
+                        Card.shiny == True
+                    )
+                )
+                if shiny_exists:
+                    cards_with_shiny.append((card, shiny_exists))
+            
+            return cards_with_shiny
+        
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении карт с шайни версией для user_id={user_id}: {exc}")
+            return []
+
+    async def get_missing_shiny_cards(self, user_id: int) -> list[Card]:
+        """
+        Возвращает шайни карты, которых нет у пользователя,
+        но которые можно получить (есть обычная версия в инвентаре).
+        """
+        try:
+            # Подзапрос: ID шайни карт пользователя
+            user_shiny_subquery = (
+                select(Card.id)
+                .join(UserCards)
+                .filter(UserCards.user_id == user_id, Card.shiny == True)
+                .distinct()
+            )
+            
+            # ID обычных карт пользователя
+            user_normal_cards_subquery = (
+                select(Card.id)
+                .join(UserCards)
+                .filter(UserCards.user_id == user_id, Card.shiny == False)
+            )
+            
+            # Все шайни карты, которых нет у пользователя
+            # и для которых у него есть обычная версия
+            stmt = (
+                select(Card)
+                .filter(
+                    Card.shiny == True,
+                    ~Card.id.in_(user_shiny_subquery),
+                    # Сопоставляем по name и verse_name
+                    Card.name.in_(
+                        select(Card.name)
+                        .filter(
+                            Card.id.in_(user_normal_cards_subquery),
+                            Card.shiny == False
+                        )
+                    )
+                )
+                .distinct()
+            )
+            
+            return await self.__session.scalars(stmt)
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении недостающих шайни карт для user_id={user_id}: {exc}")
+            return []
 
 
 class RedisRequests:
