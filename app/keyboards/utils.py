@@ -48,7 +48,7 @@ async def main_kb():
     [builder.button(text=item) for item in buttons]
     builder.adjust(2, 3, 1)
 
-    return builder.as_markup(resize_keyboard=True, input_field="Привет!" if randint(1, 1000) == 777 else "...")
+    return builder.as_markup(resize_keyboard=True, input_field_placeholder=("💫" if randint(1, 1000) == 777 else "Меню 🌟"))
 
 
 async def clan_invite_kb(clan_id: int):
