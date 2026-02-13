@@ -171,7 +171,7 @@ class DB:
             return []
 
     async def add_referral(self,
-                        referral_id: int, referrer_id: int) -> Referrals | None:
+                        referral_id: int, referrer_id: int, referrer_reward: int = 0) -> Referrals | None:
         """Создаёт рефералов"""
         if referral_id != referrer_id:
             existing_referral = await self.__session.scalar(
@@ -182,7 +182,8 @@ class DB:
                 if referrer:
                     referral_object = Referrals(
                         user_id=referrer_id,
-                        referral_id=referral_id
+                        referral_id=referral_id,
+                        referrer_reward=referrer_reward
                     )
                     self.__session.add(referral_object)
                     await self.__session.commit()

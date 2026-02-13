@@ -65,19 +65,23 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,state
                 if not inviter:
                     await message.answer(MText.get("not_user_id"))
                     return
-                    
-                # Добавляем реферальную связь
+                
+                # Вычисляем награду до создания реферала
+                reward_amount = random.randint(50, 300) if not inviter.vip else random.randint(150, 700)
+
+                # Добавляем реферальную связь с указанием награды
                 referral = await db.add_referral(referral_id=user.id,
-                                                referrer_id=inviter_id)
+                                                referrer_id=inviter_id,
+                                                referrer_reward=reward_amount)
                 if not referral:
                     await message.answer(MText.get("sorry"))
                     return
-                    
-                
-                reward_amount = random.randint(50, 300) if not inviter.vip else random.randint(150, 700)
 
                 # Награждаем реферрера за реферала
                 await db.get_award(inviter_id, reward_amount)
+                
+                # Обновляем данные инвайтера для получения актуального баланса
+                inviter = await db.get_user(inviter_id)
                 
                 referrer_link = f'<a href="tg://user?id={inviter.id}">{html_decoration.quote(inviter.name)}</a>'
                 new_user_link = f'<a href="tg://user?id={user.id}">{html_decoration.quote(user.name)}</a>'
@@ -94,7 +98,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,state
                             inviter.id,
                             MText.get("reward_message").format(
                                 reward=reward_amount,
-                                yens=inviter.balance+reward_amount)
+                                yens=inviter.balance)
                             )
                 except Exception as e:
                     logger.error(f"Не удалось отправить сообщение реферреру {inviter.id}: {e}")
