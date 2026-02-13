@@ -186,10 +186,19 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
         ) + (f"\n\n<i>«{user.profile.describe}»</i>" if user.profile.describe else "")
 
         profile_photo = await user_photo_link(message)
-        if profile_photo:
-            await message.reply_photo(photo=profile_photo,caption=text)
+        
+        # Если вызов в группе - без клавиатуры
+        if message.chat.type != "private":
+            if profile_photo:
+                await message.reply_photo(photo=profile_photo,caption=text)
+            else:
+                await message.reply(text)
         else:
-            await message.reply(text)
+            keyboard = await main_kb()
+            if profile_photo:
+                await message.reply_photo(photo=profile_photo,caption=text,reply_markup=keyboard)
+            else:
+                await message.reply(text,reply_markup=keyboard)
     else:
         await message.reply(MText.get("not_user").format(name = escape(user.name)))
 
