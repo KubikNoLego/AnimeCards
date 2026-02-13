@@ -42,8 +42,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
                 user.vip = None  # Обновляем объект пользователя
             else:
                 # Если подписка еще активна, сообщаем пользователю
-                end_date = user.vip.end_date.astimezone(MSK_TIMEZONE)
-                await message.answer(MText.get("vip_already_active").format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
+                await message.answer(MText.get("vip_already_active"))
                 return
 
         # Загружаем сообщение о VIP предложении
@@ -51,7 +50,7 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
         # Создаем инлайн-клавиатуру с кнопкой покупки
         builder = InlineKeyboardBuilder()
-        builder.button(text="💰 Купить VIP за 320 ⭐", callback_data="buy_vip")
+        builder.button(text="💰 Купить VIP за 150 ⭐", callback_data="buy_vip")
         builder.adjust(1)
 
         # Отправляем сообщение с предложением VIP
@@ -70,17 +69,16 @@ async def buy_vip(callback: CallbackQuery, session: AsyncSession):
         return
 
     if user.vip:
-        end_date = user.vip.end_date.astimezone(MSK_TIMEZONE)
-        await callback.message.answer(MText.get("vip_already_active").format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
+        await callback.message.answer(MText.get("vip_already_active"))
         return
 
 
     try:
-        vip_price_stars = 320
+        vip_price_stars = 150
 
         await callback.message.bot.send_invoice(
             chat_id=callback.from_user.id,
-            title="💎 VIP Подписка на 30 дней",
+            title="💎 VIP",
             description="Получите эксклюзивные преимущества: увеличенные награды, больше бонусов за рефералов, полный доступ к магазину и специальный символ 👑 в профиле!",
             payload=f"vip_subscription_{user.id}",
             currency="XTR",
@@ -127,14 +125,13 @@ async def process_successful_payment(message: Message, state: FSMContext, sessio
 
         # Проверяем, есть ли уже VIP подписка
         if user.vip:
-            end_date = user.vip.end_date.astimezone(MSK_TIMEZONE)
-            await message.answer(MText.get("vip_already_active").format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
+            await message.answer(MText.get("vip_already_active"))
             await state.clear()
             return
 
-        # Создаем VIP подписку на 30 дней
+        # Создаем VIP подписку навсегда (100 лет)
         start_date = datetime.now(MSK_TIMEZONE)
-        end_date = start_date + timedelta(days=30)
+        end_date = start_date + timedelta(days=36500)
 
         new_vip = VipSubscription(
             user_id=user.id,
@@ -152,7 +149,7 @@ async def process_successful_payment(message: Message, state: FSMContext, sessio
         await state.clear()
 
         # Сообщаем об успешной покупке
-        await message.answer(MText.get("vip_purchase_success").format(end_date=end_date.strftime('%d.%m.%Y %H:%M')))
+        await message.answer(MText.get("vip_purchase_success"))
 
     except Exception as e:
         logger.error(f"Ошибка при обработке успешной оплаты VIP: {e}")
