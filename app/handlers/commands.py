@@ -67,7 +67,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,state
                     return
                 
                 # Вычисляем награду до создания реферала
-                reward_amount = random.randint(50, 300) if not inviter.vip else random.randint(150, 700)
+                reward_amount = random.randint(50, 150) if not inviter.vip else random.randint(100, 150)
 
                 # Добавляем реферальную связь с указанием награды
                 referral = await db.add_referral(referral_id=user.id,
