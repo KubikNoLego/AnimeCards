@@ -15,7 +15,7 @@ from sqlalchemy import select, and_
 from loguru import logger
 
 # Локальные импорты
-from app.keyboards.utils import clan_create_exit, member_pagination_keyboard
+from app.keyboards.utils import clan_create_exit, member_pagination_keyboard, sort_inventory_kb
 from db import Card, User, Verse, Rarity,RedisRequests,DB, UserCards
 from app.messages import MText
 from app.keyboards import Pagination, ClanInvite,MemberPagination, ShopItemCallback, VerseFilterPagination, VerseFilter, RarityFilter, RarityFilterPagination, pagination_keyboard, verse_filter_pagination_keyboard, rarity_filter_pagination_keyboard
@@ -233,28 +233,12 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
     try:
         select_sort_message = MText.get("select_sort")
 
-        # Создаем клавиатуру для выбора способа сортировки
-        builder = InlineKeyboardBuilder()
         # Получаем текущие выбранные значения из FSM
         data = await state.get_data()
         selected_verse_name = data.get('selected_verse_name', None)
         selected_rarity_name = data.get('selected_rarity_name', None)
 
-        if selected_rarity_name:
-            builder.button(text=f"📊 По редкости ({selected_rarity_name})", callback_data="sort_by_rarity")
-        else:
-            builder.button(text="📊 По редкости", callback_data="sort_by_rarity")
-
-        if selected_verse_name:
-            builder.button(text=f"🌌 По вселенной ({selected_verse_name})", callback_data=VerseFilterPagination(p=1).pack())
-        else:
-            builder.button(text="🌌 По вселенной", callback_data=VerseFilterPagination(p=1).pack())
-
-        # Add Reset button
-        builder.button(text="🔄 Сбросить фильтры", callback_data="reset_sort_filters")
-        # Add Apply button
-        builder.button(text="✅ Применить фильтры", callback_data=Pagination(p=1).pack())
-        builder.adjust(2, 1, 1)
+        kb = await sort_inventory_kb(selected_rarity_name,selected_verse_name)
 
         # Проверяем, есть ли фото в текущем сообщении
         if callback.message.photo or callback.message.media_group_id:
@@ -263,20 +247,20 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
                 await callback.message.delete()
                 await callback.message.answer(
                     text=select_sort_message,
-                    reply_markup=builder.as_markup()
+                    reply_markup=kb
                 )
             except Exception as delete_error:
                 logger.warning(f"Не удалось удалить сообщение с фото, используем edit_text: {delete_error}")
                 # Если не удалось удалить, используем edit_text как резервный вариант
                 await callback.message.edit_text(
                     text=select_sort_message,
-                    reply_markup=builder.as_markup()
+                    reply_markup=kb
                 )
         else:
             # Если нет фото, используем стандартный edit_text
             await callback.message.edit_text(
                 text=select_sort_message,
-                reply_markup=builder.as_markup()
+                reply_markup=kb
             )
         await callback.answer()
     except Exception as e:

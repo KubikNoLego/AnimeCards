@@ -50,12 +50,31 @@ async def main_kb():
 
     return builder.as_markup(resize_keyboard=True, input_field_placeholder=("💫" if randint(1, 1000) == 777 else "Меню 🌟"))
 
+async def sort_inventory_kb(selected_rarity_name,selected_verse_name):
+
+    builder = InlineKeyboardBuilder()
+
+    if selected_rarity_name:
+        builder.button(text=f"📊 По редкости ({selected_rarity_name})", callback_data="sort_by_rarity", style = "success")
+    else:
+        builder.button(text="📊 По редкости", callback_data="sort_by_rarity")
+
+    if selected_verse_name:
+        builder.button(text=f"🌌 По вселенной ({selected_verse_name})", callback_data=VerseFilterPagination(p=1).pack(), style = "success")
+    else:
+        builder.button(text="🌌 По вселенной", callback_data=VerseFilterPagination(p=1).pack())
+
+    builder.button(text="🔄 Сбросить фильтры", callback_data="reset_sort_filters", style = "danger")
+    builder.button(text="✅ Применить фильтры", callback_data=Pagination(p=1).pack(), style = "success")
+    builder.adjust(2, 1, 1)
+
+    return builder.as_markup()
 
 async def clan_invite_kb(clan_id: int):
     builder = InlineKeyboardBuilder()
 
-    builder.button(text="✅ Принять", callback_data= ClanInvite(clan_id=clan_id, act=1).pack())
-    builder.button(text="❎ Отклонить", callback_data= ClanInvite(clan_id=clan_id, act=0).pack())
+    builder.button(text="✅ Принять", callback_data= ClanInvite(clan_id=clan_id, act=1).pack(),style = "success")
+    builder.button(text="❎ Отклонить", callback_data= ClanInvite(clan_id=clan_id, act=0).pack(),style = "danger")
 
     return builder.as_markup()
 
@@ -73,29 +92,34 @@ async def pagination_keyboard(current_page: int, total_pages: int):
     buttons = []
 
     if prev_100_active:
-        buttons.append(("««", Pagination(p=current_page-100).pack()))
+        buttons.append(("««", Pagination(p=current_page-100).pack(), "primary"))
 
     if prev_10_active:
-        buttons.append(("‹", Pagination(p=current_page-10).pack()))
+        buttons.append(("‹", Pagination(p=current_page-10).pack(), "primary"))
 
     if prev_1_active:
-        buttons.append(("←", Pagination(p=current_page-1).pack()))
+        buttons.append(("←", Pagination(p=current_page-1).pack(), "primary"))
 
     buttons.append((f"{current_page}/{total_pages}", "pass"))
 
     if next_1_active:
-        buttons.append(("→", Pagination(p=current_page+1).pack()))
+        buttons.append(("→", Pagination(p=current_page+1).pack(), "primary"))
 
     if next_10_active:
-        buttons.append(("›", Pagination(p=current_page+10).pack()))
+        buttons.append(("›", Pagination(p=current_page+10).pack(), "primary"))
 
     if next_100_active:
-        buttons.append(("»»", Pagination(p=current_page+100).pack()))
+        buttons.append(("»»", Pagination(p=current_page+100).pack(), "primary"))
 
-    for text, callback_data in buttons:
-        builder.button(text=text, callback_data=callback_data)
+    for item in buttons:
+        if len(item) == 3:
+            text, callback_data, style = item
+            builder.button(text=text, callback_data=callback_data, style=style)
+        else:
+            text, callback_data = item
+            builder.button(text=text, callback_data=callback_data)
 
-    builder.button(text="✂️ Сортировка", callback_data="sort_inventory")
+    builder.button(text="✂️ Сортировка", callback_data="sort_inventory", style = "success")
     builder.adjust(len(buttons),1)
 
     return builder.as_markup()
@@ -111,7 +135,7 @@ async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
     rarities_names = [rarity.name for rarity in rarities[start_index:end_index]]
 
     for rarity_name in rarities_names:
-        builder.button(text=rarity_name, callback_data=RarityFilter(rarity_name=rarity_name).pack())
+        builder.button(text=rarity_name, callback_data=RarityFilter(rarity_name=rarity_name).pack(),style="primary")
 
     empty_buttons_needed = 6 - len(rarities_names)
     for _ in range(empty_buttons_needed):
@@ -142,7 +166,7 @@ async def profile_keyboard(has_describe: bool):
     builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1).pack())
     builder.button(text="🖋️ Сменить подпись",callback_data="change_describe")
     if has_describe:
-        builder.button(text="❌ Удалить подпись",callback_data="delete_describe")
+        builder.button(text="❌ Удалить подпись",callback_data="delete_describe",style = "danger")
 
     builder.adjust(1)
 
@@ -159,7 +183,7 @@ async def verse_filter_pagination_keyboard(current_page: int, verses: list):
     verses_names = [verse.name for verse in verses[start_index:end_index]]
 
     for verse_name in verses_names:
-        builder.button(text=verse_name, callback_data=VerseFilter(verse_name=verse_name).pack())
+        builder.button(text=verse_name, callback_data=VerseFilter(verse_name=verse_name).pack(),style = "primary")
 
     empty_buttons_needed = 4 - len(verses_names)
     for _ in range(empty_buttons_needed):
@@ -191,7 +215,7 @@ async def shop_keyboard(cards: list):
     builder = InlineKeyboardBuilder()
 
     for card in cards:
-        builder.button(text=f"{card.name} ({int(card.value)} ¥)", callback_data=ShopItemCallback(item_id=card.id).pack())
+        builder.button(text=f"{card.name} ({int(card.value)} ¥)", callback_data=ShopItemCallback(item_id=card.id).pack(),style = "primary")
 
     builder.adjust(2)
 
@@ -210,9 +234,9 @@ async def clan_create():
     builder = InlineKeyboardBuilder()
     
 
-    builder.button(text="✅ Создать клан",callback_data="accept_create_clan")
-    builder.button(text="🔄 Начать заново",callback_data="create_clan")
-    builder.button(text="❌ Отмена",callback_data="cancel_create_clan")
+    builder.button(text="✅ Создать клан",callback_data="accept_create_clan", style = "success")
+    builder.button(text="🔄 Начать заново",callback_data="create_clan",style = "primary")
+    builder.button(text="❌ Отмена",callback_data="cancel_create_clan",style = "danger")
 
     return builder.as_markup()
 
@@ -221,7 +245,7 @@ async def clan_create_exit():
     builder = InlineKeyboardBuilder()
     
 
-    builder.button(text="❌ Отмена",callback_data="cancel_create_clan")
+    builder.button(text="❌ Отмена",callback_data="cancel_create_clan",style = "danger")
 
     return builder.as_markup()
 
@@ -230,7 +254,7 @@ async def clan_member():
     
 
     builder.button(text="👤 Участники",callback_data=MemberPagination(p=1).pack())
-    builder.button(text="🚪 Покинуть",callback_data="leave_clan")
+    builder.button(text="🚪 Покинуть",callback_data="leave_clan", style="danger")
 
     builder.adjust(1)
 
@@ -242,8 +266,8 @@ async def clan_leader():
 
     builder.button(text="👤 Участники",callback_data=MemberPagination(p=1).pack())
     builder.button(text="🖋️ Сменить описание", callback_data="change_desc_clan")
-    builder.button(text="🚪 Покинуть",callback_data="leave_clan")
-    builder.button(text="🗑️ Удалить клан",callback_data="delete_clan")
+    builder.button(text="🚪 Покинуть",callback_data="leave_clan",style="danger")
+    builder.button(text="🗑️ Удалить клан",callback_data="delete_clan", style="danger")
 
 
     builder.adjust(1)
@@ -262,24 +286,29 @@ async def member_pagination_keyboard(current_page: int, total_pages: int, id:int
     buttons = []
 
     if prev_10_active:
-        buttons.append(("‹", MemberPagination(p=current_page-10).pack()))
+        buttons.append(("‹", MemberPagination(p=current_page-10).pack(), "primary"))
 
     if prev_1_active:
-        buttons.append(("←", MemberPagination(p=current_page-1).pack()))
+        buttons.append(("←", MemberPagination(p=current_page-1).pack(), "primary"))
 
     buttons.append((f"{current_page}/{total_pages}", "pass"))
 
     if next_1_active:
-        buttons.append(("→", MemberPagination(p=current_page+1).pack()))
+        buttons.append(("→", MemberPagination(p=current_page+1).pack(), "primary"))
 
     if next_10_active:
-        buttons.append(("›", MemberPagination(p=current_page+10).pack()))
+        buttons.append(("›", MemberPagination(p=current_page+10).pack(), "primary"))
 
-    for text, callback_data in buttons:
-        builder.button(text=text, callback_data=callback_data)
+    for item in buttons:
+        if len(item) == 3:
+            text, callback_data, style = item
+            builder.button(text=text, callback_data=callback_data, style=style)
+        else:
+            text, callback_data = item
+            builder.button(text=text, callback_data=callback_data)
 
     if leader:
-        builder.button(text="Выгнать", callback_data=f"kick_{id}")
+        builder.button(text="Выгнать", callback_data=f"kick_{id}", style = "danger")
         builder.adjust(len(buttons),1)
 
     return builder.as_markup()
