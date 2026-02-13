@@ -385,9 +385,9 @@ async def _(message: Message, session: AsyncSession):
                 profile_photo = await user_photo_link(message)
                 keyboard = await profile_keyboard(user.profile.describe != "")
                 if profile_photo:
-                    await message.reply_photo(photo=profile_photo,caption=text,reply_markup=keyboard)
+                    await message.reply_photo(photo=profile_photo,caption=text,reply_markup= (keyboard if message.chat.type == "private" else None))
                 else:
-                    await message.reply(text,reply_markup=keyboard)
+                    await message.reply(text,reply_markup=(keyboard if message.chat.type == "private" else None))
             else:
                 text = MText.get("not_user").format(name=escape(message.from_user.full_name))
                 await message.reply(text)
