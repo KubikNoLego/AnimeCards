@@ -50,9 +50,8 @@ class DB:
                     username=username,
                     name=name,
                     last_open=now - timedelta(hours=3),
-                    joined=now,
                 )
-                user.profile = Profile(user_id=id, describe=describe)
+                user.profile = Profile(user_id=id, describe=describe, joined=now)
                 self.__session.add(user)
                 action = True
             else:
@@ -60,9 +59,10 @@ class DB:
                 user.name = name
                 action = False
             await self.__session.commit()
-            return (user,action) # возвращает пользователя и True если он создан, False - обновлён
+            return (user, action) # возвращает пользователя и True если он создан, False - обновлён
         except Exception as exc:
             logger.exception(f"Ошибка при сохранении пользователя id={id}: {exc}")
+            return None
 
     async def get_user_place_on_top(self,user: User):
         """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
