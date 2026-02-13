@@ -208,7 +208,7 @@ async def _(message: Message, session: AsyncSession):
         bot_info = await message.bot.get_me()
         referral_link = f"https://t.me/{bot_info.username}?start=r_{user.id}"
 
-        stats_message = MText.get("refferal_text").format(link=referral_link,referral=len(user.referrals),total=total_reward,award="50 до 300" if not user.vip else "150 до 700")
+        stats_message = MText.get("refferal_text").format(link=referral_link,referral=len(user.referrals),total=total_reward,award="50 до 150" if not user.vip else "100 до 150")
         try:
             qr_file = await create_qr(referral_link)
             try:
