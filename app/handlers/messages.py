@@ -5,6 +5,8 @@ from html import escape
 import re
 import os
 
+from app.keyboards.utils import trade_start
+
 
 # Создаем таймзону для Москвы (UTC+3)
 MSK_TIMEZONE = timezone(timedelta(hours=3))
@@ -364,6 +366,19 @@ async def _(message: Message, session: AsyncSession):
 
     except Exception as e:
         await message.reply(MText.get("profile_error"))
+
+@router.message(F.text == "🔁 Трейды")
+async def _(message: Message, session: AsyncSession):
+    db = DB(session)
+    user: User = db.get_user(message.from_user.id)
+
+    if len(user.inventory) == 0:
+        ...
+        return
+
+    text = MText.get(...)
+
+    await message.answer(text, reply_markup=await trade_start())
 
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):

@@ -205,7 +205,7 @@ async def change_describe_user(callback: CallbackQuery, session: AsyncSession, s
     await state.set_state(ChangeDescribe.text)
     await callback.message.answer(MText.get("change_describe_prompt"))
 
-@router.callback_query(F.data == "reset_sort_filters")
+@router.callback_query(F.data.startswith("reset_sort_filters"))
 async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext):
     """Обработчик callback для сброса фильтров сортировки."""
     try:
@@ -214,7 +214,7 @@ async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext
         await state.clear()
 
         builder = InlineKeyboardBuilder()
-        builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory")
+        builder.button(text="🔙 Назад к сортировке", callback_data= ("sort_inventory_s" if callback.data == "reset_sort_filters_s" else "sort_inventory_t"))
         builder.adjust(1)
 
         # Обновляем сообщение с подтверждением сброса
@@ -227,7 +227,7 @@ async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext
             logger.error(f"Ошибка при сбросе фильтров сортировки: {e}")
             await callback.answer(MText.get("filters_reset_error"), show_alert=True)
 
-@router.callback_query(F.data == "sort_inventory")
+@router.callback_query(F.data.startswith("sort_inventory"))
 async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора способа сортировки инвентаря."""
     try:
@@ -238,7 +238,7 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
         selected_verse_name = data.get('selected_verse_name', None)
         selected_rarity_name = data.get('selected_rarity_name', None)
 
-        kb = await sort_inventory_kb(selected_rarity_name,selected_verse_name)
+        kb = await sort_inventory_kb(selected_rarity_name, selected_verse_name, mode=("standart" if callback.data == "sort_inventory_s" else "trade"))
 
         # Проверяем, есть ли фото в текущем сообщении
         if callback.message.photo or callback.message.media_group_id:

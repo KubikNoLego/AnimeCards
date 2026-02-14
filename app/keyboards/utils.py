@@ -37,22 +37,27 @@ class RarityFilter(CallbackData, prefix="rf"):
     """Данные обратного вызова для кнопок фильтра по редкости."""
     rarity_name: str
 
+class TradePagination(CallbackData,prefix="tp"):
+    p: int
+
 async def main_kb():
     """Создать главную клавиатуру ответов.
 
     Returns:
         ReplyKeyboardMarkup с основными кнопками
     """
-    buttons = ["🌐 Открыть карту", "👤 Профиль", "🏆 Топ игроков", "🔗 Реферальная ссылка","🛒 Магазин", "💎 Купить VIP","🛡️ Клан"]
+    buttons = ["🌐 Открыть карту", "👤 Профиль", "🏆 Топ игроков", "🔗 Реферальная ссылка","🛒 Магазин", "💎 Купить VIP","🔁 Трейды","🛡️ Клан"]
     builder = ReplyKeyboardBuilder()
     [builder.button(text=item) for item in buttons]
-    builder.adjust(2, 3, 1)
+    builder.adjust(2, 3, 2, 1)
 
     return builder.as_markup(resize_keyboard=True, input_field_placeholder=("💫" if randint(1, 1000) == 777 else "Меню 🌟"))
 
-async def sort_inventory_kb(selected_rarity_name,selected_verse_name):
+async def sort_inventory_kb(selected_rarity_name,selected_verse_name,mode = "standart"):
 
     builder = InlineKeyboardBuilder()
+
+    callback = Pagination if mode == "standart" else TradePagination
 
     if selected_rarity_name:
         builder.button(text=f"📊 По редкости ({selected_rarity_name})", callback_data="sort_by_rarity", style = "success")
@@ -64,9 +69,10 @@ async def sort_inventory_kb(selected_rarity_name,selected_verse_name):
     else:
         builder.button(text="🌌 По вселенной", callback_data=VerseFilterPagination(p=1).pack())
 
-    builder.button(text="🔄 Сбросить фильтры", callback_data="reset_sort_filters", style = "danger")
-    builder.button(text="✅ Применить фильтры", callback_data=Pagination(p=1).pack(), style = "success")
+    builder.button(text="🔄 Сбросить фильтры", callback_data="reset_sort_filters" + ("_s" if mode == "standart" else "_t"), style = "danger")
+    builder.button(text="✅ Применить фильтры", callback_data=callback(p=1).pack(), style = "success")
     builder.adjust(2, 1, 1)
+
 
     return builder.as_markup()
 
@@ -78,9 +84,16 @@ async def clan_invite_kb(clan_id: int):
 
     return builder.as_markup()
 
-async def pagination_keyboard(current_page: int, total_pages: int):
+async def trade_start():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="👉 Выбрать карту", callback_data=TradePagination(p=1).pack())
+    return builder.as_markup()
+
+async def pagination_keyboard(current_page: int, total_pages: int, mode: str = "standart"):
     """Инлайн-клавиатура пагинации."""
     builder = InlineKeyboardBuilder()
+
+    callback = Pagination if mode == "standart" else TradePagination
 
     prev_100_active = current_page > 100
     prev_10_active = current_page > 10
@@ -92,24 +105,24 @@ async def pagination_keyboard(current_page: int, total_pages: int):
     buttons = []
 
     if prev_100_active:
-        buttons.append(("««", Pagination(p=current_page-100).pack(), "primary"))
+        buttons.append(("««", callback(p=current_page-100).pack(), "primary"))
 
     if prev_10_active:
-        buttons.append(("‹", Pagination(p=current_page-10).pack(), "primary"))
+        buttons.append(("‹", callback(p=current_page-10).pack(), "primary"))
 
     if prev_1_active:
-        buttons.append(("←", Pagination(p=current_page-1).pack(), "primary"))
+        buttons.append(("←", callback(p=current_page-1).pack(), "primary"))
 
     buttons.append((f"{current_page}/{total_pages}", "pass"))
 
     if next_1_active:
-        buttons.append(("→", Pagination(p=current_page+1).pack(), "primary"))
+        buttons.append(("→", callback(p=current_page+1).pack(), "primary"))
 
     if next_10_active:
-        buttons.append(("›", Pagination(p=current_page+10).pack(), "primary"))
+        buttons.append(("›", callback(p=current_page+10).pack(), "primary"))
 
     if next_100_active:
-        buttons.append(("»»", Pagination(p=current_page+100).pack(), "primary"))
+        buttons.append(("»»", callback(p=current_page+100).pack(), "primary"))
 
     for item in buttons:
         if len(item) == 3:
@@ -119,8 +132,8 @@ async def pagination_keyboard(current_page: int, total_pages: int):
             text, callback_data = item
             builder.button(text=text, callback_data=callback_data)
 
-    builder.button(text="✂️ Сортировка", callback_data="sort_inventory", style = "success")
-    builder.adjust(len(buttons),1)
+    builder.button(text="✂️ Сортировка", callback_data="sort_inventory" + ("_s" if mode == "standart" else "_t"), style = "success")
+    builder.adjust(len(buttons), 1)
 
     return builder.as_markup()
 

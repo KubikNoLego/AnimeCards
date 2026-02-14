@@ -12,7 +12,3 @@ wheels/
 database.db
 log.txt
 create_cards.py
-
-# Alembic migrations
-migrations/
-alembic.ini

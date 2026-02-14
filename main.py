@@ -27,7 +27,7 @@ logger.remove()
 logger.add("log.txt", rotation="10 MB", encoding="utf-8", level="INFO")
 
 bot = Bot(config.BOT_TOKEN.get_secret_value(),default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-dp = Dispatcher(storage=RedisStorage.from_url(config.REDIS_URL.get_secret_value(), state_ttl=timedelta(days=7)))
+dp = Dispatcher(storage=RedisStorage.from_url(config.REDIS_URL.get_secret_value(), state_ttl=timedelta(days=3), data_ttl = timedelta(3)))
 
 
 _engine = create_async_engine(
