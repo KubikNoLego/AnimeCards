@@ -29,7 +29,6 @@ def admin_kb():
     builder.button(text="⭐ VIP управление")
     builder.button(text="📋 Список пользователей")
     builder.button(text="📢 Рассылка")
-    builder.button(text="🔙 Выход")
     builder.adjust(2, 2, 1, 1)
     return builder.as_markup(resize_keyboard=True)
 
@@ -391,19 +390,6 @@ async def user_list(message: Message, session: AsyncSession):
         text += f"• {escape(user.name)}{vip_mark}{clan_mark} - ID: {user.id}\n"
     
     await message.answer(text, parse_mode="HTML")
-
-
-@router.message(F.text == "🔙 Выход", Private())
-async def admin_exit(message: Message):
-    """Выход из админ-панели"""
-    if message.from_user.id != ADMIN_ID:
-        return
-    
-    await message.answer(
-        "👋 <b>Вы вышли из админ-панели</b>",
-        parse_mode="HTML"
-    )
-
 
 # Обработчики callback-кнопок для управления пользователями
 @router.callback_query(F.data.startswith("adm_bal_"))

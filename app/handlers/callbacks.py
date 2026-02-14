@@ -306,7 +306,7 @@ async def shop_item_callback(callback: CallbackQuery, callback_data: ShopItemCal
         card_info = MText.get("card").format(name=card.name,
                                             verse=card.verse_name,
                                             rarity=card.rarity_name,
-                                            value=str(card.value)+f"\n\nЦена покупки: {int(card.value * 1.7)}")
+                                            value=str(card.value)) + f"\n\nЦена покупки: {int(card.value * 1.7)} ¥"
 
         try:
             await callback.message.answer_photo(

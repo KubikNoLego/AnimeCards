@@ -229,3 +229,16 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
 async def _(message: Message, command: CommandObject,session: AsyncSession):
     if message.from_user.id == 5027089008:
         MText.reload()
+
+@router.message(Command("top"))
+async def _(message: Message, session: AsyncSession):
+    db = DB(session)
+    user = await db.get_user(message.from_user.id)
+    if user:
+        top_players_balance = await db.get_top_players_by_balance()
+        text_balance = MText.top_players_formatter(top_players_balance, user.id)
+
+        await message.answer(text_balance)
+    else:
+        text = MText.get("not_user").format(name=message.from_user.full_name)
+        await message.reply(text)
