@@ -370,13 +370,13 @@ async def _(message: Message, session: AsyncSession):
 @router.message(F.text == "🔁 Трейды")
 async def _(message: Message, session: AsyncSession):
     db = DB(session)
-    user: User = db.get_user(message.from_user.id)
+    user: User = await db.get_user(message.from_user.id)
 
     if len(user.inventory) == 0:
         ...
         return
 
-    text = MText.get(...)
+    text = MText.get("trade")
 
     await message.answer(text, reply_markup=await trade_start())
 

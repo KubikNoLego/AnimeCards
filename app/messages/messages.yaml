@@ -242,6 +242,9 @@ success_messages:
 
     <i>Приглашайте друзей и получайте бонусы от {award} йен за каждого!</i>
 
+  trade: |-
+    Трейд...
+
 error_messages:
   # Реферальная система
   not_user_id: |-

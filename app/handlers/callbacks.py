@@ -214,7 +214,7 @@ async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext
         await state.clear()
 
         builder = InlineKeyboardBuilder()
-        builder.button(text="🔙 Назад к сортировке", callback_data= ("sort_inventory_s" if callback.data == "reset_sort_filters_s" else "sort_inventory_t"))
+        builder.button(text="🔙 Назад к сортировке", callback_data= ("sort_inventory_0" if callback.data == "reset_sort_filters_0" else "sort_inventory_1"))
         builder.adjust(1)
 
         # Обновляем сообщение с подтверждением сброса
@@ -238,7 +238,7 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
         selected_verse_name = data.get('selected_verse_name', None)
         selected_rarity_name = data.get('selected_rarity_name', None)
 
-        kb = await sort_inventory_kb(selected_rarity_name, selected_verse_name, mode=("standart" if callback.data == "sort_inventory_s" else "trade"))
+        kb = await sort_inventory_kb(selected_rarity_name, selected_verse_name, mode=(0 if callback.data == "sort_inventory_0" else 1))
 
         # Проверяем, есть ли фото в текущем сообщении
         if callback.message.photo or callback.message.media_group_id:
@@ -561,7 +561,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
 
                 # Создаем клавиатуру с кнопкой возврата к сортировке
                 builder = InlineKeyboardBuilder()
-                builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory")
+                builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory" + ("_0" if callback_data.m == 0 else "_1"))
                 builder.adjust(1)
 
                 # Очищаем данные FSM
@@ -578,7 +578,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
 
             # Проверка валидности индекса карты для отфильтрованного списка
             if 0 <= card_index < len(filtered_cards):
-                await show_inventory_card(callback, user, card_index, filtered_cards)
+                await show_inventory_card(callback, user, card_index, filtered_cards,callback_data.m)
             else:
                 logger.warning(f"Неверный индекс карты: {callback_data.p} для пользователя {user.id}")
                 await callback.message.answer(MText.get("inventory_empty"))
@@ -589,7 +589,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
             logger.error(f"Ошибка при обработке callback пагинации инвентаря: {e}")
             await callback.answer(MText.get("processing_error"), show_alert=True)
 
-async def show_inventory_card(callback: CallbackQuery, user: User, card_index: int, filtered_cards: list = None):
+async def show_inventory_card(callback: CallbackQuery, user: User, card_index: int, filtered_cards: list = None, mode: int = 0):
     """Отображение конкретной карты из инвентаря пользователя."""
     # Используем отфильтрованный список или полный инвентарь
     cards = filtered_cards if filtered_cards is not None else user.inventory
@@ -602,7 +602,7 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
                                             value=card.value)
     card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
-    keyboard = await pagination_keyboard(card_index + 1, len(cards))
+    keyboard = await pagination_keyboard(card_index + 1, len(cards),mode)
     try:
         await callback.message.edit_media(
             media=InputMediaPhoto(media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}")),
