@@ -365,6 +365,10 @@ async def _(message: Message, session: AsyncSession):
     except Exception as e:
         await message.reply(MText.get("profile_error"))
 
+@router.message(F.text == "⏫ Улучшить карту")
+async def _(message: Message, session: AsyncSession):
+    await message.answer(...,reply_markup=...)
+
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):
     db = DB(session)

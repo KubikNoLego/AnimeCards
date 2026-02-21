@@ -43,7 +43,7 @@ async def main_kb():
     Returns:
         ReplyKeyboardMarkup с основными кнопками
     """
-    buttons = ["🌐 Открыть карту", "👤 Профиль", "🏆 Топ игроков", "🔗 Реферальная ссылка","🛒 Магазин", "💎 Купить VIP","🛡️ Клан"]
+    buttons = ["🌐 Открыть карту", "👤 Профиль", "🏆 Топ игроков", "🔗 Реферальная ссылка","🛒 Магазин", "💎 Купить VIP","⏫ Улучшить карту","🛡️ Клан"]
     builder = ReplyKeyboardBuilder()
     [builder.button(text=item) for item in buttons]
     builder.adjust(2, 3, 1)
@@ -69,6 +69,9 @@ async def sort_inventory_kb(selected_rarity_name,selected_verse_name):
     builder.adjust(2, 1, 1)
 
     return builder.as_markup()
+
+async def start_upgrade():
+    ...
 
 async def clan_invite_kb(clan_id: int):
     builder = InlineKeyboardBuilder()
