@@ -5,6 +5,8 @@ from html import escape
 import re
 import os
 
+from app.keyboards.utils import upgrade_start
+
 
 # Создаем таймзону для Москвы (UTC+3)
 MSK_TIMEZONE = timezone(timedelta(hours=3))
@@ -367,7 +369,7 @@ async def _(message: Message, session: AsyncSession):
 
 @router.message(F.text == "⏫ Улучшить карту")
 async def _(message: Message, session: AsyncSession):
-    await message.answer(...,reply_markup=...)
+    await message.answer("...",reply_markup= await upgrade_start())
 
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):

@@ -537,7 +537,11 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
     """Обработчик callback для пагинации инвентаря с фильтрацией."""
     try:
 
-        user = await DB(session).get_user(callback.from_user.id)
+        db = DB(session)
+
+        user = await db.get_user(callback.from_user.id)
+
+
 
         if user and user.inventory and len(user.inventory) > 0:
             # Получаем текущие фильтры из FSM
@@ -550,9 +554,14 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
                 conditions.append(Card.rarity_name == selected_rarity_name)
             if selected_verse_name:
                 conditions.append(Card.verse_name == selected_verse_name)
+
+                conditions.append(Card.shiny == False)
             
             stmt = select(Card).join(UserCards).where(and_(*conditions))
             filtered_cards = await session.scalars(stmt)
+            if callback_data.m == 2:
+                filtered_cards = await db.get_missing_shiny_cards(user.id)
+
             filtered_cards = filtered_cards.all()
 
             if not filtered_cards:
@@ -578,7 +587,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
 
             # Проверка валидности индекса карты для отфильтрованного списка
             if 0 <= card_index < len(filtered_cards):
-                await show_inventory_card(callback, user, card_index, filtered_cards)
+                await show_inventory_card(callback, user, card_index, filtered_cards,callback_data.m)
             else:
                 logger.warning(f"Неверный индекс карты: {callback_data.p} для пользователя {user.id}")
                 await callback.message.answer(MText.get("inventory_empty"))
@@ -589,7 +598,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
             logger.error(f"Ошибка при обработке callback пагинации инвентаря: {e}")
             await callback.answer(MText.get("processing_error"), show_alert=True)
 
-async def show_inventory_card(callback: CallbackQuery, user: User, card_index: int, filtered_cards: list = None):
+async def show_inventory_card(callback: CallbackQuery, user: User, card_index: int, filtered_cards: list = None, mode = 0):
     """Отображение конкретной карты из инвентаря пользователя."""
     # Используем отфильтрованный список или полный инвентарь
     cards = filtered_cards if filtered_cards is not None else user.inventory
@@ -602,7 +611,7 @@ async def show_inventory_card(callback: CallbackQuery, user: User, card_index: i
                                             value=card.value)
     card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
-    keyboard = await pagination_keyboard(card_index + 1, len(cards))
+    keyboard = await pagination_keyboard(card_index + 1, len(cards),mode)
     try:
         await callback.message.edit_media(
             media=InputMediaPhoto(media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}")),
