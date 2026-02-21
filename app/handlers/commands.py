@@ -238,7 +238,7 @@ async def _(message: Message, session: AsyncSession):
         top_players_balance = await db.get_top_players_by_balance()
         text_balance = MText.top_players_formatter(top_players_balance, user.id)
 
-        await message.answer(text_balance, disable_notification=True)
+        await message.answer(text_balance, disable_notification=True, disable_web_page_preview=True)
     else:
         text = MText.get("not_user").format(name=message.from_user.full_name)
         await message.reply(text)

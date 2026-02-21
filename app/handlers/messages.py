@@ -307,7 +307,7 @@ async def _(message: Message, session: AsyncSession):
         text_balance = MText.top_players_formatter(top_players_balance, user.id)
 
         # Отправляем только топ по балансу
-        await message.answer(text_balance, disable_notification=True)
+        await message.answer(text_balance, disable_notification=True, disable_web_page_preview=True)
     else:
         text = MText.get("not_user").format(name=message.from_user.full_name)
         await message.reply(text)
