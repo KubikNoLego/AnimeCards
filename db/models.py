@@ -160,3 +160,10 @@ class Clan(Base):
     invitations: Mapped[list["ClanInvitation"]] = relationship("ClanInvitation", back_populates="clan", lazy="selectin", cascade="all, delete-orphan")
 
     balance: Mapped[int] = mapped_column(Integer, default=0)
+
+class Trade(Base):
+    __tablename__ = "trades"
+
+    id: Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
+    card_id: Mapped[int] = mapped_column(Integer, ForeignKey("cards.id"))
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))

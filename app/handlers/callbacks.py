@@ -24,6 +24,22 @@ from app.StateGroups.states import ChangeDescribe,CreateClan,ClanLeader
 
 router = Router()
 
+
+@router.callback_query(F.data.startswith("tr:"))
+async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
+    db = DB(session)
+    
+    user = await db.get_user(callback.from_user.id)
+    card = user.inventory[int(callback.data[3::])-1]
+    
+    if card.value * 0.4 < user.balance:
+        return
+    
+    user.balance -= int(card.value * 0.4)
+    await session.commit()
+    
+    print("Доделать отсюда")
+
 @router.callback_query(F.data.startswith("delete_clan"))
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     db = DB(session)
