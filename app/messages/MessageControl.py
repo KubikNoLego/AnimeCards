@@ -67,7 +67,10 @@ class Messages:
             end_highlight = "</i></b>" if player.id == user_id else ""
 
             # Создаем кликабельную ссылку на профиль пользователя
-            player_link = f'<a href="tg://user?id={player.id}">{escape(player.name)}</a>'
+            if player.username:
+                player_link = f'<a href="t.me:/{player.username}">{escape(player.name)}</a>'
+            else:
+                player_link = ""
             player_info = f"{place_emoji} {highlight}{player_link} — {player.balance} ¥{end_highlight}"
             players_text.append(player_info)
 
