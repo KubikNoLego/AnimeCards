@@ -6,6 +6,7 @@ from random import randint
 class Pagination(CallbackData, prefix="p"):
     """Данные обратного вызова для кнопок пагинации."""
     p: int
+    m: int
 
 class VerseFilterPagination(CallbackData, prefix="vfpg"):
     """Данные обратного вызова для кнопок пагинации фильтра по вселенной."""
@@ -36,12 +37,46 @@ async def main_kb():
 
     return builder.as_markup(resize_keyboard=True, input_field="Привет!" if randint(1, 1000) == 777 else "...")
 
-async def pagination_keyboard(current_page: int, total_pages: int):
+async def sort_inventory_kb(selected_rarity_name, selected_verse_name, mode: int = 0):
+
+    builder = InlineKeyboardBuilder()
+
+    if selected_rarity_name:
+        builder.button(text=f"📊 По редкости ({selected_rarity_name})", callback_data="sort_by_rarity", style = "success")
+    else:
+        builder.button(text="📊 По редкости", callback_data="sort_by_rarity")
+
+    if selected_verse_name:
+        builder.button(text=f"🌌 По вселенной ({selected_verse_name})", callback_data=VerseFilterPagination(p=1).pack(), style = "success")
+    else:
+        builder.button(text="🌌 По вселенной", callback_data=VerseFilterPagination(p=1).pack())
+
+    builder.button(text="🔄 Сбросить фильтры", callback_data="reset_sort_filters" + ("_0" if mode == 0 else "_1" if mode == 1 else "_2"), style = "danger")
+    builder.button(text="✅ Применить фильтры", callback_data=Pagination(p=1, m=mode).pack(), style = "success")
+    builder.adjust(2, 1, 1)
+
+    return builder.as_markup()
+
+async def trade_start():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="👉 Выбрать карту", callback_data=Pagination(p=1, m=1).pack())
+    return builder.as_markup()
+
+async def upgrade_start():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="⏫ Выбрать карту", callback_data=Pagination(p=1, m=2).pack())
+    return builder.as_markup()
+
+async def pagination_keyboard(current_page: int, total_pages: int, mode: int = 0):
+    #mode 0 - простая пагинация
+    #mode 1 - пагинация для трейда
+    #mode 2 - пагинация для улучшения карт
     """Создать инлайн-клавиатуру пагинации.
 
     Args:
         current_page: Текущий номер страницы
         total_pages: Общее количество страниц
+        mode: Режим пагинации (0 - инвентарь, 1 - трейд, 2 - улучшение)
 
     Returns:
         InlineKeyboardMarkup с кнопками пагинации
@@ -58,30 +93,32 @@ async def pagination_keyboard(current_page: int, total_pages: int):
     buttons = []
 
     if prev_100_active:
-        buttons.append(("««", Pagination(p=current_page-100).pack()))
+        buttons.append(("««", Pagination(p=current_page-100, m=mode).pack()))
 
     if prev_10_active:
-        buttons.append(("‹", Pagination(p=current_page-10).pack()))
+        buttons.append(("‹", Pagination(p=current_page-10, m=mode).pack()))
 
     if prev_1_active:
-        buttons.append(("←", Pagination(p=current_page-1).pack()))
+        buttons.append(("←", Pagination(p=current_page-1, m=mode).pack()))
 
     buttons.append((f"{current_page}/{total_pages}", "pass"))
 
     if next_1_active:
-        buttons.append(("→", Pagination(p=current_page+1).pack()))
+        buttons.append(("→", Pagination(p=current_page+1, m=mode).pack()))
 
     if next_10_active:
-        buttons.append(("›", Pagination(p=current_page+10).pack()))
+        buttons.append(("›", Pagination(p=current_page+10, m=mode).pack()))
 
     if next_100_active:
-        buttons.append(("»»", Pagination(p=current_page+100).pack()))
+        buttons.append(("»»", Pagination(p=current_page+100, m=mode).pack()))
 
     for text, callback_data in buttons:
         builder.button(text=text, callback_data=callback_data)
 
-    builder.button(text="✂️ Сортировка", callback_data="sort_inventory")
-    builder.adjust(len(buttons),1)
+    builder.button(text="✂️ Сортировка", callback_data="sort_inventory" + ("_0" if mode == 0 else "_1" if mode == 1 else "_2"), style = "success")
+    if mode == 1: builder.button(text="✅ Выбрать", callback_data=f"tr:{current_page}")
+    if mode == 2: builder.button(text="⏫ Улучшить", callback_data=f"up:{current_page}")
+    builder.adjust(len(buttons), 1)
 
     return builder.as_markup()
 
