@@ -20,6 +20,7 @@ class MemberPagination(CallbackData, prefix="pc"):
 class Pagination(CallbackData, prefix="p"):
     """Данные обратного вызова для кнопок пагинации."""
     p: int
+    m: int
 
 class VerseFilterPagination(CallbackData, prefix="vfpg"):
     """Данные обратного вызова для кнопок пагинации фильтра по вселенной."""
@@ -50,7 +51,7 @@ async def main_kb():
 
     return builder.as_markup(resize_keyboard=True, input_field_placeholder=("💫" if randint(1, 1000) == 777 else "Меню 🌟"))
 
-async def sort_inventory_kb(selected_rarity_name,selected_verse_name):
+async def sort_inventory_kb(selected_rarity_name,selected_verse_name,mode: int = 0):
 
     builder = InlineKeyboardBuilder()
 
@@ -64,14 +65,16 @@ async def sort_inventory_kb(selected_rarity_name,selected_verse_name):
     else:
         builder.button(text="🌌 По вселенной", callback_data=VerseFilterPagination(p=1).pack())
 
-    builder.button(text="🔄 Сбросить фильтры", callback_data="reset_sort_filters", style = "danger")
-    builder.button(text="✅ Применить фильтры", callback_data=Pagination(p=1).pack(), style = "success")
+    builder.button(text="🔄 Сбросить фильтры", callback_data="reset_sort_filters" + ("_0" if mode == 0 else "_1" if mode == 1 else "_2"), style = "danger")
+    builder.button(text="✅ Применить фильтры", callback_data=Pagination(p=1,m=mode).pack(), style = "success")
     builder.adjust(2, 1, 1)
 
     return builder.as_markup()
 
-async def start_upgrade():
-    ...
+async def upgrade_start():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="⏫ Выбрать карту", callback_data=Pagination(p=1,m=2).pack())
+    return builder.as_markup()
 
 async def clan_invite_kb(clan_id: int):
     builder = InlineKeyboardBuilder()
@@ -81,7 +84,10 @@ async def clan_invite_kb(clan_id: int):
 
     return builder.as_markup()
 
-async def pagination_keyboard(current_page: int, total_pages: int):
+async def pagination_keyboard(current_page: int, total_pages: int, mode: int = 0):
+    #mode 0 - простая пагинация
+    #mode 1 - пагинация для трейда
+    #mode 2 - пагинация для улучшения карт
     """Инлайн-клавиатура пагинации."""
     builder = InlineKeyboardBuilder()
 
@@ -95,24 +101,24 @@ async def pagination_keyboard(current_page: int, total_pages: int):
     buttons = []
 
     if prev_100_active:
-        buttons.append(("««", Pagination(p=current_page-100).pack(), "primary"))
+        buttons.append(("««", Pagination(p=current_page-100,m=mode).pack(), "primary"))
 
     if prev_10_active:
-        buttons.append(("‹", Pagination(p=current_page-10).pack(), "primary"))
+        buttons.append(("‹", Pagination(p=current_page-10,m=mode).pack(), "primary"))
 
     if prev_1_active:
-        buttons.append(("←", Pagination(p=current_page-1).pack(), "primary"))
+        buttons.append(("←", Pagination(p=current_page-1,m=mode).pack(), "primary"))
 
     buttons.append((f"{current_page}/{total_pages}", "pass"))
 
     if next_1_active:
-        buttons.append(("→", Pagination(p=current_page+1).pack(), "primary"))
+        buttons.append(("→", Pagination(p=current_page+1,m=mode).pack(), "primary"))
 
     if next_10_active:
-        buttons.append(("›", Pagination(p=current_page+10).pack(), "primary"))
+        buttons.append(("›", Pagination(p=current_page+10,m=mode).pack(), "primary"))
 
     if next_100_active:
-        buttons.append(("»»", Pagination(p=current_page+100).pack(), "primary"))
+        buttons.append(("»»", Pagination(p=current_page+100,m=mode).pack(), "primary"))
 
     for item in buttons:
         if len(item) == 3:
@@ -122,8 +128,10 @@ async def pagination_keyboard(current_page: int, total_pages: int):
             text, callback_data = item
             builder.button(text=text, callback_data=callback_data)
 
-    builder.button(text="✂️ Сортировка", callback_data="sort_inventory", style = "success")
-    builder.adjust(len(buttons),1)
+    builder.button(text="✂️ Сортировка", callback_data="sort_inventory" + ("_0" if mode == 0 else "_1" if mode == 1 else "_2"), style = "success")
+    if mode == 1: builder.button(text="✅ Выбрать", callback_data=f"tr:{current_page}")
+    if mode == 2: builder.button(text="⏫ Улучшить", callback_data=f"up:{current_page}")
+    builder.adjust(len(buttons), 1)
 
     return builder.as_markup()
 
