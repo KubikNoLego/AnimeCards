@@ -129,6 +129,7 @@ async def pagination_keyboard(current_page: int, total_pages: int, mode: int = 0
             builder.button(text=text, callback_data=callback_data)
 
     builder.button(text="✂️ Сортировка", callback_data="sort_inventory" + ("_0" if mode == 0 else "_1"), style = "success")
+    if mode == 1: builder.button(text="✅ Выбрать", callback_data=f"tr:{current_page}")
     builder.adjust(len(buttons), 1)
 
     return builder.as_markup()
