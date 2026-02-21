@@ -40,7 +40,6 @@ async def upgrade_card_callback(callback: CallbackQuery, session: AsyncSession, 
         
         # Получаем список недостающих Shiny карт
         missing_shiny_cards = await db.get_missing_shiny_cards(user.id)
-        missing_shiny_cards = missing_shiny_cards.all()
         
         if not missing_shiny_cards:
             await callback.answer(MText.get("no_cards_to_upgrade"), show_alert=True)
@@ -62,6 +61,8 @@ async def upgrade_card_callback(callback: CallbackQuery, session: AsyncSession, 
         
         # Добавляем Shiny карту в инвентарь пользователя
         user.inventory.append(shiny_card)
+        if int(shiny_card.value*2) > user.balance:
+            return
         user.balance -= int(shiny_card.value*2)
         await session.commit()
         
@@ -632,13 +633,21 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
             if selected_verse_name:
                 conditions.append(Card.verse_name == selected_verse_name)
             
-            stmt = select(Card).join(UserCards).where(and_(*conditions))
-            filtered_cards = await session.scalars(stmt)
             mode = callback_data.m
             if mode == 2:
-                filtered_cards = await db.get_missing_shiny_cards(user.id)
-
-            filtered_cards = filtered_cards.all()
+                # Режим улучшения карт - получаем недостающие Shiny карты
+                filtered_cards = await db.get_missing_shiny_cards(user.id, selected_verse_name, selected_rarity_name)
+            else:
+                # Обычный режим - фильтруем инвентарь пользователя
+                conditions = [UserCards.user_id == user.id]
+                if selected_rarity_name:
+                    conditions.append(Card.rarity_name == selected_rarity_name)
+                if selected_verse_name:
+                    conditions.append(Card.verse_name == selected_verse_name)
+                
+                stmt = select(Card).join(UserCards).where(and_(*conditions))
+                filtered_cards = await session.scalars(stmt)
+                filtered_cards = filtered_cards.all()
 
             if not filtered_cards:
                 # Если нет карт, соответствующих фильтрам

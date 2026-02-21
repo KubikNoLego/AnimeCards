@@ -289,6 +289,7 @@ class DB:
         """
         Возвращает список кортежей (обычная карта, её шайни версия)
         для карт пользователя, у которых есть шайни версия в базе.
+        Учитывает name, verse_name и rarity_name.
         """
         try:
             cards = await self.__session.scalars(
@@ -303,6 +304,7 @@ class DB:
                     select(Card).filter(
                         Card.name == card.name,
                         Card.verse_name == card.verse_name,
+                        Card.rarity_name == card.rarity_name,
                         Card.shiny == True
                     )
                 )
@@ -315,10 +317,11 @@ class DB:
             logger.exception(f"Ошибка при получении карт с шайни версией для user_id={user_id}: {exc}")
             return []
 
-    async def get_missing_shiny_cards(self, user_id: int) -> list[Card]:
+    async def get_missing_shiny_cards(self, user_id: int, selected_verse_name: str = None, selected_rarity_name: str = None) -> list[Card]:
         """
         Возвращает шайни карты, которых нет у пользователя,
         но которые можно получить (есть обычная версия в инвентаре).
+        Учитывает name, verse_name и rarity_name.
         """
         try:
             # Подзапрос: ID шайни карт пользователя
@@ -329,33 +332,59 @@ class DB:
                 .distinct()
             )
             
-            # ID обычных карт пользователя
-            user_normal_cards_subquery = (
-                select(Card.id)
+            # Получаем все обычные карты пользователя с их name, verse_name и rarity_name
+            user_normal_cards = await self.__session.scalars(
+                select(Card)
                 .join(UserCards)
                 .filter(UserCards.user_id == user_id, Card.shiny == False)
             )
+            user_normal_cards = user_normal_cards.all()
+            
+            # Создаем множество кортежей (name, verse_name, rarity_name) для сопоставления
+            user_normal_keys = set()
+            for card in user_normal_cards:
+                user_normal_keys.add((card.name, card.verse_name, card.rarity_name))
             
             # Все шайни карты, которых нет у пользователя
-            # и для которых у него есть обычная версия
-            stmt = (
-                select(Card)
-                .filter(
-                    Card.shiny == True,
-                    ~Card.id.in_(user_shiny_subquery),
-                    # Сопоставляем по name и verse_name
-                    Card.name.in_(
-                        select(Card.name)
+            # и для которых у него есть обычная версия с той же редкостью
+            all_shiny_cards = await self.__session.scalars(
+                select(Card).filter(Card.shiny == True)
+            )
+            all_shiny_cards = all_shiny_cards.all()
+            
+            # Фильтруем: оставляем только те Shiny карты, 
+            # которые не owned пользователем 
+            # и для которых есть обычная версия с той же редкостью
+            missing_shiny = []
+            for shiny_card in all_shiny_cards:
+                key = (shiny_card.name, shiny_card.verse_name, shiny_card.rarity_name)
+                # Проверяем, что у пользователя есть обычная версия с той же редкостью
+                # и что у него нет этой Shiny карты
+                if key in user_normal_keys and shiny_card.id not in [c.id for c in user_normal_cards]:
+                    # Дополнительно проверим, что Shiny карта не в инвентаре пользователя
+                    user_has_shiny = await self.__session.scalar(
+                        select(Card)
+                        .join(UserCards)
                         .filter(
-                            Card.id.in_(user_normal_cards_subquery),
-                            Card.shiny == False
+                            UserCards.user_id == user_id,
+                            Card.id == shiny_card.id
                         )
                     )
-                )
-                .distinct()
-            )
+                    if not user_has_shiny:
+                        missing_shiny.append(shiny_card)
             
-            return await self.__session.scalars(stmt)
+            # Применяем фильтры если они выбраны
+            if selected_verse_name:
+                missing_shiny = [c for c in missing_shiny if c.verse_name == selected_verse_name]
+            if selected_rarity_name:
+                missing_shiny = [c for c in missing_shiny if c.rarity_name == selected_rarity_name]
+            
+            # Сортируем по verse_name (по алфавиту), затем по rarity_name
+            rarity_order = {"Обычный": 0, "Редкий": 1, "Легендарный": 2, "Мифический": 3, "Хроно": 4}
+            missing_shiny.sort(key=lambda card: (card.verse_name, rarity_order.get(card.rarity_name, 5), card.name))
+            
+            return missing_shiny
+            
         except Exception as exc:
             logger.exception(f"Ошибка при получении недостающих шайни карт для user_id={user_id}: {exc}")
             return []
