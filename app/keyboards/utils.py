@@ -25,6 +25,7 @@ class Pagination(CallbackData, prefix="p"):
 class VerseFilterPagination(CallbackData, prefix="vfpg"):
     """Данные обратного вызова для кнопок пагинации фильтра по вселенной."""
     p: int
+    m: int = 0
 
 class VerseFilter(CallbackData, prefix="vf"):
     """Данные обратного вызова для кнопок фильтра по вселенной."""
@@ -33,6 +34,7 @@ class VerseFilter(CallbackData, prefix="vf"):
 class RarityFilterPagination(CallbackData, prefix="rfpg"):
     """Данные обратного вызова для кнопок пагинации фильтра по редкости."""
     p: int
+    m: int = 0
 
 class RarityFilter(CallbackData, prefix="rf"):
     """Данные обратного вызова для кнопок фильтра по редкости."""
@@ -56,16 +58,16 @@ async def sort_inventory_kb(selected_rarity_name,selected_verse_name,mode: int =
     builder = InlineKeyboardBuilder()
 
     if selected_rarity_name:
-        builder.button(text=f"📊 По редкости ({selected_rarity_name})", callback_data="sort_by_rarity", style = "success")
+        builder.button(text=f"📊 По редкости ({selected_rarity_name})", callback_data=f"sort_by_rarity_{mode}", style = "success")
     else:
-        builder.button(text="📊 По редкости", callback_data="sort_by_rarity")
+        builder.button(text="📊 По редкости", callback_data=f"sort_by_rarity_{mode}")
 
     if selected_verse_name:
-        builder.button(text=f"🌌 По вселенной ({selected_verse_name})", callback_data=VerseFilterPagination(p=1).pack(), style = "success")
+        builder.button(text=f"🌌 По вселенной ({selected_verse_name})", callback_data=VerseFilterPagination(p=1, m=mode).pack(), style = "success")
     else:
-        builder.button(text="🌌 По вселенной", callback_data=VerseFilterPagination(p=1).pack())
+        builder.button(text="🌌 По вселенной", callback_data=VerseFilterPagination(p=1, m=mode).pack())
 
-    builder.button(text="🔄 Сбросить фильтры", callback_data="reset_sort_filters" + ("_0" if mode == 0 else "_1" if mode == 1 else "_2"), style = "danger")
+    builder.button(text="🔄 Сбросить фильтры", callback_data=f"reset_sort_filters_{mode}", style = "danger")
     builder.button(text="✅ Применить фильтры", callback_data=Pagination(p=1,m=mode).pack(), style = "success")
     builder.adjust(2, 1, 1)
 
@@ -135,7 +137,7 @@ async def pagination_keyboard(current_page: int, total_pages: int, mode: int = 0
 
     return builder.as_markup()
 
-async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
+async def rarity_filter_pagination_keyboard(current_page: int, rarities: list, mode: int = 0):
     """Создать инлайн-клавиатуру пагинации для фильтра по редкости"""
     builder = InlineKeyboardBuilder()
 
@@ -156,11 +158,11 @@ async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
     next_1_active = current_page < pages
 
     if prev_1_active:
-        builder.button(text="←", callback_data=RarityFilterPagination(p=current_page-1).pack())
+        builder.button(text="←", callback_data=RarityFilterPagination(p=current_page-1, m=mode).pack())
     builder.button(text=f"{current_page}/{pages}", callback_data="pass")
     if next_1_active:
-        builder.button(text="→", callback_data=RarityFilterPagination(p=current_page+1).pack())
-    builder.button(text="◀️ Назад", callback_data="sort_inventory")
+        builder.button(text="→", callback_data=RarityFilterPagination(p=current_page+1, m=mode).pack())
+    builder.button(text="◀️ Назад", callback_data=f"sort_inventory_{mode}")
 
     if prev_1_active and next_1_active:
         builder.adjust(3, 3, 3, 1)
@@ -174,7 +176,7 @@ async def rarity_filter_pagination_keyboard(current_page: int, rarities: list):
 async def profile_keyboard(has_describe: bool):
     builder = InlineKeyboardBuilder()
 
-    builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1).pack())
+    builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1,m=0).pack())
     builder.button(text="🖋️ Сменить подпись",callback_data="change_describe")
     if has_describe:
         builder.button(text="❌ Удалить подпись",callback_data="delete_describe",style = "danger")
@@ -183,7 +185,7 @@ async def profile_keyboard(has_describe: bool):
 
     return builder.as_markup()
 
-async def verse_filter_pagination_keyboard(current_page: int, verses: list):
+async def verse_filter_pagination_keyboard(current_page: int, verses: list, mode: int = 0):
     """Создать инлайн-клавиатуру пагинации для фильтра по вселенной"""
     builder = InlineKeyboardBuilder()
 
@@ -205,11 +207,11 @@ async def verse_filter_pagination_keyboard(current_page: int, verses: list):
     next_1_active = current_page < pages
 
     if prev_1_active:
-        builder.button(text="←", callback_data=VerseFilterPagination(p=current_page-1).pack())
+        builder.button(text="←", callback_data=VerseFilterPagination(p=current_page-1, m=mode).pack())
     builder.button(text=f"{current_page}/{pages}", callback_data="pass")
     if next_1_active:
-        builder.button(text="→", callback_data=VerseFilterPagination(p=current_page+1).pack())
-    builder.button(text="◀️ Назад",callback_data="sort_inventory")
+        builder.button(text="→", callback_data=VerseFilterPagination(p=current_page+1, m=mode).pack())
+    builder.button(text="◀️ Назад",callback_data=f"sort_inventory_{mode}")
 
     if prev_1_active and next_1_active:
         builder.adjust(2, 2, 3, 1)

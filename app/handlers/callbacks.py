@@ -24,6 +24,65 @@ from app.StateGroups.states import ChangeDescribe,CreateClan,ClanLeader
 
 router = Router()
 
+@router.callback_query(F.data.startswith("up:"))
+async def upgrade_card_callback(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
+    """Обработчик callback для улучшения карты (получения Shiny версии)."""
+    try:
+        # Извлекаем номер страницы из callback данных
+        page = int(callback.data.split(":")[1])
+        
+        db = DB(session)
+        user = await db.get_user(callback.from_user.id)
+        
+        if not user:
+            await callback.answer(MText.get("user_not_found_short"), show_alert=True)
+            return
+        
+        # Получаем список недостающих Shiny карт
+        missing_shiny_cards = await db.get_missing_shiny_cards(user.id)
+        missing_shiny_cards = missing_shiny_cards.all()
+        
+        if not missing_shiny_cards:
+            await callback.answer(MText.get("no_cards_to_upgrade"), show_alert=True)
+            return
+        
+        # Проверяем валидность индекса
+        card_index = page - 1
+        if card_index < 0 or card_index >= len(missing_shiny_cards):
+            await callback.answer(MText.get("invalid_page"), show_alert=True)
+            return
+        
+        # Получаем Shiny карту для улучшения
+        shiny_card = missing_shiny_cards[card_index]
+        
+        # Проверяем, есть ли уже эта Shiny карта у пользователя
+        if shiny_card in user.inventory:
+            await callback.answer(MText.get("card_already_owned"), show_alert=True)
+            return
+        
+        # Добавляем Shiny карту в инвентарь пользователя
+        user.inventory.append(shiny_card)
+        user.balance -= int(shiny_card.value*2)
+        await session.commit()
+        
+        # Отправляем сообщение об успешном улучшении
+        success_message = MText.get("card_upgraded_success").format(
+            card_name=shiny_card.name,
+            rarity=shiny_card.rarity_name
+        )
+        
+        await callback.message.delete()
+        await callback.message.answer(
+            text=success_message,
+            photo=FSInputFile(path=f"app/icons/{shiny_card.verse.name}/{shiny_card.icon}")
+        )
+        
+        await callback.answer(MText.get("card_upgraded_success_short"))
+        
+    except Exception as e:
+        logger.error(f"Ошибка при улучшении карты: {str(e)}", exc_info=True)
+        await callback.answer(MText.get("upgrade_error"), show_alert=True)
+
 @router.callback_query(F.data.startswith("delete_clan"))
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     db = DB(session)
@@ -205,16 +264,18 @@ async def change_describe_user(callback: CallbackQuery, session: AsyncSession, s
     await state.set_state(ChangeDescribe.text)
     await callback.message.answer(MText.get("change_describe_prompt"))
 
-@router.callback_query(F.data == "reset_sort_filters")
+@router.callback_query(F.data.startswith("reset_sort_filters_"))
 async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext):
-    """Обработчик callback для сброса фильтров сортировки."""
+    """Обработчик callback для сброса фильтров сортировки с учетом режима."""
     try:
+        # Извлекаем режим из callback данных
+        mode = int(callback.data.split("_")[-1])
 
         # Очищаем данные FSM
         await state.clear()
 
         builder = InlineKeyboardBuilder()
-        builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory")
+        builder.button(text="🔙 Назад к сортировке", callback_data=f"sort_inventory_{mode}")
         builder.adjust(1)
 
         # Обновляем сообщение с подтверждением сброса
@@ -227,10 +288,16 @@ async def reset_sort_filters_callback(callback: CallbackQuery, state: FSMContext
             logger.error(f"Ошибка при сбросе фильтров сортировки: {e}")
             await callback.answer(MText.get("filters_reset_error"), show_alert=True)
 
-@router.callback_query(F.data == "sort_inventory")
+@router.callback_query(F.data.startswith("sort_inventory_"))
 async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
-    """Обработчик callback для выбора способа сортировки инвентаря."""
+    """Обработчик callback для выбора способа сортировки инвентаря с учетом режима."""
     try:
+        # Извлекаем режим из callback данных
+        mode = int(callback.data.split("_")[-1])
+        
+        # Сохраняем текущий mode в FSM для использования в фильтрах
+        await state.update_data(current_mode=mode)
+        
         select_sort_message = MText.get("select_sort")
 
         # Получаем текущие выбранные значения из FSM
@@ -238,7 +305,7 @@ async def sort_inventory_callback(callback: CallbackQuery, session: AsyncSession
         selected_verse_name = data.get('selected_verse_name', None)
         selected_rarity_name = data.get('selected_rarity_name', None)
 
-        kb = await sort_inventory_kb(selected_rarity_name,selected_verse_name)
+        kb = await sort_inventory_kb(selected_rarity_name, selected_verse_name, mode)
 
         # Проверяем, есть ли фото в текущем сообщении
         if callback.message.photo or callback.message.media_group_id:
@@ -412,10 +479,11 @@ async def verse_filter_pagination_callback(callback: CallbackQuery, callback_dat
         verses = verses.all()
         total_pages = len(verses)
         current_page = callback_data.p
+        mode = callback_data.m
 
         if 1 <= current_page <= total_pages:
             # Создаем клавиатуру с обновленными кнопками пагинации
-            keyboard = await verse_filter_pagination_keyboard(current_page,verses=verses)
+            keyboard = await verse_filter_pagination_keyboard(current_page, verses=verses, mode=mode)
             # Получаем сообщение из messages.json
             select_universe_message = MText.get("select_universe")
 
@@ -435,6 +503,9 @@ async def verse_filter_pagination_callback(callback: CallbackQuery, callback_dat
 async def verse_filter_callback(callback: CallbackQuery, callback_data: VerseFilter, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора конкретной вселенной."""
     try:
+        # Получаем текущий mode из FSM
+        data = await state.get_data()
+        mode = data.get('current_mode', 0)
 
         # Сохраняем выбранное название вселенной в FSM
         await state.update_data(selected_verse_name=callback_data.verse_name)
@@ -443,7 +514,7 @@ async def verse_filter_callback(callback: CallbackQuery, callback_data: VerseFil
 
         # Создаем клавиатуру для подтверждения выбора
         builder = InlineKeyboardBuilder()
-        builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory")
+        builder.button(text="🔙 Назад к сортировке", callback_data=f"sort_inventory_{mode}")
         builder.adjust(1)
 
         # Обновляем сообщение с подтверждением выбора
@@ -456,17 +527,19 @@ async def verse_filter_callback(callback: CallbackQuery, callback_data: VerseFil
             logger.error(f"Ошибка при обработке callback выбора вселенной: {e}")
             await callback.answer(MText.get("processing_error"), show_alert=True)
 
-@router.callback_query(F.data == "sort_by_rarity")
+@router.callback_query(F.data.startswith("sort_by_rarity_"))
 async def sort_by_rarity_callback(callback: CallbackQuery, session: AsyncSession):
-    """Обработчик callback для сортировки по редкости."""
+    """Обработчик callback для сортировки по редкости с учетом режима."""
     try:
+        # Извлекаем режим из callback данных
+        mode = int(callback.data.split("_")[-1])
 
         # Получаем все редкости из базы данных
         rarities = await session.scalars(select(Rarity))
         rarities = rarities.all()
 
         # Создаем клавиатуру с первой страницей редкостей
-        keyboard = await rarity_filter_pagination_keyboard(1, rarities=rarities)
+        keyboard = await rarity_filter_pagination_keyboard(1, rarities=rarities, mode=mode)
 
         select_rarity_message = MText.get("select_rarity")
 
@@ -489,10 +562,11 @@ async def rarity_filter_pagination_callback(callback: CallbackQuery, callback_da
         rarities = rarities.all()
         total_pages = len(rarities)
         current_page = callback_data.p
+        mode = callback_data.m
 
         if 1 <= current_page <= total_pages:
             # Создаем клавиатуру с обновленными кнопками пагинации
-            keyboard = await rarity_filter_pagination_keyboard(current_page, rarities=rarities)
+            keyboard = await rarity_filter_pagination_keyboard(current_page, rarities=rarities, mode=mode)
             select_rarity_message = MText.get("select_rarity")
 
             # Обновляем сообщение с новой клавиатурой, но сохраняем тот же текст
@@ -511,6 +585,9 @@ async def rarity_filter_pagination_callback(callback: CallbackQuery, callback_da
 async def rarity_filter_callback(callback: CallbackQuery, callback_data: RarityFilter, session: AsyncSession, state: FSMContext):
     """Обработчик callback для выбора конкретной редкости."""
     try:
+        # Получаем текущий mode из FSM
+        data = await state.get_data()
+        mode = data.get('current_mode', 0)
 
         # Сохраняем выбранное название редкости в FSM
         await state.update_data(selected_rarity_name=callback_data.rarity_name)
@@ -519,7 +596,7 @@ async def rarity_filter_callback(callback: CallbackQuery, callback_data: RarityF
 
         # Создаем клавиатуру для подтверждения выбора
         builder = InlineKeyboardBuilder()
-        builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory")
+        builder.button(text="🔙 Назад к сортировке", callback_data=f"sort_inventory_{mode}")
         builder.adjust(1)
 
         # Обновляем сообщение с подтверждением выбора
@@ -554,8 +631,6 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
                 conditions.append(Card.rarity_name == selected_rarity_name)
             if selected_verse_name:
                 conditions.append(Card.verse_name == selected_verse_name)
-
-                conditions.append(Card.shiny == False)
             
             stmt = select(Card).join(UserCards).where(and_(*conditions))
             filtered_cards = await session.scalars(stmt)
