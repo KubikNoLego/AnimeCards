@@ -559,7 +559,8 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
             
             stmt = select(Card).join(UserCards).where(and_(*conditions))
             filtered_cards = await session.scalars(stmt)
-            if callback_data.m == 2:
+            mode = callback_data.m
+            if mode == 2:
                 filtered_cards = await db.get_missing_shiny_cards(user.id)
 
             filtered_cards = filtered_cards.all()
@@ -570,7 +571,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
 
                 # Создаем клавиатуру с кнопкой возврата к сортировке
                 builder = InlineKeyboardBuilder()
-                builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory")
+                builder.button(text="🔙 Назад к сортировке", callback_data="sort_inventory" + ("_0" if mode == 0 else "_1" if mode == 1 else "_2"))
                 builder.adjust(1)
 
                 # Очищаем данные FSM
@@ -587,7 +588,7 @@ async def inventory_pagination_callback(callback: CallbackQuery, callback_data: 
 
             # Проверка валидности индекса карты для отфильтрованного списка
             if 0 <= card_index < len(filtered_cards):
-                await show_inventory_card(callback, user, card_index, filtered_cards,callback_data.m)
+                await show_inventory_card(callback, user, card_index, filtered_cards,mode)
             else:
                 logger.warning(f"Неверный индекс карты: {callback_data.p} для пользователя {user.id}")
                 await callback.message.answer(MText.get("inventory_empty"))
