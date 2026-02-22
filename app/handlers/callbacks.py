@@ -39,7 +39,11 @@ async def upgrade_card_callback(callback: CallbackQuery, session: AsyncSession, 
             return
         
         # Получаем список недостающих Shiny карт
-        missing_shiny_cards = await db.get_missing_shiny_cards(user.id)
+        data = await state.get_data()
+        selected_verse_name = data.get('selected_verse_name', None)
+        selected_rarity_name = data.get('selected_rarity_name', None)
+                
+        missing_shiny_cards = await db.get_missing_shiny_cards(user.id, selected_verse_name, selected_rarity_name)
         
         if not missing_shiny_cards:
             await callback.answer(MText.get("no_cards_to_upgrade"), show_alert=True)
@@ -59,10 +63,27 @@ async def upgrade_card_callback(callback: CallbackQuery, session: AsyncSession, 
             await callback.answer(MText.get("card_already_owned"), show_alert=True)
             return
         
-        # Добавляем Shiny карту в инвентарь пользователя
+        # Находим обычную версию карты для удаления
+        normal_card = None
+        for card in user.inventory:
+            if (card.name == shiny_card.name and 
+                card.verse_name == shiny_card.verse_name and 
+                card.rarity_name == shiny_card.rarity_name and 
+                not card.shiny):
+                normal_card = card
+                break
+        
+        # Если обычная версия не найдена, выходим
+        if not normal_card:
+            return
+        
+        # Удаляем обычную версию и добавляем Shiny
+        user.inventory.remove(normal_card)
         user.inventory.append(shiny_card)
+
         if int(shiny_card.value*2) > user.balance:
             return
+        
         user.balance -= int(shiny_card.value*2)
         await session.commit()
         

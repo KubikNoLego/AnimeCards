@@ -285,38 +285,6 @@ class DB:
         await self.__session.delete(clan)
         await self.__session.commit()
 
-    async def get_cards_with_shiny(self, user_id: int) -> list[tuple[Card, Card]]:
-        """
-        Возвращает список кортежей (обычная карта, её шайни версия)
-        для карт пользователя, у которых есть шайни версия в базе.
-        Учитывает name, verse_name и rarity_name.
-        """
-        try:
-            cards = await self.__session.scalars(
-                select(Card)
-                .join(UserCards)
-                .filter(UserCards.user_id == user_id, Card.shiny == False)
-            )
-            
-            cards_with_shiny = []
-            for card in cards.all():
-                shiny_exists = await self.__session.scalar(
-                    select(Card).filter(
-                        Card.name == card.name,
-                        Card.verse_name == card.verse_name,
-                        Card.rarity_name == card.rarity_name,
-                        Card.shiny == True
-                    )
-                )
-                if shiny_exists:
-                    cards_with_shiny.append((card, shiny_exists))
-            
-            return cards_with_shiny
-        
-        except Exception as exc:
-            logger.exception(f"Ошибка при получении карт с шайни версией для user_id={user_id}: {exc}")
-            return []
-
     async def get_missing_shiny_cards(self, user_id: int, selected_verse_name: str = None, selected_rarity_name: str = None) -> list[Card]:
         """
         Возвращает шайни карты, которых нет у пользователя,
