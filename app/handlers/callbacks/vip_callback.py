@@ -1,64 +1,18 @@
-# Стандартные библиотеки
-from datetime import datetime, timedelta, timezone, timedelta
+from datetime import datetime, timedelta, timedelta
 
-# Создаем таймзону для Москвы (UTC+3)
-MSK_TIMEZONE = timezone(timedelta(hours=3))
-
-# Сторонние библиотеки
 from aiogram import Router,F
-from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery, SuccessfulPayment
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import Message, CallbackQuery, LabeledPrice,PreCheckoutQuery
 from aiogram.fsm.context import FSMContext
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-# Локальные импорты
-from app.filters import Private
-from db import VipSubscription, DB
+from app.func import MSK_TIMEZONE
 from app.messages import MText
+from db import VipSubscription, DB
+
 
 router = Router()
 
-@router.message(F.text == "💎 Купить VIP", Private())
-async def vip_offer_handler(message: Message, session: AsyncSession):
-    """Обработчик кнопки покупки VIP подписки."""
-    try:
-
-        # Получаем пользователя из базы данных
-        user = await DB(session).get_user(message.from_user.id)
-
-        if not user:
-            await message.answer(MText.get("user_not_found_vip"))
-            return
-
-        # Проверяем, есть ли у пользователя VIP подписка
-        if user.vip:
-            current_time = datetime.now(MSK_TIMEZONE)
-
-            # Если подписка истекла, удаляем ее
-            if user.vip.end_date <= current_time:
-                await DB(session).delete_vip_subscription(user.id)
-                user.vip = None  # Обновляем объект пользователя
-            else:
-                # Если подписка еще активна, сообщаем пользователю
-                await message.answer(MText.get("vip_already_active"))
-                return
-
-        # Загружаем сообщение о VIP предложении
-        vip_message = MText.get("vip_offer")
-
-        # Создаем инлайн-клавиатуру с кнопкой покупки
-        builder = InlineKeyboardBuilder()
-        builder.button(text="💰 Купить VIP за 150 ⭐", callback_data="buy_vip")
-        builder.adjust(1)
-
-        # Отправляем сообщение с предложением VIP
-        await message.answer(vip_message, reply_markup=builder.as_markup())
-
-    except Exception as e:
-        logger.error(f"Ошибка при обработке запроса на покупку VIP: {e}")
-        await message.answer(MText.get("processing_request_error"))
 
 @router.callback_query(F.data == "buy_vip")
 async def buy_vip(callback: CallbackQuery, session: AsyncSession):
@@ -108,10 +62,12 @@ async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
         await pre_checkout_query.answer(ok=True)
     except Exception as e:
         logger.error(f"Ошибка при обработке PreCheckoutQuery: {e}")
-        await pre_checkout_query.answer(ok=False, error_message=MText.get("processing_error"))
+        await pre_checkout_query.answer(ok=False, error_message=MText.get(
+            "processing_error"))
 
 @router.message(F.successful_payment)
-async def process_successful_payment(message: Message, state: FSMContext, session: AsyncSession):
+async def process_successful_payment(message: Message, state: FSMContext,
+                                    session: AsyncSession):
     """Обработчик успешной оплаты - создание VIP подписки."""
     try:
         

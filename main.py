@@ -1,33 +1,38 @@
-
 import asyncio
-from datetime import timedelta,datetime, timezone, timedelta
-
-from db.models import Clan
-
-# Создаем таймзону для Москвы (UTC+3)
-MSK_TIMEZONE = timezone(timedelta(hours=3))
+from datetime import timedelta,datetime, timedelta
 
 from aiogram import Bot,Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import RedisStorage
-from redis.asyncio import Redis
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession,async_sessionmaker
+from sqlalchemy.ext.asyncio import (create_async_engine,
+                                    AsyncSession,
+                                    async_sessionmaker
+                                    )
 from sqlalchemy import delete, select
 from loguru import logger
+from redis.asyncio import Redis
 
 from configR import config
 from app.handlers import setup_routers
 from app.middlewares import DBSessionMiddleware
-from db import Base,Verse,DB,RedisRequests,VipSubscription,User
+from db import Base,Verse,DB,VipSubscription,User,Clan
+from app.func import MSK_TIMEZONE
 
 
 # Настройка логирования: записывать в файл `log.txt`, ротация при 10 МБ
 logger.remove()
 logger.add("log.txt", rotation="10 MB", encoding="utf-8", level="INFO")
 
-bot = Bot(config.BOT_TOKEN.get_secret_value(),default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-dp = Dispatcher(storage=RedisStorage.from_url(config.REDIS_URL.get_secret_value(), state_ttl=timedelta(days=7)))
+bot = Bot(
+    config.BOT_TOKEN.get_secret_value(),
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    )
+dp = Dispatcher(storage=RedisStorage.from_url(
+    config.REDIS_URL.get_secret_value(), 
+    state_ttl=timedelta(days=7),
+    data_ttl=timedelta(days=3))
+    )
 
 
 _engine = create_async_engine(
@@ -70,10 +75,13 @@ async def _cleanup_expired_vip_subscriptions():
 
                 if expired_count > 0:
                     await session.commit()
-                    logger.info(f"Удалено {expired_count} истекших VIP подписок")
+                    logger.info(
+                        f"Удалено {expired_count} истекших VIP подписок"
+                        )
 
         except Exception as e:
-            logger.error(f"Ошибка при очистке истекших VIP подписок: {str(e)}", exc_info=True)
+            logger.error(
+                f"Ошибка при очистке истекших VIP подписок: {str(e)}")
             await asyncio.sleep(60)
 
         await asyncio.sleep(3600)
@@ -83,10 +91,12 @@ async def _update_daily_verse(session, db_session, current_date):
     new_verse: Verse = await DB(db_session).get_random_verse()
     if new_verse:
         await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
-        logger.info(f"Ежедневная вселенная обновлена. ID: {new_verse.id}, Дата: {current_date}")
+        logger.info(
+f"Ежедневная вселенная обновлена. ID: {new_verse.id}, Дата: {current_date}")
         return True
     else:
-        logger.warning("Не удалось получить новую вселенную для ежедневного обновления")
+        logger.warning(
+        "Не удалось получить новую вселенную для ежедневного обновления")
         return False
 
 async def _update_daily_shop(session, db_session, current_date):
@@ -95,7 +105,8 @@ async def _update_daily_shop(session, db_session, current_date):
     if daily_items and len(daily_items) > 0:
         shop_items_ids = [str(card.id) for card in daily_items]
         await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)
-        logger.info(f"Ежедневный магазин обновлен. Товары: {len(daily_items)} шт., Дата: {current_date}")
+        logger.info(
+f"Ежедневный магазин обновлен. Товары: {len(daily_items)} шт., Дата: {current_date}")
         return True
     else:
         logger.warning("Не удалось получить товары для ежедневного магазина")
@@ -118,7 +129,8 @@ async def _add_vip_free_opens(db_session, current_date):
 
     if updated_count > 0:
         await db_session.commit()
-        logger.info(f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
+        logger.info(
+            f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
     return updated_count > 0
 
 async def _rebalance_clans(db_session: AsyncSession):
@@ -149,16 +161,25 @@ async def _daily_coordinator():
 
             if last_update_date_str:
                 last_update_date_str = last_update_date_str.decode('utf-8')
-                last_update_date = datetime.strptime(last_update_date_str, "%Y-%m-%d").date()
+                last_update_date = datetime.strptime(last_update_date_str,
+                                                    "%Y-%m-%d").date()
             else:
                 last_update_date = None
 
             # Если сегодня еще не обновляли, выполняем все ежедневные задачи
             if not last_update_date or last_update_date < current_date:
                 async with _sessionmaker() as db_session:
-                    verse_updated = await _update_daily_verse(session, db_session, current_date)
-                    shop_updated = await _update_daily_shop(session, db_session, current_date)
-                    vip_updated = await _add_vip_free_opens(db_session, current_date)
+                    verse_updated = await _update_daily_verse(session,
+                                                            db_session,
+                                                            current_date
+                                                            )
+                    shop_updated = await _update_daily_shop(session,
+                                                            db_session,
+                                                            current_date
+                                                            )
+                    vip_updated = await _add_vip_free_opens(db_session,
+                                                            current_date
+                                                            )
 
                     if current_date.weekday() == 0:
                         await _rebalance_clans(db_session)
@@ -166,12 +187,14 @@ async def _daily_coordinator():
 
                     # Обновляем дату последнего обновления только если хотя бы одна задача выполнилась успешно
                     if verse_updated or shop_updated or vip_updated:
-                        await session.set("last_update", current_date.strftime("%Y-%m-%d"), ex=24*60*60)
-                        logger.info(f"Все ежедневные задачи выполнены. Дата: {current_date}")
+                        await session.set("last_update",
+                            current_date.strftime("%Y-%m-%d"), ex=24*60*60)
+                        logger.info(
+                    f"Все ежедневные задачи выполнены. Дата: {current_date}")
 
             await session.aclose()
         except Exception as e:
-            logger.error(f"Ошибка в _daily_coordinator: {str(e)}", exc_info=True)
+            logger.error(f"Ошибка в _daily_coordinator: {str(e)}")
             await asyncio.sleep(60)
 
         await asyncio.sleep(3600)  # Проверяем каждые 60 минут

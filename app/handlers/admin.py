@@ -20,19 +20,6 @@ ADMIN_ID = 5027089008
 
 router = Router()
 
-def admin_kb():
-    """Клавиатура админ-панели"""
-    builder = ReplyKeyboardBuilder()
-    builder.button(text="📊 Статистика")
-    builder.button(text="👤 Поиск пользователя")
-    builder.button(text="💰 Изменить баланс")
-    builder.button(text="⭐ VIP управление")
-    builder.button(text="📋 Список пользователей")
-    builder.button(text="📢 Рассылка")
-    builder.adjust(2, 2, 1, 1)
-    return builder.as_markup(resize_keyboard=True)
-
-
 async def get_stats_text(session: AsyncSession) -> str:
     """Получение текста со статистикой бота"""
     # Количество пользователей

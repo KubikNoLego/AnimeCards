@@ -1,20 +1,14 @@
-# Стандартные библиотеки
 import random
-from datetime import datetime, timedelta, timezone, timedelta
+from datetime import datetime, timedelta, timedelta
 
-# Создаем таймзону для Москвы (UTC+3)
-MSK_TIMEZONE = timezone(timedelta(hours=3))
-
-# Сторонние библиотеки
 from loguru import logger
 from redis.asyncio import Redis
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-# Локальные импорты
 from db.models import (Card, Clan, ClanMember,
-                    User, Profile, UserCards, Verse, Referrals,ClanInvitation)
+                    User, Profile, Verse, Referrals,ClanInvitation)
+from app.func import MSK_TIMEZONE
 
 class DB:
     def __init__(self, session):
@@ -23,17 +17,21 @@ class DB:
     async def get_clan(self,clan_id: int) -> Clan | None:
         """Получает пользователя из БД, если он есть"""
         try:
-            return await self.__session.scalar(select(Clan).filter_by(id=clan_id))
+            return await self.__session.scalar(select(Clan)
+                                            .filter_by(id=clan_id))
         except Exception as exc:
-            logger.exception(f"Ошибка при получении пользователя id={clan_id}: {exc}")
+            logger.exception(
+                f"Ошибка при получении пользователя id={clan_id}: {exc}")
             return None
 
     async def get_user(self,user_id: int) -> User | None:
         """Получает пользователя из БД, если он есть"""
         try:
-            return await self.__session.scalar(select(User).filter_by(id=user_id))
+            return await self.__session.scalar(select(User)
+                                            .filter_by(id=user_id))
         except Exception as exc:
-            logger.exception(f"Ошибка при получении пользователя id={user_id}: {exc}")
+            logger.exception(
+                f"Ошибка при получении пользователя id={user_id}: {exc}")
             return None
 
     async def create_or_update_user(self, id: int,
@@ -138,17 +136,20 @@ class DB:
                     if not card.shiny and not any(c.id == card.id for c in daily_cards):
                         daily_cards.append(card)
                 except Exception as e:
-                    logger.warning(f"Не удалось сгенерировать карточку (попытка {attempts}): {str(e)}")
+                    logger.warning(
+        f"Не удалось сгенерировать карточку (попытка {attempts}): {str(e)}")
                     continue
 
             if len(daily_cards) >= 4:
                 return daily_cards
             else:
-                logger.warning(f"Не удалось получить достаточно карточек после {attempts} попыток, используем резервный метод")
+                logger.warning(
+f"Не удалось получить достаточно карточек после {attempts} попыток, используем резервный метод")
 
                 # Резервный метод: случайный выбор, если random_card не сработал
                 # Гарантированно выбираем только не-shiny карты
-                cards = await self.__session.scalars(select(Card).filter_by(shiny=False))
+                cards = await self.__session.scalars(select(Card)
+                                                    .filter_by(shiny=False))
                 cards = cards.all()
 
                 if len(cards) >= 4:
@@ -163,19 +164,23 @@ class DB:
                                 break
                     return unique_cards[:4]
                 else:
-                    logger.warning("Недостаточно карточек в базе данных для ежедневного магазина")
+                    logger.warning(
+                "Недостаточно карточек в базе данных для ежедневного магазина")
                     return []
 
         except Exception as exc:
-            logger.exception(f"Ошибка при получении карточек для ежедневного магазина: {exc}")
+            logger.exception(
+            f"Ошибка при получении карточек для ежедневного магазина: {exc}")
             return []
 
     async def add_referral(self,
-                        referral_id: int, referrer_id: int, referrer_reward: int = 0) -> Referrals | None:
+                        referral_id: int, referrer_id: int,
+                        referrer_reward: int = 0) -> Referrals | None:
         """Создаёт рефералов"""
         if referral_id != referrer_id:
             existing_referral = await self.__session.scalar(
-                select(Referrals).filter_by(user_id=referrer_id, referral_id=referral_id)
+                select(Referrals).filter_by(user_id=referrer_id,
+                                            referral_id=referral_id)
             )
             if not existing_referral:
                 referrer = await self.get_user(referrer_id)
@@ -218,7 +223,8 @@ class DB:
         await self.__session.commit()
         logger.info(f"Создан клан {tag}")
 
-    async def get_clan_invitation(self, clan_id: int, receiver_id: int) -> ClanInvitation | None:
+    async def get_clan_invitation(self, clan_id: int,
+                                receiver_id: int) -> ClanInvitation | None:
         """Проверяет существование приглашения в клан для пользователя"""
         try:
             return await self.__session.scalar(
@@ -226,14 +232,16 @@ class DB:
                 .filter_by(clan_id=clan_id, receiver_id=receiver_id)
             )
         except Exception as exc:
-            logger.exception(f"Ошибка при проверке приглашения в клан для пользователя id={receiver_id}: {exc}")
+            logger.exception(
+f"Ошибка при проверке приглашения в клан для пользователя id={receiver_id}: {exc}")
             return None
 
     async def create_clan_invitation(self,clan_id: int, sender_id: int,
                                     receiver_id: int) -> ClanInvitation | None:
         """Создает новое приглашение в клан"""
         try:
-            existing_invitation = await self.get_clan_invitation(clan_id, receiver_id)
+            existing_invitation = await self.get_clan_invitation(clan_id,
+                                                                receiver_id)
             if existing_invitation:
                 return None
 
@@ -245,10 +253,12 @@ class DB:
             )
             self.__session.add(invitation)
             await self.__session.commit()
-            logger.info(f"Создано приглашение в клан {clan_id} для пользователя {receiver_id}")
+            logger.info(
+        f"Создано приглашение в клан {clan_id} для пользователя {receiver_id}")
             return invitation
         except Exception as exc:
-            logger.exception(f"Ошибка при создании приглашения в клан для пользователя id={receiver_id}: {exc}")
+            logger.exception(
+f"Ошибка при создании приглашения в клан для пользователя id={receiver_id}: {exc}")
             return None
     
     async def create_clan_member(self,user_id:int, clan_id: int) -> ClanMember:
@@ -284,82 +294,6 @@ class DB:
         
         await self.__session.delete(clan)
         await self.__session.commit()
-
-    async def get_cards_with_shiny(self, user_id: int) -> list[tuple[Card, Card]]:
-        """
-        Возвращает список кортежей (обычная карта, её шайни версия)
-        для карт пользователя, у которых есть шайни версия в базе.
-        """
-        try:
-            cards = await self.__session.scalars(
-                select(Card)
-                .join(UserCards)
-                .filter(UserCards.user_id == user_id, Card.shiny == False)
-            )
-            
-            cards_with_shiny = []
-            for card in cards.all():
-                shiny_exists = await self.__session.scalar(
-                    select(Card).filter(
-                        Card.name == card.name,
-                        Card.verse_name == card.verse_name,
-                        Card.shiny == True
-                    )
-                )
-                if shiny_exists:
-                    cards_with_shiny.append((card, shiny_exists))
-            
-            return cards_with_shiny
-        
-        except Exception as exc:
-            logger.exception(f"Ошибка при получении карт с шайни версией для user_id={user_id}: {exc}")
-            return []
-
-    async def get_missing_shiny_cards(self, user_id: int) -> list[Card]:
-        """
-        Возвращает шайни карты, которых нет у пользователя,
-        но которые можно получить (есть обычная версия в инвентаре).
-        """
-        try:
-            # Подзапрос: ID шайни карт пользователя
-            user_shiny_subquery = (
-                select(Card.id)
-                .join(UserCards)
-                .filter(UserCards.user_id == user_id, Card.shiny == True)
-                .distinct()
-            )
-            
-            # ID обычных карт пользователя
-            user_normal_cards_subquery = (
-                select(Card.id)
-                .join(UserCards)
-                .filter(UserCards.user_id == user_id, Card.shiny == False)
-            )
-            
-            # Все шайни карты, которых нет у пользователя
-            # и для которых у него есть обычная версия
-            stmt = (
-                select(Card)
-                .filter(
-                    Card.shiny == True,
-                    ~Card.id.in_(user_shiny_subquery),
-                    # Сопоставляем по name и verse_name
-                    Card.name.in_(
-                        select(Card.name)
-                        .filter(
-                            Card.id.in_(user_normal_cards_subquery),
-                            Card.shiny == False
-                        )
-                    )
-                )
-                .distinct()
-            )
-            
-            return await self.__session.scalars(stmt)
-        except Exception as exc:
-            logger.exception(f"Ошибка при получении недостающих шайни карт для user_id={user_id}: {exc}")
-            return []
-
 
 class RedisRequests:
 

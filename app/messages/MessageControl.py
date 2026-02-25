@@ -1,8 +1,7 @@
 from html import escape
-import yaml
-from datetime import datetime,timezone,timedelta
-
-MSK_TIMEZONE = timezone(timedelta(hours=3))
+import json
+from datetime import datetime, timedelta
+from ..func import MSK_TIMEZONE
 
 
 class Messages:
@@ -12,24 +11,41 @@ class Messages:
         self._messages = self._load_messages()
 
     def get(self,param:str) -> str:
-        return self._messages[param]
+        message = self._messages.get(param)
+        if isinstance(message, dict):
+            # Если это категория, возвращаем первый доступный ключ
+            return list(message.values())[0] if message else ""
+        return message
 
     def reload(self) -> None:
         self._messages = self._load_messages()
         return
     def _load_messages(self) -> dict:
-        """Загружает сообщения из JSON"""
-        with open("app/messages/messages.yaml", "r", encoding="utf-8") as f:
-            messages_data = yaml.safe_load(f)
-
-        # Объединяем сообщения из категорий для обратной совместимости
+        """Загружает сообщения из всех JSON файлов в папке jsons"""
+        import os
         combined_messages = {}
-        combined_messages.update(messages_data.get("success_messages", {}))
-        combined_messages.update(messages_data.get("error_messages", {}))
-
-        # Добавляем категории для прямого доступа
-        combined_messages["success_messages"] = messages_data.get("success_messages", {})
-        combined_messages["error_messages"] = messages_data.get("error_messages", {})
+        
+        # Получаем список всех JSON файлов в папке jsons
+        jsons_dir = "app/messages/jsons"
+        try:
+            json_files = [f for f in os.listdir(jsons_dir) if f.endswith('.json')]
+        except FileNotFoundError:
+            return combined_messages
+        
+        # Загружаем каждый JSON файл
+        for filename in json_files:
+            filepath = os.path.join(jsons_dir, filename)
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    file_data = json.load(f)
+                    combined_messages.update(file_data)
+                    
+                    # Добавляем категорию по имени файла (без расширения)
+                    category_name = filename[:-5]  # Убираем .json
+                    combined_messages[category_name] = file_data
+            except (FileNotFoundError, json.JSONDecodeError):
+                continue
+            
         return combined_messages
 
     def nottime(self,openc: datetime) -> str:
