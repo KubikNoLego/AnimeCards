@@ -13,7 +13,7 @@ async def main_kb():
     [builder.button(text=item) for item in buttons]
     builder.adjust(2, 3, 2)
 
-    return builder.as_markup(resize_keyboard=True, input_field_placeholder=("💫" if randint(1, 1000) == 777 else "Меню 🌟"))
+    return builder.as_markup(resize_keyboard=True, input_field_placeholder=("🌟 <- это ты" if randint(1, 1000) == 777 else "Меню 🌟"))
 
 async def admin_kb():
     """Клавиатура админ-панели"""

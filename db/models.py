@@ -55,6 +55,7 @@ class User(Base):
     # VIP подписка — 1 к 1 связь
     vip: Mapped["VipSubscription"] = relationship("VipSubscription", back_populates="user", lazy="selectin", uselist=False)
 
+
     # Рефералы — один ко многим связь (пользователи, которых пригласил этот пользователь)
     referrals: Mapped[list["Referrals"]] = relationship("Referrals", back_populates="referrer", foreign_keys="[Referrals.user_id]", lazy="selectin")
 

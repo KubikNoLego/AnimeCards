@@ -1,14 +1,19 @@
+from __future__ import annotations
 import random
 from datetime import datetime, timedelta, timedelta
+from typing import TYPE_CHECKING
 
 from loguru import logger
 from redis.asyncio import Redis
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import (Card, Clan, ClanMember,
-                    User, Profile, Verse, Referrals,ClanInvitation)
-from app.func import MSK_TIMEZONE
+
+
+if TYPE_CHECKING:
+    from db.models import (Card, Clan, ClanMember,
+                        User, Profile, Verse, Referrals,ClanInvitation)
+    from app.func import MSK_TIMEZONE
 
 class DB:
     def __init__(self, session):
