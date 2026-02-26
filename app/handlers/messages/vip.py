@@ -29,16 +29,8 @@ async def vip_offer_handler(message: Message, session: AsyncSession):
 
         # Проверяем, есть ли у пользователя VIP подписка
         if user.vip:
-            current_time = datetime.now(MSK_TIMEZONE)
-
-            # Если подписка истекла, удаляем ее
-            if user.vip.end_date <= current_time:
-                await DB(session).delete_vip_subscription(user.id)
-                user.vip = None  # Обновляем объект пользователя
-            else:
-                # Если подписка еще активна, сообщаем пользователю
-                await message.answer(MText.get("vip_already_active"))
-                return
+            await message.answer(MText.get("vip_already_active"))
+            return
 
         # Загружаем сообщение о VIP предложении
         vip_message = MText.get("vip_offer")
