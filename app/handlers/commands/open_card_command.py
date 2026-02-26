@@ -1,4 +1,5 @@
 from datetime import datetime,timedelta
+import math
 
 from aiogram import Router
 from aiogram.types import Message, FSInputFile
@@ -45,7 +46,7 @@ async def _(message: Message, session: AsyncSession):
             text = MText.get("card").format(name=card.name,
                                             verse=card.verse_name,
                                             rarity=card.rarity_name,
-                                            value=card.value if not user.vip else f"{card.value} (+{int(card.value * 0.1)})")
+                                            value=card.value if not user.vip else f"{card.value} (+{math.ceil(card.value * 0.1)})")
             text = text + "\n\n✨ Shiny" if card.shiny else text
             
             await message.reply_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
@@ -60,7 +61,7 @@ async def _(message: Message, session: AsyncSession):
                 user.free_open -= 1
             else:
                 user.last_open = datetime.now(MSK_TIMEZONE)
-            added_sum = int(card.value + (int(card.value * 0.1) if user.vip else 0))
+            added_sum = int(card.value + (math.ceil(card.value * 0.1) if user.vip else 0))
             user.balance += added_sum
             if user.clan_member:
                 user.clan_member.contribution += int(added_sum*0.3)

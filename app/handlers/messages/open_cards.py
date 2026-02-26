@@ -1,4 +1,5 @@
 from datetime import datetime,timedelta
+import math
 
 from aiogram import Router,F
 from aiogram.types import Message,FSInputFile
@@ -49,7 +50,7 @@ async def _(message: Message, session: AsyncSession):
                                             value=(
                             card.value 
                             if not user.vip 
-                            else f"{card.value} (+{int(card.value * 0.1)})")
+                            else f"{card.value} (+{math.ceil(card.value * 0.1)})")
                             )
             
             text = text + "\n\n✨ Shiny" if card.shiny else text
@@ -67,7 +68,7 @@ async def _(message: Message, session: AsyncSession):
                 user.free_open -= 1
             else:
                 user.last_open = datetime.now(MSK_TIMEZONE)
-            added_sum = (int(card.value + (int(card.value * 0.1) 
+            added_sum = (int(card.value + (math.ceil(card.value * 0.1) 
                                         if user.vip 
                                         else 0)))
             user.balance += added_sum
