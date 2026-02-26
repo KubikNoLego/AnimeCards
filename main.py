@@ -81,38 +81,38 @@ async def _cleanup_expired_vip_subscriptions():
 
         except Exception as e:
             logger.error(
-                f"Ошибка при очистке истекших VIP подписок: {str(e)}")
+                f"Ошибка при очистке истекших VIP подписок: {e}")
             await asyncio.sleep(60)
 
         await asyncio.sleep(3600)
 
-async def _update_daily_verse(session, db_session, current_date):
+async def _update_daily_verse(session, db_session):
     """Обновляем ежедневную вселенную."""
     new_verse: Verse = await DB(db_session).get_random_verse()
     if new_verse:
         await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
         logger.info(
-f"Ежедневная вселенная обновлена. ID: {new_verse.id}, Дата: {current_date}")
+f"Ежедневная вселенная обновлена. ID: {new_verse.id}")
         return True
     else:
-        logger.warning(
+        logger.error(
         "Не удалось получить новую вселенную для ежедневного обновления")
         return False
 
-async def _update_daily_shop(session, db_session, current_date):
+async def _update_daily_shop(session, db_session):
     """Обновляем ежедневный магазин."""
     daily_items = await DB(db_session).get_daily_shop_items()
     if daily_items and len(daily_items) > 0:
         shop_items_ids = [str(card.id) for card in daily_items]
         await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)
         logger.info(
-f"Ежедневный магазин обновлен. Товары: {len(daily_items)} шт., Дата: {current_date}")
+f"Ежедневный магазин обновлен. Товары: {len(daily_items)} шт.")
         return True
     else:
-        logger.warning("Не удалось получить товары для ежедневного магазина")
+        logger.error("Не удалось получить товары для ежедневного магазина")
         return False
 
-async def _add_vip_free_opens(db_session, current_date):
+async def _add_vip_free_opens(db_session):
     """Добавляем бесплатные открытия VIP пользователям."""
     current_time = datetime.now(MSK_TIMEZONE)
     result = await db_session.execute(
@@ -239,8 +239,6 @@ async def _daily_coordinator():
                 if verse_updated or shop_updated or vip_updated or backup_success:
                     await session.set("last_update",
                         current_date.strftime("%Y-%m-%d"), ex=24*60*60)
-                    logger.info(
-                        f"Все ежедневные задачи выполнены. Дата: {current_date}")
 
             await session.aclose()
         except Exception as e:

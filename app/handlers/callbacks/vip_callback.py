@@ -38,10 +38,11 @@ async def buy_vip(callback: CallbackQuery, session: AsyncSession):
             currency="XTR",
             prices=[LabeledPrice(label="VIP Подписка", amount=vip_price_stars)],
             is_flexible=False)
-
     except Exception as e:
         logger.error(f"Ошибка при отправке invoice для VIP подписки: {e}")
         await callback.message.answer(MText.get("invoice_error"))
+    
+    await callback.answer()
 
 
 @router.callback_query(F.data == "cancel_vip_purchase")

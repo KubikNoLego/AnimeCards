@@ -167,7 +167,7 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     user = await db.get_user(callback.from_user.id)
 
     # Проверяем, достаточно ли у пользователя йен для создания клана
-    clan_creation_cost = 1000
+    clan_creation_cost = 500
     if user.balance < clan_creation_cost:
         await callback.answer(MText.get("not_enough_yens_clan"),
                             show_alert=True)
@@ -201,7 +201,7 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     user = await db.get_user(callback.from_user.id)
 
     # Проверяем баланс пользователя перед созданием клана
-    clan_creation_cost = 1000
+    clan_creation_cost = 500
     if user.balance < clan_creation_cost:
         await callback.answer(MText.get("not_enough_yens_clan"),
                             show_alert=True)

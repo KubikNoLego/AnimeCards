@@ -51,7 +51,7 @@ async def shop_item_callback(callback: CallbackQuery,
                                             verse=card.verse_name,
                                             rarity=card.rarity_name,
                                             value=(str(card.value)) + 
-                            f"\n\nЦена покупки: {int(card.value * 1.7)} ¥")
+                            f"¥\n\nЦена покупки: {int(card.value * 1.7)} ")
         
         builder = await shop_keyboard_choice(card_id=card.id)
 
@@ -131,7 +131,7 @@ f"Не удалось удалить сообщение с предложени�
             await callback.message.answer(MText.get("purchase_success").format(
                 card_name=card.name, price=int(card.value*1.7)))
 
-            await callback.answer(MText.get("purchase_success").split('\n')[0])
+            await callback.answer(MText.get("purchase_success"))
         else:
             await callback.message.answer(MText.get("shop_items_changed"))
 
