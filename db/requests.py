@@ -8,12 +8,9 @@ from redis.asyncio import Redis
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-
-if TYPE_CHECKING:
-    from db.models import (Card, Clan, ClanMember,
+from db.models import (Card, Clan, ClanMember,
                         User, Profile, Verse, Referrals,ClanInvitation)
-    from app.func import MSK_TIMEZONE
+from app.func import MSK_TIMEZONE
 
 class DB:
     def __init__(self, session):
@@ -93,7 +90,6 @@ class DB:
     async def get_random_verse(self) -> Verse:
         """Возвращает случайную вселенную, в которой есть хотя бы одна карта, которая может выпадать"""
         try:
-            
             valid_verse_names_subquery = (
                 select(Card.verse_name)
                 .where(Card.can_drop == True)
