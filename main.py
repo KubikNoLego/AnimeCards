@@ -86,112 +86,53 @@ async def _cleanup_expired_vip_subscriptions():
 
         await asyncio.sleep(3600)
 
-async def _update_daily_verse(session, db_session):
+async def _update_daily_verse(session, db_session, current_date):
     """Обновляем ежедневную вселенную."""
-    try:
-        new_verse: Verse = await DB(db_session).get_random_verse()
-        if new_verse:
-            await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
-            logger.info(
+    new_verse: Verse = await DB(db_session).get_random_verse()
+    if new_verse:
+        await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
+        logger.info(
 f"Ежедневная вселенная обновлена. ID: {new_verse.id}")
-            return True
-        else:
-            logger.error(
-            "Не удалось получить новую вселенную для ежедневного обновления")
-            return False
-    except Exception as e:
-        logger.error(f"Ошибка при обновлении ежедневной вселенной: {str(e)}")
+        return True
+    else:
+        logger.error(
+        "Не удалось получить новую вселенную для ежедневного обновления")
         return False
 
-async def _update_daily_shop(session, db_session):
+async def _update_daily_shop(session, db_session, current_date):
     """Обновляем ежедневный магазин."""
-    try:
-        daily_items = await DB(db_session).get_daily_shop_items()
-        if daily_items and len(daily_items) > 0:
-            shop_items_ids = [str(card.id) for card in daily_items]
-            await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)
-            logger.info(
+    daily_items = await DB(db_session).get_daily_shop_items()
+    if daily_items and len(daily_items) > 0:
+        shop_items_ids = [str(card.id) for card in daily_items]
+        await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)
+        logger.info(
 f"Ежедневный магазин обновлен. Товары: {len(daily_items)} шт.")
-            return True
-        else:
-            logger.error("Не удалось получить товары для ежедневного магазина")
-            return False
-    except Exception as e:
-        logger.error(f"Ошибка при обновлении ежедневного магазина: {str(e)}")
+        return True
+    else:
+        logger.error("Не удалось получить товары для ежедневного магазина")
         return False
 
-async def _add_vip_free_opens(db_session):
+async def _add_vip_free_opens(db_session, current_date):
     """Добавляем бесплатные открытия VIP пользователям."""
-    try:
-        current_time = datetime.now(MSK_TIMEZONE)
-        result = await db_session.execute(
-            select(User)
-            .join(User.vip)
-            .where(VipSubscription.end_date > current_time)
-        )
-        vip_users = result.scalars().all()
+    current_time = datetime.now(MSK_TIMEZONE)
+    result = await db_session.execute(
+        select(User)
+        .join(User.vip)
+        .where(VipSubscription.end_date > current_time)
+    )
+    vip_users = result.scalars().all()
 
-        updated_count = 0
-        for user in vip_users:
-            user.free_open += 1
-            updated_count += 1
+    updated_count = 0
+    for user in vip_users:
+        user.free_open += 1
+        updated_count += 1
 
-        if updated_count > 0:
-            await db_session.commit()
-            logger.info(
-                f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
-        return updated_count > 0
-    except Exception as e:
-        logger.error(f"Ошибка при добавлении бесплатных открытий VIP: {str(e)}")
-        return False
+    if updated_count > 0:
+        await db_session.commit()
+        logger.info(
+            f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
+    return updated_count > 0
 
-async def _create_database_backup():
-    """Создание бекапа базы данных PostgreSQL с ротацией."""
-    import subprocess
-    from datetime import datetime, timedelta
-    from pathlib import Path
-    import os
-
-    backup_dir = Path("backups")
-    backup_dir.mkdir(exist_ok=True)
-
-    # Удаляем бекапы старше 7 дней
-    now = datetime.now()
-    for backup_file in backup_dir.glob("animecards_backup_*.sql"):
-        file_time = datetime.fromtimestamp(backup_file.stat().st_mtime)
-        if now - file_time > timedelta(days=7):
-            try:
-                backup_file.unlink()
-                logger.info(f"Удален старый бекап: {backup_file}")
-            except Exception as e:
-                logger.error(f"Ошибка при удалении бекапа: {str(e)}")
-
-    timestamp = now.strftime("%Y%m%d_%H%M%S")
-    backup_file = backup_dir / f"animecards_backup_{timestamp}.sql"
-
-    try:
-        # Создаем бекап с использованием pg_dump без sudo
-        result = subprocess.run(
-            [
-                "pg_dump", "animecards",
-                "-f", str(backup_file),
-                "-U", "postgres"  # Используем пользователя postgres
-            ],
-            capture_output=True,
-            text=True,
-            env={**os.environ, "PGPASSWORD": "postgres"}  # Устанавливаем пароль через переменную окружения
-        )
-
-        if result.returncode == 0:
-            logger.info(f"Бекап базы данных создан: {backup_file}")
-            return True
-        else:
-            logger.error(f"Ошибка при создании бекапа: {result.stderr}")
-            return False
-
-    except Exception as e:
-        logger.error(f"Исключение при создании бекапа: {str(e)}")
-        return False
 
 async def _rebalance_clans(db_session: AsyncSession):
     clans = await db_session.scalars(select(Clan))
@@ -229,18 +170,15 @@ async def _daily_coordinator():
             # Если сегодня еще не обновляли, выполняем все ежедневные задачи
             if not last_update_date or last_update_date < current_date:
                 async with _sessionmaker() as db_session:
-                    verse_updated = await _update_daily_verse(session, db_session)
-                    shop_updated = await _update_daily_shop(session, db_session)
-                    vip_updated = await _add_vip_free_opens(db_session)
+                    verse_updated = await _update_daily_verse(session, db_session, current_date)
+                    shop_updated = await _update_daily_shop(session, db_session, current_date)
+                    vip_updated = await _add_vip_free_opens(db_session, current_date)
 
                 if current_date.weekday() == 0:
                     await _rebalance_clans(db_session)
 
-                # Создаем бекап базы данных
-                backup_success = await _create_database_backup()
-
                 # Обновляем дату последнего обновления только если хотя бы одна задача выполнилась успешно
-                if verse_updated or shop_updated or vip_updated or backup_success:
+                if verse_updated or shop_updated or vip_updated:
                     await session.set("last_update",
                         current_date.strftime("%Y-%m-%d"), ex=24*60*60)
 
