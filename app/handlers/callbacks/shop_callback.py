@@ -51,7 +51,7 @@ async def shop_item_callback(callback: CallbackQuery,
                                             verse=card.verse_name,
                                             rarity=card.rarity_name,
                                             value=(str(card.value)) + 
-                            f"¥\n\nЦена покупки: {int(card.value * 1.7)} ")
+                            f" ¥\n\nЦена покупки: {int(card.value * 1.7)}")
         
         builder = await shop_keyboard_choice(card_id=card.id)
 
