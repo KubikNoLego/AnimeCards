@@ -12,3 +12,4 @@ wheels/
 database.db
 log.txt
 create_cards.py
+backups

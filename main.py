@@ -133,20 +133,68 @@ async def _add_vip_free_opens(db_session, current_date):
             f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
     return updated_count > 0
 
+async def _create_database_backup():
+    """Создание бекапа базы данных PostgreSQL с ротацией."""
+    import subprocess
+    from datetime import datetime, timedelta
+    from pathlib import Path
+    import os
+
+    backup_dir = Path("backups")
+    backup_dir.mkdir(exist_ok=True)
+
+    # Удаляем бекапы старше 7 дней
+    now = datetime.now()
+    for backup_file in backup_dir.glob("animecards_backup_*.sql"):
+        file_time = datetime.fromtimestamp(backup_file.stat().st_mtime)
+        if now - file_time > timedelta(days=7):
+            try:
+                backup_file.unlink()
+                logger.info(f"Удален старый бекап: {backup_file}")
+            except Exception as e:
+                logger.error(f"Ошибка при удалении бекапа: {str(e)}")
+
+    timestamp = now.strftime("%Y%m%d_%H%M%S")
+    backup_file = backup_dir / f"animecards_backup_{timestamp}.sql"
+
+    try:
+        # Создаем бекап с использованием pg_dump без sudo
+        result = subprocess.run(
+            [
+                "pg_dump", "animecards",
+                "-f", str(backup_file),
+                "-U", "postgres"  # Используем пользователя postgres
+            ],
+            capture_output=True,
+            text=True,
+            env={**os.environ, "PGPASSWORD": "postgres"}  # Устанавливаем пароль через переменную окружения
+        )
+
+        if result.returncode == 0:
+            logger.info(f"Бекап базы данных создан: {backup_file}")
+            return True
+        else:
+            logger.error(f"Ошибка при создании бекапа: {result.stderr}")
+            return False
+
+    except Exception as e:
+        logger.error(f"Исключение при создании бекапа: {str(e)}")
+        return False
+
 async def _rebalance_clans(db_session: AsyncSession):
     clans = await db_session.scalars(select(Clan))
     clans_result = clans.all()
     for clan in clans_result:
-        
+
         added_sum = clan.balance // len(clan.members)
-        
+
         users = clan.members
         for user in users:
             user.contribution = 0
             user = user.user
             user.balance += added_sum
         clan.balance = 0
-    
+
     await db_session.commit()
 
 
@@ -181,16 +229,18 @@ async def _daily_coordinator():
                                                             current_date
                                                             )
 
-                    if current_date.weekday() == 0:
-                        await _rebalance_clans(db_session)
+                if current_date.weekday() == 0:
+                    await _rebalance_clans(db_session)
 
+                # Создаем бекап базы данных
+                backup_success = await _create_database_backup()
 
-                    # Обновляем дату последнего обновления только если хотя бы одна задача выполнилась успешно
-                    if verse_updated or shop_updated or vip_updated:
-                        await session.set("last_update",
-                            current_date.strftime("%Y-%m-%d"), ex=24*60*60)
-                        logger.info(
-                    f"Все ежедневные задачи выполнены. Дата: {current_date}")
+                # Обновляем дату последнего обновления только если хотя бы одна задача выполнилась успешно
+                if verse_updated or shop_updated or vip_updated or backup_success:
+                    await session.set("last_update",
+                        current_date.strftime("%Y-%m-%d"), ex=24*60*60)
+                    logger.info(
+                        f"Все ежедневные задачи выполнены. Дата: {current_date}")
 
             await session.aclose()
         except Exception as e:
