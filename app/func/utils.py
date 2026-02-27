@@ -8,7 +8,6 @@ from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db import Card, RedisRequests, Rarity
 from .consts import RARITIES,SHINY_CHANCE,CHANCES
 
 
@@ -35,8 +34,10 @@ async def create_qr(link:str) -> FSInputFile:
         return
     
 
-async def random_card(session: AsyncSession, pity: int) -> Card:
+async def random_card(session: AsyncSession, pity: int):
     """Выбрать случайную карту"""
+    from db import Card, RedisRequests, Rarity
+
     random_rarity = random.choices(RARITIES, CHANCES, k=1)[0] if pity > 0 else 5
     # Определяем, выпала ли shiny-версия
     is_shiny = random.random() < SHINY_CHANCE

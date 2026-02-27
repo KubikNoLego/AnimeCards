@@ -1,0 +1,6 @@
+{
+    "input_promocode": "🖊️ Напишите промокод после <code>.promo</code>\n\n<b>Например <code>.promo NEWBIE</code></b>",
+    "promo_expired": "<b>😢 Промокод не существует или уже истёк...</b>",
+    "u_already_use_this_promo": "<b>🍇 Ты уже использовал этот промокод!</b>",
+    "success_used_promo": "🥳 Вы успешно получили <b>{reward}</b> ¥ за промокод!\n<i>Больше промокодов вы можете найти в нашем <a href= \"https://t.me/animcrds\">ТГК</a></i>"
+}

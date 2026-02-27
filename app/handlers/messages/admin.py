@@ -12,7 +12,7 @@ from loguru import logger
 from app.filters import Private
 from app.func import MSK_TIMEZONE
 from app.keyboards import admin_kb, choice, user_panel
-from db import User, Card, Verse, VipSubscription, DB
+from db import User, Card, Verse, VipSubscription, DB, Promo
 
 
 ADMIN_ID = 5027089008
@@ -391,10 +391,107 @@ async def broadcast_start(message: Message, state: FSMContext):
     """Начало рассылки"""
     if message.from_user.id != ADMIN_ID:
         return
-    
+
     await message.answer(
         "📢 <b>Рассылка</b>\n\n"
         "Перешли любое сообщение (с текстом, фото, медиа), которое хочешь разослать.",
         parse_mode="HTML"
     )
     await state.set_state("admin_broadcast")
+
+# Обработчики для создания промокодов
+@router.message(F.text == "🎁 Создать промокод", Private())
+async def create_promo_start(message: Message, state: FSMContext):
+    """Начало создания промокода"""
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    await message.answer(
+        "🎁 <b>Создание промокода</b>\n\n"
+        "Введите код промокода (например, NEWYEAR2024):",
+        parse_mode="HTML"
+    )
+    await state.set_state("admin_promo_code")
+
+@router.message(StateFilter("admin_promo_code"), Private())
+async def create_promo_reward(message: Message, session: AsyncSession, state: FSMContext):
+    """Ввод награды за промокод"""
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    promocode = message.text.strip().upper()
+    await state.update_data(promocode=promocode)
+
+    await message.answer(
+        f"🎁 <b>Создание промокода</b>\n\n"
+        f"Код промокода: <code>{promocode}</code>\n\n"
+        f"Введите награду за промокод (количество единиц):",
+        parse_mode="HTML"
+    )
+    await state.set_state("admin_promo_reward")
+
+@router.message(StateFilter("admin_promo_reward"), Private())
+async def create_promo_days(message: Message, session: AsyncSession, state: FSMContext):
+    """Ввод количества дней до истечения"""
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    try:
+        reward = int(message.text.strip())
+        if reward <= 0:
+            await message.answer("❌ Награда должна быть положительным числом")
+            return
+
+        await state.update_data(reward=reward)
+
+        await message.answer(
+            f"🎁 <b>Создание промокода</b>\n\n"
+            f"Код промокода: <code>{(await state.get_data()).get('promocode')}</code>\n"
+            f"Награда: {reward}\n\n"
+            f"Введите количество дней до истечения промокода:",
+            parse_mode="HTML"
+        )
+        await state.set_state("admin_promo_days")
+
+    except ValueError:
+        await message.answer("❌ Введите корректное число")
+        return
+
+@router.message(StateFilter("admin_promo_days"), Private())
+async def create_promo_confirm(message: Message, session: AsyncSession, state: FSMContext):
+    """Подтверждение создания промокода"""
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    try:
+        days = int(message.text.strip())
+        if days <= 0:
+            await message.answer("❌ Количество дней должно быть положительным числом")
+            return
+
+        data = await state.get_data()
+        promocode = data.get('promocode')
+        reward = data.get('reward')
+
+        # Создаём промокод
+        db = DB(session)
+        promo = await db.create_promo(promocode, reward, days)
+
+        if promo:
+            await message.answer(
+                f"✅ <b>Промокод создан!</b>\n\n"
+                f"Код: <code>{promo.promocode}</code>\n"
+                f"Награда: {promo.reward}\n"
+                f"Истекает через: {days} дней\n"
+                f"Дата истечения: {promo.expire_at.strftime('%d.%m.%Y %H:%M')}",
+                parse_mode="HTML"
+            )
+            logger.info(f"ADMIN: Создан промокод {promocode} с наградой {reward} на {days} дней")
+        else:
+            await message.answer("❌ Не удалось создать промокод. Возможно, такой код уже существует.")
+
+    except ValueError:
+        await message.answer("❌ Введите корректное число")
+        return
+
+    await state.clear()

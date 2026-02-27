@@ -17,14 +17,15 @@ async def main_kb():
 
 async def admin_kb():
     """Клавиатура админ-панели"""
-    
+
     builder = ReplyKeyboardBuilder()
     builder.button(text="📊 Статистика")
     builder.button(text="👤 Поиск пользователя")
     builder.button(text="💰 Изменить баланс")
     builder.button(text="⭐ VIP управление")
+    builder.button(text="🎁 Создать промокод")
     builder.button(text="📋 Список пользователей")
     builder.button(text="📢 Рассылка")
-    builder.adjust(2, 2, 1, 1)
+    builder.adjust(2, 2, 2, 1)
 
     return builder.as_markup(resize_keyboard=True)

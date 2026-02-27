@@ -61,6 +61,9 @@ class User(Base):
 
     clan_member: Mapped["ClanMember"] = relationship("ClanMember", back_populates="user", lazy="selectin", uselist=False)
 
+    # Промокоды, которые использовал этот пользователь
+    used_promos: Mapped[list["Promo"]] = relationship("Promo", back_populates="used_by", secondary="promo_users", lazy="selectin")
+
 class Card(Base):
     __tablename__ = "cards"
 
@@ -161,3 +164,23 @@ class Clan(Base):
     invitations: Mapped[list["ClanInvitation"]] = relationship("ClanInvitation", back_populates="clan", lazy="selectin", cascade="all, delete-orphan")
 
     balance: Mapped[int] = mapped_column(Integer, default=0)
+
+class PromoUsers(Base):
+    __tablename__ = 'promo_users'
+
+    # Ассоциативная таблица для связи многие-ко-многим между User и Promo
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    promo_id: Mapped[int] = mapped_column(Integer, ForeignKey("promocodes.id", ondelete="CASCADE"), primary_key=True)
+
+class Promo(Base):
+    __tablename__ = "promocodes"
+
+    id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
+
+    promocode: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
+    reward: Mapped[int] = mapped_column(Integer, default=30)
+
+    expire_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    # Пользователи, которые использовали этот промокод
+    used_by: Mapped[list["User"]] = relationship("User", back_populates="used_promos", secondary="promo_users", lazy="selectin")
