@@ -86,7 +86,7 @@ async def _cleanup_expired_vip_subscriptions():
 
         await asyncio.sleep(3600)
 
-async def _update_daily_verse(session, db_session, current_date):
+async def _update_daily_verse(session, db_session):
     """Обновляем ежедневную вселенную."""
     new_verse: Verse = await DB(db_session).get_random_verse()
     if new_verse:
@@ -99,7 +99,7 @@ f"Ежедневная вселенная обновлена. ID: {new_verse.id}
         "Не удалось получить новую вселенную для ежедневного обновления")
         return False
 
-async def _update_daily_shop(session, db_session, current_date):
+async def _update_daily_shop(session, db_session):
     """Обновляем ежедневный магазин."""
     daily_items = await DB(db_session).get_daily_shop_items()
     if daily_items and len(daily_items) > 0:
@@ -112,7 +112,7 @@ f"Ежедневный магазин обновлен. Товары: {len(daily
         logger.error("Не удалось получить товары для ежедневного магазина")
         return False
 
-async def _add_vip_free_opens(db_session, current_date):
+async def _add_vip_free_opens(db_session):
     """Добавляем бесплатные открытия VIP пользователям."""
     current_time = datetime.now(MSK_TIMEZONE)
     result = await db_session.execute(
@@ -170,9 +170,9 @@ async def _daily_coordinator():
             # Если сегодня еще не обновляли, выполняем все ежедневные задачи
             if not last_update_date or last_update_date < current_date:
                 async with _sessionmaker() as db_session:
-                    verse_updated = await _update_daily_verse(session, db_session, current_date)
-                    shop_updated = await _update_daily_shop(session, db_session, current_date)
-                    vip_updated = await _add_vip_free_opens(db_session, current_date)
+                    verse_updated = await _update_daily_verse(session, db_session)
+                    shop_updated = await _update_daily_shop(session, db_session)
+                    vip_updated = await _add_vip_free_opens(db_session)
 
                 if current_date.weekday() == 0:
                     await _rebalance_clans(db_session)

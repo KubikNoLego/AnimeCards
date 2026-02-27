@@ -2,7 +2,7 @@ from datetime import datetime,timedelta
 import math
 
 from aiogram import Router
-from aiogram.types import Message, FSInputFile
+from aiogram.types import Message, FSInputFile, ReactionTypeEmoji
 from aiogram.filters import Command
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -67,8 +67,11 @@ async def _(message: Message, session: AsyncSession):
                 user.clan_member.contribution += int(added_sum*0.3)
                 user.clan_member.clan.balance += int(added_sum*0.3)
             await session.commit()
+            await message.react([ReactionTypeEmoji(emoji="💘")])
+
         else:
             text = MText.nottime(user.last_open)
+            await message.react([ReactionTypeEmoji(emoji="😴")])
             await message.reply(text)
 
     finally:

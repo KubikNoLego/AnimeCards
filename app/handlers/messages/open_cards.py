@@ -2,13 +2,13 @@ from datetime import datetime,timedelta
 import math
 
 from aiogram import Router,F
-from aiogram.types import Message,FSInputFile
+from aiogram.types import Message,FSInputFile, ReactionTypeEmoji
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.filters import Private
 from app.messages import MText
 from app.func import MSK_TIMEZONE,random_card
-from db import DB, Clan
+from db import DB
 
 
 router = Router()
@@ -79,6 +79,7 @@ async def _(message: Message, session: AsyncSession):
         else:
             text = MText.nottime(user.last_open)
             await message.reply(text)
+
 
     finally:
         # Убираем пользователя из списка после завершения

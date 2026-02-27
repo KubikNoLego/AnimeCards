@@ -3,7 +3,7 @@ from aiogram import Router
 from .messages import (clan, profile, referral, shop, top_players, open_cards,
                     admin, vip)
 from .commands import (start, open_card_command, profile_command,daily,
-                    top_players_command, admin_command,promo)
+                    top_players_command, admin_command,promo,clan_command)
 from .callbacks import (clan_callback, shop_callback,pagination,
                         admin_callbacks, vip_callback)
 
@@ -22,6 +22,7 @@ def setup_routers():
     router.include_router(open_card_command.router)
     router.include_router(profile_command.router)
     router.include_router(daily.router)
+    router.include_router(clan_command.router)
     router.include_router(top_players_command.router)
     router.include_router(promo.router)
     router.include_router(admin_command.router)

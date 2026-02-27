@@ -183,7 +183,7 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
                         callback.from_user.id)
     await callback.message.delete()
     await callback.answer(
-        "Клан успешно создан! Списано {clan_creation_cost} ¥")
+        f"Клан успешно создан! Списано {clan_creation_cost} ¥")
     
     await state.clear()
 
