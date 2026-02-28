@@ -30,9 +30,10 @@ class Referrals(Base):
 class UserCards(Base):
     __tablename__ = 'usercards'
 
+    id: Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
     # Ассоциативная таблица для связи многие-ко-многим между User и Card
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    card_id: Mapped[int] = mapped_column(Integer, ForeignKey("cards.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
+    card_id: Mapped[int] = mapped_column(Integer, ForeignKey("cards.id", ondelete="CASCADE"))
 
 class User(Base):
     __tablename__ = "users"
@@ -184,3 +185,11 @@ class Promo(Base):
 
     # Пользователи, которые использовали этот промокод
     used_by: Mapped[list["User"]] = relationship("User", back_populates="used_promos", secondary="promo_users", lazy="selectin")
+
+
+class Trade(Base):
+    __tablename__ = "trades"
+
+    id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, nullable= False)
+    card_id: Mapped[int] = mapped_column(Integer, nullable=False)

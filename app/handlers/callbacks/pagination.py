@@ -250,7 +250,7 @@ async def inventory_pagination_callback(callback: CallbackQuery,
             if selected_verse_name:
                 conditions.append(Card.verse_name == selected_verse_name)
             
-            stmt = select(Card).join(UserCards).where(and_(*conditions))
+            stmt = select(Card).join(UserCards).where(and_(*conditions)).order_by(UserCards.id)
             filtered_cards = await session.scalars(stmt)
             filtered_cards = filtered_cards.all()
 

@@ -10,12 +10,37 @@ from app.keyboards import (back_to_sort, sort_inventory_kb,
                     rarity_filter_pagination_keyboard,
                     TradeVerseFilter, TradePagination,
                     TradeVerseFilterPagination,
-                    TradeRarityFilter, TradeRarityFilterPagination)
+                    TradeRarityFilter, TradeRarityFilterPagination,
+                    SelectedCard)
 from app.messages import MText
-from db import DB, Card, Verse, Rarity, UserCards, User
+from db import DB, Card, Verse, Rarity, UserCards, User, Trade
 
 
 router = Router()
+
+
+@router.callback_query(SelectedCard.filter())
+async def selected_card_callback(callback: CallbackQuery,
+                callback_data: SelectedCard, session: AsyncSession, state: FSMContext):
+    db = DB(session)
+    user = await db.get_user(callback.from_user.id)
+
+    existing_trade = await db.get_trade(user.id)
+
+    if existing_trade:
+        await callback.message.answer(MText.get("trade_exist"))
+        await db.delete_trade(user.id)
+
+    trade = await db.create_trade(user.id, callback_data.card_id)
+    bot_info = await callback.message.bot.get_me()
+    trade_link = f"https://t.me/{bot_info.username}?start=t_{user.id}"
+
+
+    await callback.message.answer(MText.get("trade_created").format(
+        link=trade_link)
+        )
+    await callback.message.delete()
+
 
 
 @router.callback_query(F.data == "reset_sort_filters_trade")
@@ -256,7 +281,7 @@ async def inventory_pagination_callback(callback: CallbackQuery,
             if selected_verse_name:
                 conditions.append(Card.verse_name == selected_verse_name)
             
-            stmt = select(Card).join(UserCards).where(and_(*conditions))
+            stmt = select(Card).join(UserCards).where(and_(*conditions)).order_by(UserCards.id)
             filtered_cards = await session.scalars(stmt)
             filtered_cards = filtered_cards.all()
 

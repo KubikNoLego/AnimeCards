@@ -2,11 +2,11 @@ import random
 from datetime import datetime, timedelta, timedelta
 from loguru import logger
 from redis.asyncio import Redis
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import (Card, Clan, ClanMember, Promo,
-                        User, Profile, Verse, Referrals,ClanInvitation)
+                        User, Profile, UserCards, Verse, Referrals,ClanInvitation,Trade)
 
 class DB:
     def __init__(self, session):
@@ -338,6 +338,29 @@ f"Ошибка при создании приглашения в клан для
             logger.exception(f"Ошибка при создании промокода: {exc}")
             return None
 
+    async def create_trade(self, user_id:int, card_id:int):
+        trade = Trade(user_id=user_id,card_id=card_id)
+
+        self.__session.add(trade)
+        await self.__session.commit()
+
+        return trade
+
+    async def get_trade(self,user_id:int):
+        return await self.__session.scalar(select(Trade).filter_by(
+                            user_id=user_id))
+
+    async def delete_trade(self, user_id: int):
+        await self.__session.delete(await self.get_trade(user_id))
+        await self.__session.commit()
+
+    async def get_card(self, card_id:int):
+        try:
+            return await self.__session.scalar(select(Card).filter_by(
+                id=card_id))
+        except Exception as exc:
+            logger.exception(f"Ошибка получения карты: {exc}")
+            return None
 class RedisRequests:
 
     async def daily_verse() -> int:
