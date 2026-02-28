@@ -31,3 +31,26 @@ class RarityFilterPagination(CallbackData, prefix="rfpg"):
 class RarityFilter(CallbackData, prefix="rf"):
     """Данные обратного вызова для кнопок фильтра по редкости."""
     rarity_name: str
+
+class TradePagination(CallbackData, prefix="tp"):
+    """Данные обратного вызова для кнопок пагинации."""
+    p: int
+
+class TradeVerseFilterPagination(CallbackData, prefix="tvfpg"):
+    """Данные обратного вызова для кнопок пагинации фильтра по вселенной."""
+    p: int
+
+class TradeVerseFilter(CallbackData, prefix="tvf"):
+    """Данные обратного вызова для кнопок фильтра по вселенной."""
+    verse_name: str
+
+class TradeRarityFilterPagination(CallbackData, prefix="trfpg"):
+    """Данные обратного вызова для кнопок пагинации фильтра по редкости."""
+    p: int
+
+class TradeRarityFilter(CallbackData, prefix="trf"):
+    """Данные обратного вызова для кнопок фильтра по редкости."""
+    rarity_name: str
+
+class SelectedCard(CallbackData, prefix="ts"):
+    card_id: int
