@@ -22,7 +22,7 @@ class VerseFilterPagination(CallbackData, prefix="vfpg"):
 
 class VerseFilter(CallbackData, prefix="vf"):
     """Данные обратного вызова для кнопок фильтра по вселенной."""
-    verse_name: str
+    verse_id: int
 
 class RarityFilterPagination(CallbackData, prefix="rfpg"):
     """Данные обратного вызова для кнопок пагинации фильтра по редкости."""
@@ -42,7 +42,7 @@ class TradeVerseFilterPagination(CallbackData, prefix="tvfpg"):
 
 class TradeVerseFilter(CallbackData, prefix="tvf"):
     """Данные обратного вызова для кнопок фильтра по вселенной."""
-    verse_name: str
+    verse_id: int
 
 class TradeRarityFilterPagination(CallbackData, prefix="trfpg"):
     """Данные обратного вызова для кнопок пагинации фильтра по редкости."""

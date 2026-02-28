@@ -240,21 +240,21 @@ async def verse_filter_pagination_keyboard(current_page: int, verses: list,
     """Создать инлайн-клавиатуру пагинации для фильтра по вселенной"""
     builder = InlineKeyboardBuilder()
 
-    verses_names: list
+    verses_data: list
     pages = (len(verses) + 3) // 4
     start_index = (current_page - 1) * 4
     end_index = start_index + 4
-    verses_names = [verse.name for verse in verses[start_index:end_index]]
+    verses_data = verses[start_index:end_index]
 
-    for verse_name in verses_names:
-        builder.button(text=verse_name,
-                callback_data=(VerseFilter(verse_name=verse_name)
+    for verse in verses_data:
+        builder.button(text=verse.name,
+                callback_data=(VerseFilter(verse_id=verse.id)
                             if not trade
-                            else TradeVerseFilter(verse_name=verse_name)
+                            else TradeVerseFilter(verse_id=verse.id)
                             ).pack(),
                 style = "primary")
 
-    empty_buttons_needed = 4 - len(verses_names)
+    empty_buttons_needed = 4 - len(verses_data)
     for _ in range(empty_buttons_needed):
         builder.button(text=" ", callback_data="pass")
 
