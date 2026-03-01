@@ -2,11 +2,12 @@ import random
 from datetime import datetime, timedelta, timedelta
 from loguru import logger
 from redis.asyncio import Redis
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import (Card, Clan, ClanMember, Promo,
-                        User, Profile, Verse, Referrals,ClanInvitation)
+                        User, Profile, UserCards, Verse, Referrals,
+                        ClanInvitation,Trade)
 
 class DB:
     def __init__(self, session):
@@ -337,6 +338,63 @@ f"Ошибка при создании приглашения в клан для
         except Exception as exc:
             logger.exception(f"Ошибка при создании промокода: {exc}")
             return None
+
+    async def create_trade(self, user_id:int, card_id:int):
+        trade = Trade(user_id=user_id,card_id=card_id)
+
+        self.__session.add(trade)
+        await self.__session.commit()
+
+        return trade
+
+    async def get_trade(self,user_id:int) -> Trade | None:
+        return await self.__session.scalar(select(Trade).filter_by(
+                            user_id=user_id))
+
+    async def delete_trade(self, user_id: int):
+        await self.__session.delete(await self.get_trade(user_id))
+        await self.__session.commit()
+
+    async def get_card(self, card_id:int):
+        try:
+            return await self.__session.scalar(select(Card).filter_by(
+                id=card_id))
+        except Exception as exc:
+            logger.exception(f"Ошибка получения карты: {exc}")
+
+            return None
+    
+    async def complete_trade(self, trade: Trade):
+        try:
+            user1 = await self.get_user(trade.user_id)
+            user2 = await self.get_user(trade.partner_id)
+            
+            card1 = await self.get_card(trade.card_id)
+            card2 = await self.get_card(trade.partner_card)
+
+            # Проверяем, что обе карты существуют
+            if not card1 or not card2:
+                return False
+
+            # Проверяем, что карты есть в инвентаре пользователей
+            if card1 not in user1.inventory or card2 not in user2.inventory:
+                return False
+
+            # Удаляем карты из инвентаря
+            user1.inventory.remove(card1)
+            user2.inventory.remove(card2)
+            
+            # Добавляем карты в инвентарь
+            user1.inventory.append(card2)
+            user2.inventory.append(card1)
+
+            await self.__session.commit()
+            await self.delete_trade(trade.user_id)
+            return True
+
+        except Exception as exc:
+            logger.exception(f"Ошибка при завершении трейда: {exc}")
+            return False
 
 class RedisRequests:
 

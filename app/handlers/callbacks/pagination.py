@@ -119,12 +119,17 @@ async def verse_filter_callback(callback: CallbackQuery,
                         state: FSMContext):
     """Обработчик callback для выбора конкретной вселенной."""
     try:
+        # Получаем объект вселенной из базы данных по ID
+        verse = await session.get(Verse, callback_data.verse_id)
+        if not verse:
+            await callback.answer(MText.get("verse_not_found"), show_alert=True)
+            return
 
         # Сохраняем выбранное название вселенной в FSM
-        await state.update_data(selected_verse_name=callback_data.verse_name)
+        await state.update_data(selected_verse_name=verse.name)
 
         verse_selected_message = MText.get("verse_selected").format(
-            verse_name=callback_data.verse_name)
+            verse_name=verse.name)
 
         # Создаем клавиатуру для подтверждения выбора
         builder = await back_to_sort()
@@ -135,7 +140,7 @@ async def verse_filter_callback(callback: CallbackQuery,
             reply_markup=builder
         )
         await callback.answer(MText.get("verse_selected_success").format(
-            verse_name=callback_data.verse_name))
+            verse_name=verse.name))
     except Exception as e:
             logger.error(
                 f"Ошибка при обработке callback выбора вселенной: {e}")
@@ -250,7 +255,7 @@ async def inventory_pagination_callback(callback: CallbackQuery,
             if selected_verse_name:
                 conditions.append(Card.verse_name == selected_verse_name)
             
-            stmt = select(Card).join(UserCards).where(and_(*conditions))
+            stmt = select(Card).join(UserCards).where(and_(*conditions)).order_by(UserCards.id)
             filtered_cards = await session.scalars(stmt)
             filtered_cards = filtered_cards.all()
 

@@ -30,8 +30,8 @@ bot = Bot(
     )
 dp = Dispatcher(storage=RedisStorage.from_url(
     config.REDIS_URL.get_secret_value(), 
-    state_ttl=timedelta(days=7),
-    data_ttl=timedelta(days=3))
+    state_ttl=timedelta(days=3),
+    data_ttl=timedelta(days=1))
     )
 
 

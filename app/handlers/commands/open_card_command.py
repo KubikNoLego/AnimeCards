@@ -49,7 +49,8 @@ async def _(message: Message, session: AsyncSession):
                                             value=card.value if not user.vip else f"{card.value} (+{math.ceil(card.value * 0.1)})")
             text = text + "\n\n✨ Shiny" if card.shiny else text
             
-            await message.reply_photo(FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
+            await message.reply_photo(FSInputFile(
+                path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
             if card not in user.inventory:
                 user.inventory.append(card)
             match user.pity:
