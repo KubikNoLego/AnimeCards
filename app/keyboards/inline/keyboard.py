@@ -103,8 +103,20 @@ async def clan_invite_kb(clan_id: int):
     builder.button(text="✅ Принять",
                 callback_data= ClanInvite(clan_id=clan_id, act=1).pack(),
                 style = "success")
-    builder.button(text="❎ Отклонить",
+    builder.button(text="❌ Отклонить",
                 callback_data= ClanInvite(clan_id=clan_id, act=0).pack(),
+                style = "danger")
+
+    return builder.as_markup()
+
+async def trade_action_kb():
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text="✅ Принять",
+                callback_data="accept_trade",
+                style = "success")
+    builder.button(text="❌ Отклонить",
+                callback_data="reject_trade",
                 style = "danger")
 
     return builder.as_markup()

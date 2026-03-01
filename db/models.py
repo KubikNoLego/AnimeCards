@@ -193,6 +193,6 @@ class Trade(Base):
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
     user_id: Mapped[int] = mapped_column(BigInteger, nullable= False)
     card_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    partner_id: Mapped[int] = mapped_column(BigInteger,nullable=True, default=None)
-    partner_card: Mapped[int] = mapped_column(BigInteger, nullable=True, default=None)
+    partner_id: Mapped[int | None] = mapped_column(BigInteger,nullable=True, default=None)
+    partner_card: Mapped[int | None] = mapped_column(BigInteger, nullable=True, default=None)
     partner_added_at: Mapped[datetime | None] = mapped_column(default=None)

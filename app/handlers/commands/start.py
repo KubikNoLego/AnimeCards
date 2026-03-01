@@ -1,15 +1,17 @@
+from datetime import datetime, timedelta
 import random
 from html import escape
 
 from aiogram.fsm.context import FSMContext
 from aiogram import Router
-from aiogram.types import FSInputFile, InputMediaPhoto, Message
+from aiogram.types import FSInputFile, Message
 from aiogram.filters import CommandStart,CommandObject
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
 from app.filters import Private
-from app.keyboards import main_kb
+from app.func.consts import MSK_TIMEZONE
+from app.keyboards import main_kb, trade_kb_pagination
 from app.messages import MText
 from db import DB
 
@@ -35,34 +37,48 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                 trader = await db.get_user(int(value))
 
                 if not trader:
-                    await message.answer(MText.get("not_user_short"))
+                    await message.answer(MText.get("user_not_found_short"))
                     return
 
-                #if trader.id == user.id:
-                #    await message.answer(MText.get("u_cant_trade_with_self"))
-                #    return
+                if trader.id == user.id:
+                    await message.answer(MText.get("u_cant_trade_with_self"))
+                    return
 
                 trade = await db.get_trade(trader.id)
-
+                
                 if not trade:
-                    await message.answer(MText.get("not_user_short"))
+                    await message.answer(MText.get("user_not_found_short"))
                     return
+
+                if (trade.partner_id and trade.partner_id != user.id and 
+            trade.partner_added_at + timedelta(minutes=10) >= datetime.now(
+                                                                MSK_TIMEZONE)):
+                    
+                    await message.answer(MText.get("user_already_trading"))
+                    return
+
 
                 card = await db.get_card(trade.card_id)
 
                 if not card:
-                    await message.answer(MText.get("not_user_short"))
+                    await message.answer(MText.get("user_not_found_short"))
                     return
 
                 card_info = MText.get("card").format(name=card.name,
-                                                            verse=card.verse_name,
-                                                            rarity=card.rarity_name,
-                                                            value=card.value)
+                                                    verse=card.verse_name,
+                                                    rarity=card.rarity_name,
+                                                    value=card.value)
                 card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
                 await message.answer_photo(FSInputFile(
                     path=f"app/icons/{card.verse.name}/{card.icon}"),
-                    caption=card_info)
+                    caption=card_info, reply_markup=await trade_kb_pagination())
+                
+                trade.partner_id = user.id
+                trade.partner_card = None
+                trade.partner_added_at = datetime.now(MSK_TIMEZONE).replace(tzinfo=None)
+
+                await session.commit()
 
                 return
 

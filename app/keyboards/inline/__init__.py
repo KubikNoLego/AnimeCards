@@ -13,5 +13,5 @@ from .keyboard import (
                     clan_member, clan_leader, member_pagination_keyboard,
                     verse_filter_pagination_keyboard, shop_keyboard_choice,
                     back_to_sort, vip_kb, choice, user_panel,
-                    trade_kb_pagination
+                    trade_kb_pagination, trade_action_kb
                     )

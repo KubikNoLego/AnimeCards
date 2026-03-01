@@ -6,7 +6,8 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import (Card, Clan, ClanMember, Promo,
-                        User, Profile, UserCards, Verse, Referrals,ClanInvitation,Trade)
+                        User, Profile, UserCards, Verse, Referrals,
+                        ClanInvitation,Trade)
 
 class DB:
     def __init__(self, session):
@@ -346,7 +347,7 @@ f"Ошибка при создании приглашения в клан для
 
         return trade
 
-    async def get_trade(self,user_id:int):
+    async def get_trade(self,user_id:int) -> Trade | None:
         return await self.__session.scalar(select(Trade).filter_by(
                             user_id=user_id))
 
@@ -360,7 +361,41 @@ f"Ошибка при создании приглашения в клан для
                 id=card_id))
         except Exception as exc:
             logger.exception(f"Ошибка получения карты: {exc}")
+
             return None
+    
+    async def complete_trade(self, trade: Trade):
+        try:
+            user1 = await self.get_user(trade.user_id)
+            user2 = await self.get_user(trade.partner_id)
+            
+            card1 = await self.get_card(trade.card_id)
+            card2 = await self.get_card(trade.partner_card)
+
+            # Проверяем, что обе карты существуют
+            if not card1 or not card2:
+                return False
+
+            # Проверяем, что карты есть в инвентаре пользователей
+            if card1 not in user1.inventory or card2 not in user2.inventory:
+                return False
+
+            # Удаляем карты из инвентаря
+            user1.inventory.remove(card1)
+            user2.inventory.remove(card2)
+            
+            # Добавляем карты в инвентарь
+            user1.inventory.append(card2)
+            user2.inventory.append(card1)
+
+            await self.__session.commit()
+            await self.delete_trade(trade.user_id)
+            return True
+
+        except Exception as exc:
+            logger.exception(f"Ошибка при завершении трейда: {exc}")
+            return False
+
 class RedisRequests:
 
     async def daily_verse() -> int:
