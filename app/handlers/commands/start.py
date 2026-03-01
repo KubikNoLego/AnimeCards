@@ -51,8 +51,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                     return
 
                 if (trade.partner_id and trade.partner_id != user.id and 
-            trade.partner_added_at + timedelta(minutes=10) >= datetime.now(
-                                                                MSK_TIMEZONE)):
+            trade.partner_added_at + timedelta(minutes=10) >= datetime.now()):
                     
                     await message.answer(MText.get("user_already_trading"))
                     return

@@ -33,11 +33,11 @@ async def selected_card_callback(callback: CallbackQuery,
     is_complete = await db.complete_trade(trade)
     
     if not is_complete:
-        await callback.answer("Произошла ошибка")
+        await callback.answer(MText.get("error_completing"))
         return
 
-    await callback.message.answer("Трейд прошёл успешно")
-    await callback.bot.send_message(trade.partner_id, "Трейд прошёл успешно")
+    await callback.message.answer(MText.get("trade_succes"))
+    await callback.bot.send_message(trade.partner_id, MText.get("trade_succes"))
     
     await callback.message.delete()
 
@@ -51,8 +51,8 @@ async def selected_card_callback(callback: CallbackQuery,
     if not trade:
         return
 
-    await callback.message.answer("Вы отклонили предложение")
-    await callback.bot.send_message(trade.partner_id, "Пользователь отклонил ваше предложение")
+    await callback.message.answer(MText.get("u_reject_trade"))
+    await callback.bot.send_message(trade.partner_id, MText.get("user_reject_your_offer"))
     
     trade.partner_card = None
     trade.partner_id = None
