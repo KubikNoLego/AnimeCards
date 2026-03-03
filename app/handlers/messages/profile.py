@@ -28,9 +28,9 @@ async def _(message:Message, session: AsyncSession, state: FSMContext):
     else:
         db = DB(session)
         user = await db.get_user(message.from_user.id)
-        user.profile.describe = escape(message.text.strip())
+        user.profile.describe = escape(message.text.strip().replace('\n', ''))
         await session.commit()
-        await message.answer(MText.get("describe_updated_success").format(desc= escape(message.text.strip())))
+        await message.answer(MText.get("describe_updated_success").format(desc= escape(message.text.strip().replace('\n', ''))))
         await state.set_state(None)
 
 @router.message(F.text.startswith(".профиль @"))
