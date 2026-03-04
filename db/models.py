@@ -118,7 +118,7 @@ class Profile(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
 
     joined: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    describe: Mapped[str] = mapped_column(String(70), default="", nullable=False)
+    describe: Mapped[str] = mapped_column(String(255), default="", nullable=False)
 
     owner: Mapped["User"] = relationship("User", back_populates="profile", lazy="selectin")
 

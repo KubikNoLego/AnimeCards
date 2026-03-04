@@ -22,7 +22,7 @@ router = Router()
 
 @router.message(ChangeDescribe.text)
 async def _(message:Message, session: AsyncSession, state: FSMContext):
-    if len(message.text) > 70:
+    if len(message.text) > 255:
         await message.answer(MText.get("describe_too_long").format(
             desc = len(message.text)))
     else:
@@ -58,7 +58,7 @@ async def _(message: Message, session: AsyncSession):
             await message.reply(MText.get("user_not_found_short"))
             return
         
-        text = MText.user_profile(session,user.id)
+        text = await MText.user_profile(session,user.id)
 
         target_profile_photo = None
         try:
