@@ -28,4 +28,4 @@ async def _(message: Message,session: AsyncSession):
             await message.reply(text)
     else:
         await message.reply(MText.get("not_user")
-                            .format(name = escape(user.name)))
+                            .format(name = escape(message.from_user.full_name)))
