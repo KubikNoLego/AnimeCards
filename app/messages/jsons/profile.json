@@ -1,5 +1,5 @@
 {
-    "profile": "<b>{tag} {name}</b>\n\n💰 Баланс: <i>{balance}</i> ¥\n📍 Место в топе: <b>{place}</b>\n\n📚 Количество карт: <b>{cards}</b>\n\n🕦 Присоединился: <i>{date}</i>",
+    "profile": "<b>{tag} {name}</b>\n\n💰 Баланс: <i>{balance}</i> ¥\n📍 Место в топе: <b>{place}</b>\n📚 Количество карт: <b>{cards}</b>\n🍀 Гарант на Хроно: <b>{pity}/100</b>\n👤 Рефералов: <b>{referrals}</b> <i>(+{referral_rewards} ¥)</i>\n\n⏫ <i>Топ карт по ценности:</i>\n<blockquote>{top_cards}</blockquote>\n\n🕦 Присоединился: <i>{date}</i>",
     "change_describe_prompt": "<b>📝 Изменение описания профиля</b>\n\nВведите новое описание для вашего профиля (максимум <b>70</b> символов):\n\n<i>Описание будет видно другим игрокам в вашем профиле.</i>",
     "describe_updated_success": "<b>✅ Описание обновлено!</b>\n\n🗒️ Ваше новое описание профиля:\n\n<b>«{desc}»</b>",
     "describe_updated_empty": "<b>🗑️ Описание очищено!</b>",
