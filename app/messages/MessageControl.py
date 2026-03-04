@@ -111,7 +111,7 @@ class Messages:
             referrals = len(user.referrals),
             referral_rewards = referral_rewards,
             top_cards = await self.user_top_cards(session,user_id),
-            place = place_on_top,
+            place = (place_on_top if place_on_top <= 99 else "99+"),
             cards = len(user.inventory),
             date = user.profile.joined.astimezone(MSK_TIMEZONE).strftime("%d.%m.%Y")
         ) + (f"\n\n<i>«{user.profile.describe}»</i>" if user.profile.describe else "")
