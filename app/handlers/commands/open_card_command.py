@@ -25,8 +25,8 @@ async def _(message: Message, session: AsyncSession):
         return
 
     try:
-        
         user_card_opens.append(user_id)
+        
         db = DB(session)
         user = await db.get_user(user_id)
             
@@ -41,12 +41,17 @@ async def _(message: Message, session: AsyncSession):
             
         hour = 2 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 3
 
-        if (last_open + timedelta(hours=hour) <= datetime.now(MSK_TIMEZONE)) or user.free_open:
+        if ((last_open + timedelta(hours=hour) <= datetime.now(MSK_TIMEZONE))
+                                                        or user.free_open):
+            
             card = await random_card(session,user.pity)
+
             text = MText.get("card").format(name=card.name,
                                             verse=card.verse_name,
                                             rarity=card.rarity_name,
-                                            value=card.value if not user.vip else f"{card.value} (+{math.ceil(card.value * 0.1)})")
+                                            value=(card.value
+                                                if not user.vip
+                    else f"{card.value} (+{math.ceil(card.value * 0.1)})"))
             text = text + "\n\n✨ Shiny" if card.shiny else text
             text += MText.get("pity").format(pity=100-user.pity)
             
@@ -54,21 +59,29 @@ async def _(message: Message, session: AsyncSession):
                 path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
             if card not in user.inventory:
                 user.inventory.append(card)
-            match user.pity:
-                case _ if user.pity <= 0:
-                    user.pity = 100                    
-                case _:
-                    user.pity -= 1
+            
+            user.pity -= 1
+
+            if user.pity < 0:
+                user.pity = 100
+
             if user.free_open:
                 user.free_open -= 1
+
             else:
                 user.last_open = datetime.now(MSK_TIMEZONE)
-            added_sum = int(card.value + (math.ceil(card.value * 0.1) if user.vip else 0))
+
+            added_sum = int(card.value + (math.ceil(card.value * 0.1) 
+                                        if user.vip else 0))
+            
             user.balance += added_sum
+
             if user.clan_member:
                 user.clan_member.contribution += int(added_sum*0.3)
                 user.clan_member.clan.balance += int(added_sum*0.3)
+
             await session.commit()
+
             try:
                 await message.react([ReactionTypeEmoji(emoji="💘")])
             except:
@@ -83,6 +96,5 @@ async def _(message: Message, session: AsyncSession):
             await message.reply(text)
 
     finally:
-        # Убираем пользователя из списка после завершения (даже если была ошибка)
         if user_id in user_card_opens:
             user_card_opens.remove(user_id)
