@@ -84,7 +84,7 @@ async def _(message: Message, session: AsyncSession):
             await session.commit()
 
         else:
-            text = MText.nottime(user.last_open)
+            text = MText.nottime(last_open)
             await message.reply(text)
 
     finally:

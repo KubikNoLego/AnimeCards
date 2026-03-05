@@ -88,7 +88,7 @@ async def _(message: Message, session: AsyncSession):
                 ...
 
         else:
-            text = MText.nottime(user.last_open)
+            text = MText.nottime(last_open)
             try:
                 await message.react([ReactionTypeEmoji(emoji="😴")])
             except:
