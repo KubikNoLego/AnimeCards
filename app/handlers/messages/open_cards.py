@@ -37,7 +37,7 @@ async def _(message: Message, session: AsyncSession):
         last_open = user.last_open
 
         if last_open.tzinfo is None:
-            last_open = last_open.replace(tzinfo=MSK_TIMEZONE)
+            last_open = last_open.astimezone(MSK_TIMEZONE)
             
         hour = 2 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 3
 
