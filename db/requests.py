@@ -5,7 +5,7 @@ from redis.asyncio import Redis
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import (Card, Clan, ClanMember, Promo,
+from db.models import (BattleInventory, Card, Clan, ClanMember, Promo,
                         User, Profile, UserCards, Verse, Referrals,
                         ClanInvitation,Trade)
 
@@ -395,6 +395,18 @@ f"Ошибка при создании приглашения в клан для
         except Exception as exc:
             logger.exception(f"Ошибка при завершении трейда: {exc}")
             return False
+
+    async def create_battle_inventory(self, user: User) -> BattleInventory:
+        
+        battle_inventory = BattleInventory(user_id=user.id)
+        
+        self.__session.add(battle_inventory)
+
+        user.battle_inventory = battle_inventory
+
+        await self.__session.commit()
+
+        return battle_inventory
 
 class RedisRequests:
 

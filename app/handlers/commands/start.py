@@ -24,10 +24,16 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
     user = await message.bot.get_chat(message.from_user.id)
 
     db = DB(session)
-    user, action = await db.create_or_update_user(user.id,
+    result = await db.create_or_update_user(user.id,
                                 message.from_user.username,
                                 user.full_name,
                                 user.bio)
+    
+    if result is None:
+        await message.answer("Произошла ошибка при регистрации. Попробуйте позже.")
+        return
+    
+    user, action = result
 
     if command.args:
         option,value = command.args.split("_")

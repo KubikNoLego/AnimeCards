@@ -2,7 +2,7 @@ from datetime import datetime,timedelta
 import math
 
 from aiogram import Router,F
-from aiogram.types import Message,FSInputFile, ReactionTypeEmoji
+from aiogram.types import Message,FSInputFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.filters import Private
