@@ -88,7 +88,7 @@ async def _(message: Message, session: AsyncSession):
             if user:
                 text = await MText.user_profile(session, user.id)
                 profile_photo = await user_photo_link(message)
-                keyboard = await profile_keyboard(user.profile.describe != "")
+                keyboard = await profile_keyboard(user.profile.describe != "", user.vip)
                 if profile_photo:
                     await message.reply_photo(photo=profile_photo,caption=text,
                             reply_markup= (keyboard 

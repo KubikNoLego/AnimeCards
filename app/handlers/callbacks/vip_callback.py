@@ -33,7 +33,7 @@ async def buy_vip(callback: CallbackQuery, session: AsyncSession):
         await callback.message.bot.send_invoice(
             chat_id=callback.from_user.id,
             title="💎 VIP",
-            description="Получите эксклюзивные преимущества: увеличенные награды, больше бонусов за рефералов, полный доступ к магазину и специальный символ 👑 в профиле!",
+            description= MText.get("description_vip"),
             payload=f"vip_subscription_{user.id}",
             currency="XTR",
             prices=[LabeledPrice(label="VIP Подписка", amount=vip_price_stars)],

@@ -234,10 +234,14 @@ async def rarity_filter_pagination_keyboard(current_page: int, rarities: list,
 
     return builder.as_markup()
 
-async def profile_keyboard(has_describe: bool):
+async def profile_keyboard(has_describe: bool, vip: bool):
     builder = InlineKeyboardBuilder()
 
     builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1).pack())
+    
+    if not vip:
+        builder.button(text="💰 Купить VIP", callback_data="buy_vip")
+
     builder.button(text="🖋️ Сменить подпись",callback_data="change_describe")
     if has_describe:
         builder.button(text="❌ Удалить подпись",
