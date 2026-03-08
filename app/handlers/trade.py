@@ -1,22 +1,34 @@
-from aiogram import Router, F
 from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, select
+from aiogram import Router,F
+from aiogram.types import Message
+from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
+from app.filters import Private
+from app.messages import MText
 from app.keyboards import (back_to_sort, sort_inventory_kb,
                     verse_filter_pagination_keyboard, pagination_keyboard,
                     rarity_filter_pagination_keyboard,trade_action_kb,
                     TradeVerseFilter, TradePagination,
                     TradeVerseFilterPagination,
                     TradeRarityFilter, TradeRarityFilterPagination,
-                    SelectedCard)
-from app.messages import MText
+                    SelectedCard,trade_kb_pagination)
 from db import DB, Card, Verse, Rarity, UserCards, User, Trade
 
 
 router = Router()
+
+
+@router.message(F.text == "🔁 Трейды", Private())
+async def _(message: Message, session: AsyncSession):
+    db = DB(session)
+    user: User = await db.get_user(message.from_user.id)
+
+    if len(user.inventory) > 0:
+        await message.answer(MText.get("trade_message"),reply_markup=await trade_kb_pagination())
+
 
 
 @router.callback_query(F.data == "accept_trade")
@@ -456,4 +468,3 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
 
     except Exception as e:
         logger.warning(f"Не удалось отредактировать сообщение: {e}")
-

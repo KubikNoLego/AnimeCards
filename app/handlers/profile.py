@@ -2,6 +2,7 @@ import re
 from html import escape
 
 from aiogram import Router,F
+from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +20,24 @@ from db import DB, User
 
 router = Router()
 
+
+
+@router.message(Command("profile"))
+async def _(message: Message,session: AsyncSession):
+    db = DB(session)
+    user = await db.get_user(message.from_user.id)
+    if user:
+        text = await MText.user_profile(session, user.id)
+
+        profile_photo = await user_photo_link(message)
+            
+        if profile_photo:
+            await message.reply_photo(photo=profile_photo,caption=text)
+        else:
+            await message.reply(text)
+    else:
+        await message.reply(MText.get("not_user")
+                            .format(name = escape(message.from_user.full_name)))
 
 @router.message(ChangeDescribe.text)
 async def _(message:Message, session: AsyncSession, state: FSMContext):

@@ -33,7 +33,7 @@ dp = Dispatcher(storage=RedisStorage.from_url(
     )
 
 
-_engine = create_async_engine(
+engine = create_async_engine(
     config.DB_URL.get_secret_value(),
     pool_size=20,
     max_overflow=30,
@@ -41,7 +41,7 @@ _engine = create_async_engine(
     pool_recycle=3600,
     pool_pre_ping=True
 )
-_sessionmaker = async_sessionmaker(_engine,expire_on_commit=False)
+_sessionmaker = async_sessionmaker(engine,expire_on_commit=False)
 
 # Глобальные переменные для хранения ссылок на фоновые задачи
 _daily_coordinator_task = None
@@ -55,7 +55,7 @@ dp.include_router(router=setup_routers())
 async def on_startup():
     await bot.delete_webhook(True)
 
-    async with _engine.begin() as connection:
+    async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
 
     # Запуск ежедневных обновлений в фоновом режиме
@@ -81,7 +81,7 @@ async def on_shudown():
         except asyncio.CancelledError:
             pass
 
-    await _engine.dispose()
+    await engine.dispose()
     logger.error("Бот отключён")
 
 if __name__ == "__main__":
