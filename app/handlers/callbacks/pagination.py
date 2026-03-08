@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto
+from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, InputMediaVideo
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, select
@@ -87,7 +87,14 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
     """Обработчик callback для пагинации фильтра по вселенной."""
     try:
 
-        verses = await session.scalars(select(Verse))
+        # Получаем все вселенные, у которых есть хотя бы одна карта в инвентаре пользователя
+        user = await DB(session).get_user(callback.from_user.id)
+        
+        verses = await session.scalars(
+            select(Verse).join(Card).join(UserCards).filter(
+                UserCards.user_id == user.id
+            ).distinct()
+        )
         verses = verses.all()
         total_pages = len(verses)
         current_page = callback_data.p
@@ -309,10 +316,17 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
     card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
     keyboard = await pagination_keyboard(card_index + 1, len(cards))
+
+    if card.icon.lower().endswith(".mp4"):
+        media = InputMediaVideo(media=FSInputFile(
+            path=f"app/icons/{card.verse.name}/{card.icon}"))
+    else:
+        media = media=InputMediaPhoto(media=FSInputFile(
+                path=f"app/icons/{card.verse.name}/{card.icon}"))
+
     try:
         await callback.message.edit_media(
-            media=InputMediaPhoto(media=FSInputFile(
-                path=f"app/icons/{card.verse.name}/{card.icon}")),
+            media=media,
             reply_markup=keyboard
         )
         await callback.message.edit_caption(
