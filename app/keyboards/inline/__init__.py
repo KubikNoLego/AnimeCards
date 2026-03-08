@@ -13,7 +13,7 @@ from .pagination import (
                     back_to_sort
                     )
 from .clan_kb import (
-                    clan_create, clan_create_exit, clan_invite_kb, 
+                    clan_create, create_clan,clan_create_exit, clan_invite_kb, 
                     clan_leader, clan_member, member_pagination_keyboard
                     )
 
