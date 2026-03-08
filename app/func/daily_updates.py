@@ -48,7 +48,6 @@ async def _cleanup_expired_vip_subscriptions(sessionmaker:async_sessionmaker):
 
         await asyncio.sleep(3600)
 
-@logger.catch
 async def _update_daily_verse(session, db_session):
     """Обновляем ежедневную вселенную."""
     new_verse: Verse = await DB(db_session).get_random_verse()
@@ -62,7 +61,6 @@ f"Ежедневная вселенная обновлена. ID: {new_verse.id}
         "Не удалось получить новую вселенную для ежедневного обновления")
         return False
 
-@logger.catch
 async def _update_daily_shop(session, db_session):
     """Обновляем ежедневный магазин."""
     daily_items = await DB(db_session).get_daily_shop_items()
@@ -76,7 +74,6 @@ f"Ежедневный магазин обновлен. Товары: {len(daily
         logger.error("Не удалось получить товары для ежедневного магазина")
         return False
 
-@logger.catch
 async def _add_vip_free_opens(db_session):
     """Добавляем бесплатные открытия VIP пользователям."""
     current_time = datetime.now(MSK_TIMEZONE)

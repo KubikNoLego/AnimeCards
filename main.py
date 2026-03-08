@@ -1,29 +1,22 @@
 import asyncio
-from datetime import timedelta,datetime, timedelta
+from datetime import timedelta, timedelta
 
 from aiogram import Bot,Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import RedisStorage
 from sqlalchemy.ext.asyncio import (create_async_engine,
-                                    AsyncSession,
                                     async_sessionmaker
                                     )
-from sqlalchemy import delete, select
 from loguru import logger
-from redis.asyncio import Redis
 
 from configR import config
 from app.handlers import setup_routers
 from app.middlewares import DBSessionMiddleware
-from db import Base,Verse,DB,VipSubscription,User,Clan
-from app.func import MSK_TIMEZONE, setup_logger
+from db import Base
+from app.func import setup_logger
 from app.func.daily_updates import (
     _cleanup_expired_vip_subscriptions,
-    _update_daily_verse,
-    _update_daily_shop,
-    _add_vip_free_opens,
-    _rebalance_clans,
     _daily_coordinator
 )
 

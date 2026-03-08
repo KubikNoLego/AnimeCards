@@ -1,5 +1,6 @@
-from datetime import datetime,timedelta
 import math
+import asyncio
+from collections import defaultdict
 
 from aiogram import Router
 from aiogram.types import Message, FSInputFile, ReactionTypeEmoji
@@ -7,12 +8,13 @@ from aiogram.filters import Command
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.messages import MText
-from app.func import MSK_TIMEZONE, random_card
+from app.func import open_card, CardOpen
 from db import DB
 
 
 router = Router()
-user_card_opens = []
+user_card_opens = defaultdict(asyncio.Lock)
+
 
 
 @router.message(Command("card"))
@@ -20,81 +22,39 @@ async def _(message: Message, session: AsyncSession):
     user_id = message.from_user.id
 
     # Проверяем, не открывает ли пользователь карту в данный момент
-    if user_id in user_card_opens:
+    if user_card_opens[user_id].locked():
         await message.reply(MText.get("wait"))
         return
+    
+    
+    async with user_card_opens[user_id]:
 
-    try:
-        user_card_opens.append(user_id)
-        
+        result = await open_card(session, user_id)
+
         db = DB(session)
         user = await db.get_user(user_id)
+
+        match result:
             
-        if not user:
-            await message.reply(MText.get("not_registered"))
-            return
-        
-        last_open = user.last_open
-
-        if last_open.tzinfo is None:
-            last_open = last_open.astimezone(MSK_TIMEZONE)
-            
-        hour = 2 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 3
-
-        if ((last_open + timedelta(hours=hour) <= datetime.now(MSK_TIMEZONE))
-                                                        or user.free_open):
-            
-            card = await random_card(session,user.pity)
-
-            text = MText.get("card").format(name=card.name,
-                                            verse=card.verse_name,
-                                            rarity=card.rarity_name,
-                                            value=(card.value
-                                                if not user.vip
-                    else f"{card.value} (+{math.ceil(card.value * 0.1)})"))
-            text = text + "\n\n✨ Shiny" if card.shiny else text
-            text += MText.get("pity").format(pity=100-user.pity)
-            
-            await message.reply_photo(FSInputFile(
-                path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
-            if card not in user.inventory:
-                user.inventory.append(card)
-            
-            user.pity -= 1
-
-            if user.pity < 0:
-                user.pity = 100
-
-            if user.free_open:
-                user.free_open -= 1
-
-            else:
-                user.last_open = datetime.now(MSK_TIMEZONE)
-
-            added_sum = int(card.value + (math.ceil(card.value * 0.1) 
-                                        if user.vip else 0))
-            
-            user.balance += added_sum
-
-            if user.clan_member:
-                user.clan_member.contribution += int(added_sum*0.3)
-                user.clan_member.clan.balance += int(added_sum*0.3)
-
-            await session.commit()
-
-            try:
-                await message.react([ReactionTypeEmoji(emoji="💘")])
-            except:
-                ...
-
-        else:
-            text = MText.nottime(last_open)
-            try:
+            case CardOpen.NOT_REGISTERED:
+                await message.answer(MText.get("not_registered"))
+            case CardOpen.NOT_TIME:
+                await message.answer(MText.nottime(user.last_open))
                 await message.react([ReactionTypeEmoji(emoji="😴")])
-            except:
-                ...
-            await message.reply(text)
+            case CardOpen.ERROR: pass
+            case Card:
+                card = result
 
-    finally:
-        if user_id in user_card_opens:
-            user_card_opens.remove(user_id)
+                text = MText.get("card").format(name=card.name,
+                                                verse=card.verse_name,
+                                                rarity=card.rarity_name,
+                                                value=(card.value
+                                                    if not user.vip
+                        else f"{card.value} (+{math.ceil(card.value * 0.1)})"))
+                text = text + "\n\n✨ Shiny" if card.shiny else text
+                text += MText.get("pity").format(pity=100-user.pity)
+
+                await message.answer_photo(FSInputFile(
+                path=f"app/icons/{card.verse.name}/{card.icon}"), caption=text)
+
+                await message.react([ReactionTypeEmoji(emoji="💘")])
