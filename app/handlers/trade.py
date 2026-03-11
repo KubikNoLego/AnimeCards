@@ -1,63 +1,70 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, InputMediaVideo
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, select
+from aiogram.types import Message
+from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
+from app.filters import Private
+from app.messages import MText
 from app.keyboards import (back_to_sort, sort_inventory_kb,
                     verse_filter_pagination_keyboard, pagination_keyboard,
                     rarity_filter_pagination_keyboard,trade_action_kb,
                     TradeVerseFilter, TradePagination,
                     TradeVerseFilterPagination,
                     TradeRarityFilter, TradeRarityFilterPagination,
-                    SelectedCard)
-from app.messages import MText
+                    SelectedCard,trade_kb_pagination)
 from db import DB, Card, Verse, Rarity, UserCards, User, Trade
-
 
 router = Router()
 
+@router.message(F.text == "🔁 Трейды", Private())
+async def _(message: Message, session: AsyncSession):
+    db = DB(session)
+    user: User = await db.get_user(message.from_user.id)
+
+    if len(user.inventory) > 0:
+        await message.answer(MText.get("trade_message"),reply_markup=await trade_kb_pagination())
 
 @router.callback_query(F.data == "accept_trade")
 async def selected_card_callback(callback: CallbackQuery,
                                 session: AsyncSession):
     db = DB(session)
-    
-    
+
     trade = await db.get_trade(callback.from_user.id)
-    
+
     if not trade:
         return
-    
+
     is_complete = await db.complete_trade(trade)
-    
+
     if not is_complete:
         await callback.answer(MText.get("error_completing"))
         return
 
     await callback.message.answer(MText.get("trade_succes"))
     await callback.bot.send_message(trade.partner_id, MText.get("trade_succes"))
-    
+
     await callback.message.delete()
 
 @router.callback_query(F.data == "reject_trade")
 async def selected_card_callback(callback: CallbackQuery,
                                 session: AsyncSession):
     db = DB(session)
-    
+
     trade = await db.get_trade(callback.from_user.id)
-    
+
     if not trade:
         return
 
     await callback.message.answer(MText.get("u_reject_trade"))
     await callback.bot.send_message(trade.partner_id, MText.get("user_reject_your_offer"))
-    
+
     trade.partner_card = None
     trade.partner_id = None
     trade.partner_added_at = None
-    
+
     await callback.message.delete()
 
 @router.callback_query(SelectedCard.filter())
@@ -65,11 +72,11 @@ async def selected_card_callback(callback: CallbackQuery,
                 callback_data: SelectedCard, session: AsyncSession):
     db = DB(session)
     user = await db.get_user(callback.from_user.id)
-    
+
     # Проверяем, является ли пользователь партнером другого игрока
     trade = await session.scalar(select(Trade).filter_by(
         partner_id=user.id))
-    
+
     if trade:
         # Проверяем, что выбранная карта доступна для обмена
         partner = await db.get_user(trade.user_id)
@@ -95,11 +102,11 @@ async def selected_card_callback(callback: CallbackQuery,
                     path=f"app/icons/{card.verse.name}/{card.icon}"),
                     caption=card_info,
                     reply_markup=await trade_action_kb())
-        
+
         trade.partner_card = card.id
-        
+
         await session.commit()
-        
+
         return
 
     # Проверяем, есть ли уже активный трейд у пользователя
@@ -118,8 +125,6 @@ async def selected_card_callback(callback: CallbackQuery,
         link=trade_link)
         )
     await callback.message.delete()
-
-
 
 @router.callback_query(F.data == "reset_sort_filters_trade")
 async def reset_sort_filters_callback(callback: CallbackQuery,
@@ -195,7 +200,7 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
 
         # Получаем все вселенные, у которых есть хотя бы одна карта в инвентаре пользователя
         user = await DB(session).get_user(callback.from_user.id)
-        
+
         verses = await session.scalars(
             select(Verse).join(Card).join(UserCards).filter(
                 UserCards.user_id == user.id
@@ -352,7 +357,7 @@ async def rarity_filter_callback(callback: CallbackQuery,
 
 @router.callback_query(TradePagination.filter())
 async def inventory_pagination_callback(callback: CallbackQuery,
-                    callback_data: TradePagination, session: AsyncSession, 
+                    callback_data: TradePagination, session: AsyncSession,
                     state: FSMContext):
     """Обработчик callback для пагинации инвентаря с фильтрацией."""
     try:
@@ -364,31 +369,31 @@ async def inventory_pagination_callback(callback: CallbackQuery,
             data = await state.get_data()
             selected_verse_name = data.get('selected_verse_name_trade', None)
             selected_rarity_name = data.get('selected_rarity_name_trade', None)
-            
+
             # Проверяем, является ли пользователь партнером другого игрока
             trade = await session.scalar(select(Trade).filter_by(
                 partner_id=user.id))
-            
+
             partner_cards = []
             if trade:
                 # Получаем карты партнера
                 partner = await DB(session).get_user(trade.user_id)
                 if partner:
                     partner_cards = [card.id for card in partner.inventory]
-            
+
             conditions = [UserCards.user_id == user.id]
             if selected_rarity_name:
                 conditions.append(Card.rarity_name == selected_rarity_name)
             if selected_verse_name:
                 conditions.append(Card.verse_name == selected_verse_name)
-            
+
             stmt = select(Card).join(UserCards).where(and_(*conditions)).order_by(UserCards.id)
             filtered_cards = await session.scalars(stmt)
             filtered_cards = filtered_cards.all()
 
             # Фильтруем карты, исключая те, которые есть у партнера
             if partner_cards:
-                filtered_cards = [card for card in filtered_cards 
+                filtered_cards = [card for card in filtered_cards
                                 if card.id not in partner_cards]
 
             if not filtered_cards:
@@ -400,10 +405,10 @@ async def inventory_pagination_callback(callback: CallbackQuery,
                     # Удаляем partner_id, так как у партнера нет доступных карт
                     trade.partner_id = None
                     await session.commit()
-                    
+
                     # Уведомляем пользователя
                     await callback.message.answer("У вас нет карт для обмена. Партнерство расторгнуто.")
-                
+
                 # Создаем клавиатуру с кнопкой возврата к сортировке
                 builder = await back_to_sort(True)
                 # Очищаем данные FSM
@@ -470,4 +475,3 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
 
     except Exception as e:
         logger.warning(f"Не удалось отредактировать сообщение: {e}")
-

@@ -1,15 +1,9 @@
 import os
-import random
 import tempfile
 
 import qrcode
 from aiogram.types import FSInputFile, Message
 from loguru import logger
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from .consts import RARITIES,SHINY_CHANCE,CHANCES
-
 
 async def create_qr(link:str) -> FSInputFile:
     """Создаёт QR для реферальной ссылки"""
@@ -31,51 +25,8 @@ async def create_qr(link:str) -> FSInputFile:
         # Удаляем временный файл в случае ошибки
         if os.path.exists(temp_file.name):
             os.unlink(temp_file.name)
+        logger.exception("Ошибкв при создании QR")
         return
-    
-
-async def random_card(session: AsyncSession, pity: int):
-    """Выбрать случайную карту"""
-    from db import Card, RedisRequests, Rarity
-
-    random_rarity = random.choices(RARITIES, CHANCES, k=1)[0] if pity > 0 else 5
-    # Определяем, выпала ли shiny-версия
-    is_shiny = random.random() < SHINY_CHANCE
-
-    # Оптимизация: получаем daily_verse параллельно с запросом к базе данных
-    daily_verse_task = RedisRequests.daily_verse()
-
-    cards_result = await session.scalars(
-        select(Card).join(Rarity).where(
-            Card.shiny == is_shiny,
-            Card.can_drop == True,
-            Rarity.id == random_rarity,
-        )
-    )
-    cards = cards_result.all()
-
-    if not cards:
-        raise ValueError(
-        f"Нет доступных карт с редкостью {random_rarity} и shiny={is_shiny}"
-        )
-
-    daily_verse = await daily_verse_task
-
-    if daily_verse:
-        boosted_cards = [card for card in cards if card.verse.id == daily_verse]
-        normal_cards = [card for card in cards if card.verse.id != daily_verse]
-
-        # Увеличиваем шанс на 25% для карт из ежедневной вселенной
-        if boosted_cards:
-            cards = random.choices(
-                population=boosted_cards + normal_cards,
-                weights=[1.25] * len(boosted_cards) + [1.0] * len(normal_cards),
-                k=1
-            )
-            return cards[0]
-
-    return random.choice(cards) if cards else None
-
 
 async def user_photo_link(message: Message) -> str | None:
     """Получить file_id фото профиля пользователя"""
@@ -95,10 +46,6 @@ async def user_photo_link(message: Message) -> str | None:
             file_id = photo.file_id
             return file_id
     except Exception as exc:
-
         logger.exception(f"Ошибка при получении фото пользователя: {exc}")
 
-    return None
-
-
-
+        return None

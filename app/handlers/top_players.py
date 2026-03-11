@@ -1,4 +1,5 @@
 from aiogram import Router,F
+from aiogram.filters import Command
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +22,21 @@ async def _(message: Message, session: AsyncSession):
                                                 user.id)
 
         # Отправляем только топ по балансу
+        await message.answer(text_balance, disable_notification=True,
+                            disable_web_page_preview=True)
+    else:
+        text = MText.get("not_user").format(name=message.from_user.full_name)
+        await message.reply(text)
+
+@router.message(Command("top"))
+async def _(message: Message, session: AsyncSession):
+    db = DB(session)
+    user = await db.get_user(message.from_user.id)
+    if user:
+        top_players_balance = await db.get_top_players_by_balance()
+        text_balance = MText.top_players_formatter(top_players_balance,
+                                                user.id)
+
         await message.answer(text_balance, disable_notification=True,
                             disable_web_page_preview=True)
     else:
