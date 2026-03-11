@@ -122,6 +122,6 @@ async def open_card(session: AsyncSession, user_id):
 
         else:
             return CardOpen.NOT_TIME
-    except:
-        logger.exception("Ошибка при открытии карт {id}", id=user_id)
+    except Exception as e:
+        logger.exception("Ошибка при открытии карт {id}: {error}", id=user_id, error=str(e))
         return CardOpen.ERROR
