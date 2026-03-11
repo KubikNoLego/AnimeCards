@@ -2,6 +2,7 @@ from aiogram import Router,F
 from aiogram.types import Message,FSInputFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from loguru import logger
 
 from app.filters import Private
 from app.messages import MText
@@ -21,8 +22,10 @@ async def _(message:Message,session:AsyncSession):
         return
     
     if not user.battle_inventory:
-        inventory = await db.create_battle_inventory(user)
-    
+        await db.create_battle_inventory(user)
+
+    logger.info("Пользователь {id} смотрит колоду: {coloda}", id = user.id,coloda = user.battle_inventory.cards)
+
     rarity_emojis = {
             "Обычный": "🔵",
             "Редкий": "🟢",

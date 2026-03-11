@@ -56,8 +56,8 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                     await message.answer(MText.get("user_not_found_short"))
                     return
 
-                if (trade.partner_id and trade.partner_id != user.id and 
-            trade.partner_added_at + timedelta(minutes=10) >= datetime.now()):
+                if (trade.partner_id and trade.partner_id != user.id and
+            trade.partner_added_at + timedelta(minutes=10) >= datetime.now(MSK_TIMEZONE)):
                     
                     await message.answer(MText.get("user_already_trading"))
                     return
@@ -146,7 +146,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                                 yens=inviter.balance)
                             )
                 except Exception as e:
-                    logger.error(f"Не удалось отправить сообщение реферреру {inviter.id}: {e}")
+                    logger.exception(f"Не удалось отправить сообщение реферреру {inviter.id}: {e}")
 
     message_text = MText.get("start")
     keyboard = await main_kb()
