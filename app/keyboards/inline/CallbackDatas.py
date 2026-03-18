@@ -54,3 +54,27 @@ class TradeRarityFilter(CallbackData, prefix="trf"):
 
 class SelectedCard(CallbackData, prefix="ts"):
     card_id: int
+
+class PvPPagination(CallbackData, prefix="pp"):
+    """Данные обратного вызова для кнопок пагинации."""
+    p: int
+    s: int
+
+class PvPVerseFilterPagination(CallbackData, prefix="tvfpg"):
+    """Данные обратного вызова для кнопок пагинации фильтра по вселенной."""
+    p: int
+
+class PvPVerseFilter(CallbackData, prefix="tvf"):
+    """Данные обратного вызова для кнопок фильтра по вселенной."""
+    verse_id: int
+
+class PvPRarityFilterPagination(CallbackData, prefix="trfpg"):
+    """Данные обратного вызова для кнопок пагинации фильтра по редкости."""
+    p: int
+
+class PvPRarityFilter(CallbackData, prefix="trf"):
+    """Данные обратного вызова для кнопок фильтра по редкости."""
+    rarity_name: str
+
+class PvPSelectedCard(CallbackData, prefix="ps"):
+    card_id: int
