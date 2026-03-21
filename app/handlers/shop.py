@@ -2,6 +2,7 @@ from aiogram import Router,F
 from aiogram.types import Message,CallbackQuery, FSInputFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from loguru import logger
 
 from app.filters import Private
@@ -151,7 +152,13 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
             user.balance -= int(card.value*1.7)
             user.inventory.append(card)
 
-            await session.commit()
+            try:
+                await session.commit()
+            except IntegrityError:
+                await session.rollback()
+                await callback.answer(MText.get("card_already_owned"),
+                                    show_alert=True)
+                return
 
             # Удаляем сообщение с предложением покупки
             try:
