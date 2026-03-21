@@ -204,16 +204,29 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
                 callback_data: TradeVerseFilterPagination, session: AsyncSession):
     """Обработчик callback для пагинации фильтра по вселенной."""
     try:
-
-        verses = await session.scalars(select(Verse))
-        verses = verses.all()
-        total_pages = len(verses)
+        # Получаем пользователя
+        user = await DB(session).get_user(callback.from_user.id)
+        
+        if not user or not user.inventory:
+            await callback.answer(MText.get("inventory_empty"), show_alert=True)
+            return
+        
+        # Получаем уникальные вселенные из карточек пользователя
+        user_verses = list({card.verse for card in user.inventory if card.verse})
+        # Сортируем по id
+        user_verses.sort(key=lambda v: v.id)
+        
+        if not user_verses:
+            await callback.answer(MText.get("inventory_empty"), show_alert=True)
+            return
+        
+        total_pages = (len(user_verses) + 3) // 4  # 4 вселенные на страницу
         current_page = callback_data.p
 
         if 1 <= current_page <= total_pages:
             # Создаем клавиатуру с обновленными кнопками пагинации
             keyboard = await verse_filter_pagination_keyboard(current_page,
-                                                            verses=verses,
+                                                            verses=user_verses,
                                                             trade = True)
             # Получаем сообщение из messages.json
             select_universe_message = MText.get("select_universe")
