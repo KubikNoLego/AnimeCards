@@ -69,9 +69,14 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                                                     value=card.value)
                 card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
-                await message.answer_photo(FSInputFile(
-                    path=f"app/icons/{card.verse.name}/{card.icon}"),
-                    caption=card_info, reply_markup=await trade_kb_pagination())
+                # Отправляем карту с учетом типа файла
+                file_path = f"app/icons/{card.verse.name}/{card.icon}"
+                if card.icon.endswith('.mp4'):
+                    await message.answer_video(FSInputFile(path=file_path),
+                        caption=card_info, reply_markup=await trade_kb_pagination())
+                else:
+                    await message.answer_photo(FSInputFile(path=file_path),
+                        caption=card_info, reply_markup=await trade_kb_pagination())
                 
                 trade.partner_id = user.id
                 trade.partner_card = None

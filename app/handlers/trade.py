@@ -1,4 +1,4 @@
-from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto
+from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, InputMediaVideo
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import and_, select
 from aiogram import Router,F
@@ -103,10 +103,18 @@ async def selected_card_callback(callback: CallbackQuery,
                                                     value=card.value)
         card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
-        await callback.bot.send_photo(trade.user_id, photo=FSInputFile(
-                    path=f"app/icons/{card.verse.name}/{card.icon}"),
-                    caption=card_info,
-                    reply_markup=await trade_action_kb())
+        # Отправляем карту партнеру с учетом типа файла
+        file_path = f"app/icons/{card.verse.name}/{card.icon}"
+        if card.icon.endswith('.mp4'):
+            await callback.bot.send_video(trade.user_id, video=FSInputFile(
+                        path=file_path),
+                        caption=card_info,
+                        reply_markup=await trade_action_kb())
+        else:
+            await callback.bot.send_photo(trade.user_id, photo=FSInputFile(
+                        path=file_path),
+                        caption=card_info,
+                        reply_markup=await trade_action_kb())
         
         trade.partner_card = card.id
         
@@ -469,9 +477,15 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
 
     keyboard = await pagination_keyboard(card_index + 1, len(cards), True, card.id)
     try:
+        # Определяем тип медиа по расширению файла
+        file_path = f"app/icons/{card.verse.name}/{card.icon}"
+        if card.icon.endswith('.mp4'):
+            media = InputMediaVideo(media=FSInputFile(path=file_path))
+        else:
+            media = InputMediaPhoto(media=FSInputFile(path=file_path))
+        
         await callback.message.edit_media(
-            media=InputMediaPhoto(media=FSInputFile(
-                path=f"app/icons/{card.verse.name}/{card.icon}")),
+            media=media,
             reply_markup=keyboard
         )
         await callback.message.edit_caption(
