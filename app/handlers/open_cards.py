@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from aiogram import Router,F
 from aiogram.filters import Command
-from aiogram.types import FSInputFile, Message, ReactionTypeEmoji, InputMediaPhoto
+from aiogram.types import FSInputFile, Message, ReactionTypeEmoji
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.filters import Private
@@ -53,9 +53,10 @@ async def _(message: Message, session: AsyncSession):
                 text = text + "\n\n✨ Shiny" if card.shiny else text
                 text += MText.get("pity").format(pity=100-user.pity)
 
-                await message.reply_photo(InputMediaPhoto(
-                media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
-                caption=text))
+                await message.reply_photo(
+                    photo=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
+                    caption=text
+                )
 
 
 @router.message(Command("card"))
@@ -96,8 +97,9 @@ async def _(message: Message, session: AsyncSession):
                 text = text + "\n\n✨ Shiny" if card.shiny else text
                 text += MText.get("pity").format(pity=100-user.pity)
 
-                await message.reply_photo(InputMediaPhoto(
-                media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
-                caption=text))
+                await message.reply_photo(
+                    photo=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
+                    caption=text
+                )
 
                 await message.react([ReactionTypeEmoji(emoji="💘")])
