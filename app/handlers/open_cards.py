@@ -28,27 +28,19 @@ async def _(message: Message, session: AsyncSession):
     
     
     async with user_card_opens[user_id]:
-        # Сначала отправляем анимацию открытия
-        anim = await message.reply_video(FSInputFile("app/icons/open.mp4"))
-
-        await asyncio.sleep(2)
-
-        # Параллельно обрабатываем открытие карты
-        result_task = asyncio.create_task(open_card(session, user_id))
-
-        # Ждем завершения обработки карты
-        result = await result_task
+        result = await open_card(session, user_id)
 
         db = DB(session)
         user = await db.get_user(user_id)
 
         match result:
-
             case CardOpen.NOT_REGISTERED:
-                await anim.edit_text(MText.get("not_registered"))
+                await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
-                await anim.edit_text(MText.nottime(user.last_open))
-            case CardOpen.ERROR: pass
+                await message.reply(MText.nottime(user.last_open))
+                await message.react([ReactionTypeEmoji(emoji="😴")])
+            case CardOpen.ERROR:
+                await message.reply("Произошла ошибка при открытии карты.")
             case Card:
                 card = result
 
@@ -61,9 +53,10 @@ async def _(message: Message, session: AsyncSession):
                 text = text + "\n\n✨ Shiny" if card.shiny else text
                 text += MText.get("pity").format(pity=100-user.pity)
 
-                await anim.edit_media(media=InputMediaPhoto(
+                await message.reply_photo(InputMediaPhoto(
                 media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
                 caption=text))
+
 
 @router.message(Command("card"))
 async def _(message: Message, session: AsyncSession):
@@ -76,16 +69,9 @@ async def _(message: Message, session: AsyncSession):
     
     
     async with user_card_opens[user_id]:
-        # Сначала отправляем анимацию открытия
-        anim = await message.reply_video(FSInputFile("app/icons/open.mp4"))
-
-        await asyncio.sleep(2)
 
         # Параллельно обрабатываем открытие карты
-        result_task = asyncio.create_task(open_card(session, user_id))
-
-        # Ждем завершения обработки карты
-        result = await result_task
+        result = await open_card(session,user_id)
 
         db = DB(session)
         user = await db.get_user(user_id)
@@ -93,10 +79,8 @@ async def _(message: Message, session: AsyncSession):
         match result:
 
             case CardOpen.NOT_REGISTERED:
-                await anim.delete()
-                await anim.reply(MText.get("not_registered"))
+                await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
-                await anim.delete()
                 await message.reply(MText.nottime(user.last_open))
                 await message.react([ReactionTypeEmoji(emoji="😴")])
             case CardOpen.ERROR: pass
@@ -112,7 +96,7 @@ async def _(message: Message, session: AsyncSession):
                 text = text + "\n\n✨ Shiny" if card.shiny else text
                 text += MText.get("pity").format(pity=100-user.pity)
 
-                await anim.edit_media(media=InputMediaPhoto(
+                await message.reply_photo(InputMediaPhoto(
                 media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
                 caption=text))
 
