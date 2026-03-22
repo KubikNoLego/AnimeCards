@@ -63,13 +63,6 @@ async def open_card(session: AsyncSession, user_id):
     Args:
         session (AsyncSession): Асинхронная сессия базы данных
         user_id: Идентификатор пользователя
-        
-    Returns:
-        int: Код результата операции
-            0 - пользователь не найден
-            1 - еще не прошло время для открытия карты
-            2 - карта успешно открыта
-            3 - произошла ошибка
     """
     try:
         db = DB(session)
@@ -93,7 +86,10 @@ async def open_card(session: AsyncSession, user_id):
             if card not in user.inventory:
                 user.inventory.append(card)
             
-            user.pity -= 1
+            if card.rarity.id == 5 and user.pity > 0:
+                user.pity = (100 + user.pity) // 2
+            else:
+                user.pity -= 1
 
             if user.pity < 0:
                 user.pity = 100
