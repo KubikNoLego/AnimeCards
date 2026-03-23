@@ -69,7 +69,7 @@ class Card(Base):
     __tablename__ = "cards"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    verse_name: Mapped[str] = mapped_column(String(50), ForeignKey("verses.name"))
+    verse_name: Mapped[str] = mapped_column(String(150), ForeignKey("verses.name"))
     rarity_name: Mapped[str] = mapped_column(String(50), ForeignKey("rarities.name"))
     value: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
@@ -97,7 +97,7 @@ class Verse(Base):
     __tablename__ = "verses"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
 
     cards: Mapped[list["Card"]] = relationship("Card", back_populates="verse", lazy="selectin")
 
