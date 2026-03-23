@@ -19,7 +19,7 @@ async def random_card(session: AsyncSession, pity: int):
     from db import Card, RedisRequests, Rarity
 
     # С вероятностью 10% выпадает карта с ID 351 (Ивент)
-    if random.random() < 0.10:
+    if random.random() < 0.01:
         special_card = await session.scalar(select(Card).filter_by(id=351))
         if special_card:
             logger.info("Выпала специальная карта с ID 351")
