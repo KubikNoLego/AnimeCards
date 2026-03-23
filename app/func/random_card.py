@@ -18,6 +18,13 @@ async def random_card(session: AsyncSession, pity: int):
     """Выбрать случайную карту"""
     from db import Card, RedisRequests, Rarity
 
+    # С вероятностью 10% выпадает карта с ID 351 (Ивент)
+    if random.random() < 0.10:
+        special_card = await session.scalar(select(Card).filter_by(id=351))
+        if special_card:
+            logger.info("Выпала специальная карта с ID 351")
+            return special_card
+
     random_rarity = random.choices(RARITIES, CHANCES, k=1)[0] if pity > 0 else 5
     # Определяем, выпала ли shiny-версия
     is_shiny = random.random() < SHINY_CHANCE
