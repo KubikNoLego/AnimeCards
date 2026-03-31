@@ -45,7 +45,7 @@ async def _(message: Message, session: AsyncSession, state: FSMContext):
         await message.reply(MText.get("wait"))
         return
     
-    problem = MText.get_question(randint(1,10))
+    problem = MText.get_question(randint(1,50))
     await state.set_state(CardOpenFSM.answer)
     await state.set_data({"problem_id": problem['id']})
     await message.answer(f"Задача:\n<b>{problem["task"]}</b>\n\nНапишите ответ, чтобы открыть карту!")
