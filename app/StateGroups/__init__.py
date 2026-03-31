@@ -1,1 +1,1 @@
-from .states import CardViewStates,ChangeDescribe,CreateClan,ClanLeader
+from .states import CardViewStates,ChangeDescribe,CreateClan,ClanLeader, CardOpenFSM

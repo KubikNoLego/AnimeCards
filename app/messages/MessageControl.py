@@ -131,5 +131,10 @@ class Messages:
             "Хроно": "🔴"}
         return "\n".join([f"{rarity_emojis.get(card.rarity_name, '🟡')} {card.name} {"(Shiny ✨) " if card.shiny else ""}- <b>{card.value} ¥</b>" for card in top])
 
+    def get_question(self, id):
+        for question in self.get("problems"):
+            if question["id"] == id:
+                return question
+        return None
 
 MText = Messages()

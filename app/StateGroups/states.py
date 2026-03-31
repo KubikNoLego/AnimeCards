@@ -18,3 +18,7 @@ class CreateClan(StatesGroup):
 
 class ClanLeader(StatesGroup):
     desc = State()
+
+class CardOpenFSM(StatesGroup):
+    problem_id = State()
+    answer = State()
