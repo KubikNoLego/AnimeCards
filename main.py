@@ -1,5 +1,5 @@
 import asyncio
-from datetime import timedelta, timedelta
+from datetime import timedelta
 
 from aiogram import Bot,Dispatcher
 from aiogram.enums import ParseMode
@@ -16,7 +16,6 @@ from app.middlewares import DBSessionMiddleware
 from db import Base
 from app.func import setup_logger
 from app.func.daily_updates import (
-    _cleanup_expired_vip_subscriptions,
     _daily_coordinator
 )
 
@@ -43,9 +42,8 @@ engine = create_async_engine(
 )
 _sessionmaker = async_sessionmaker(engine,expire_on_commit=False)
 
-# Глобальные переменные для хранения ссылок на фоновые задачи
+# Глобальная переменная для хранения ссылки на фоновую задачу
 _daily_coordinator_task = None
-_vip_cleanup_task = None
 
 dp.message.middleware(DBSessionMiddleware(_sessionmaker))
 dp.callback_query.middleware(DBSessionMiddleware(_sessionmaker))
@@ -59,13 +57,12 @@ async def on_startup():
         await connection.run_sync(Base.metadata.create_all)
 
     # Запуск ежедневных обновлений в фоновом режиме
-    global _daily_coordinator_task, _vip_cleanup_task
-    _daily_coordinator_task = asyncio.create_task(_daily_coordinator(_sessionmaker))
-    _vip_cleanup_task = asyncio.create_task(_cleanup_expired_vip_subscriptions(_sessionmaker))
+    global _daily_coordinator_task
+    _daily_coordinator_task = asyncio.create_task(_daily_coordinator(bot, _sessionmaker))
     logger.success("Бот успешно запущен")
     
 @dp.shutdown()
-async def on_shudown():
+async def on_shutdown():
     # Отменяем фоновые задачи при завершении работы
     if _daily_coordinator_task and not _daily_coordinator_task.done():
         _daily_coordinator_task.cancel()
@@ -74,15 +71,8 @@ async def on_shudown():
         except asyncio.CancelledError:
             pass
 
-    if _vip_cleanup_task and not _vip_cleanup_task.done():
-        _vip_cleanup_task.cancel()
-        try:
-            await _vip_cleanup_task
-        except asyncio.CancelledError:
-            pass
-
     await engine.dispose()
-    logger.error("Бот отключён")
+    logger.info("Бот отключён")
 
 if __name__ == "__main__":
     asyncio.run(dp.start_polling(bot))
