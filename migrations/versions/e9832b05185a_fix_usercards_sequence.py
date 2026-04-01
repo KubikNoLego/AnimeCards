@@ -25,8 +25,8 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = inspect(bind)
     
-    # Получаем список последовательностей
-    sequences = [seq['sequence_name'] for seq in inspector.get_sequence_names()]
+    # Получаем список последовательностей (get_sequence_names возвращает список строк)
+    sequences = inspector.get_sequence_names()
     
     if 'usercards_id_seq' in sequences:
         # Устанавливаем последовательность usercards_id_seq в значение, 
