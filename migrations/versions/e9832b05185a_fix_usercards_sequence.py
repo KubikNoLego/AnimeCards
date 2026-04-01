@@ -20,12 +20,21 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Устанавливаем последовательность usercards_id_seq в значение, 
-    # которое больше максимального id в таблице usercards
-    # Это предотвращает конфликты дублирования первичного ключа
-    op.execute("""
-        SELECT setval('usercards_id_seq', (SELECT COALESCE(MAX(id), 0) FROM usercards) + 1, false)
-    """)
+    # Проверяем существование последовательности перед установкой
+    from sqlalchemy import inspect
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    
+    # Получаем список последовательностей
+    sequences = [seq['sequence_name'] for seq in inspector.get_sequence_names()]
+    
+    if 'usercards_id_seq' in sequences:
+        # Устанавливаем последовательность usercards_id_seq в значение, 
+        # которое больше максимального id в таблице usercards
+        # Это предотвращает конфликты дублирования первичного ключа
+        op.execute("""
+            SELECT setval('usercards_id_seq', (SELECT COALESCE(MAX(id), 0) FROM usercards) + 1, false)
+        """)
 
 
 def downgrade() -> None:
