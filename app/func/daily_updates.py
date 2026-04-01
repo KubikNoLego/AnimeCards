@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy import delete, select
 from loguru import logger
 
-from db import Verse, DB, VipSubscription, User, Clan, Card, Trade, Profile, ClanMember, Promo, UserCards
+from db import Verse, DB, VipSubscription, User, Clan, Card, Trade, Profile, ClanMember, Promo, UserCards, PromoUsers
 from app.func import MSK_TIMEZONE
 from sqlalchemy import func, distinct, and_
 
@@ -251,15 +251,9 @@ async def _get_stats_text(db_session) -> str:
             select(func.count()).select_from(UserCards)
         )).scalar()
         
-        # Активные промокоды
-        active_promos = (await db_session.execute(
-            select(func.count(Promo.id))
-            .where(Promo.expire_at > current_time)
-        )).scalar()
-        
-        # Пользователи с профилем
-        users_with_profile = (await db_session.execute(
-            select(func.count(Profile.id))
+        # Количество активаций всех промокодов
+        total_promo_activations = (await db_session.execute(
+            select(func.count(PromoUsers.user_id))
         )).scalar()
         
         # Формируем текст статистики
@@ -267,8 +261,7 @@ async def _get_stats_text(db_session) -> str:
             "<i>📊 Статистика бота</i>\n\n"
             "<b>👥 Пользователи:</b>\n"
             f"  • Всего игроков: <b>{total_players or 0}</b>\n"
-            f"  • Активных за 24ч: <b>{active_users or 0}</b>\n"
-            f"  • С профилем: <b>{users_with_profile or 0}</b>\n\n"
+            f"  • Активных за 24ч: <b>{active_users or 0}</b>\n\n"
             
             "<b>🃏 Карты:</b>\n"
             f"  • Всего карт доступно: <b>{total_cards or 0}</b>\n"
@@ -284,7 +277,7 @@ async def _get_stats_text(db_session) -> str:
             f"  • VIP подписчиков: <b>{vip_count or 0}</b>\n\n"
             
             "<b>🎁 Промокоды:</b>\n"
-            f"  • Активных промокодов: <b>{active_promos or 0}</b>\n\n"
+            f"  • Активаций промокодов: <b>{total_promo_activations or 0}</b>\n\n"
         )
         
         return stats_text
