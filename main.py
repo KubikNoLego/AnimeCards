@@ -1,5 +1,5 @@
 import asyncio
-from datetime import timedelta, timedelta
+from datetime import timedelta
 
 from aiogram import Bot,Dispatcher
 from aiogram.enums import ParseMode
@@ -16,8 +16,8 @@ from app.middlewares import DBSessionMiddleware
 from db import Base
 from app.func import setup_logger
 from app.func.daily_updates import (
-    _cleanup_expired_vip_subscriptions,
-    _daily_coordinator
+    _daily_coordinator,
+    _edit_stats
 )
 
 setup_logger()
@@ -45,7 +45,7 @@ _sessionmaker = async_sessionmaker(engine,expire_on_commit=False)
 
 # Глобальные переменные для хранения ссылок на фоновые задачи
 _daily_coordinator_task = None
-_vip_cleanup_task = None
+_edit_stats_task = None
 
 dp.message.middleware(DBSessionMiddleware(_sessionmaker))
 dp.callback_query.middleware(DBSessionMiddleware(_sessionmaker))
@@ -59,13 +59,29 @@ async def on_startup():
         await connection.run_sync(Base.metadata.create_all)
 
     # Запуск ежедневных обновлений в фоновом режиме
-    global _daily_coordinator_task, _vip_cleanup_task
-    _daily_coordinator_task = asyncio.create_task(_daily_coordinator(_sessionmaker))
-    _vip_cleanup_task = asyncio.create_task(_cleanup_expired_vip_subscriptions(_sessionmaker))
+    global _daily_coordinator_task, _edit_stats_task
+    
+    _daily_coordinator_task = asyncio.create_task(_daily_coordinator(bot, _sessionmaker))
+    
+    # Запуск обновления статистики
+    try:
+        _edit_stats_task = asyncio.create_task(
+            _edit_stats(
+                bot=bot,
+                chat_id=config.CHAT_ID,
+                message_id=config.MESSAGE_ID,
+                db_sessionmaker=_sessionmaker,
+                interval=600
+            )
+        )
+        logger.info("Запущено обновление статистики")
+    except Exception as e:
+        logger.warning(f"Не удалось запустить обновление статистики: {e}")
+    
     logger.success("Бот успешно запущен")
     
 @dp.shutdown()
-async def on_shudown():
+async def on_shutdown():
     # Отменяем фоновые задачи при завершении работы
     if _daily_coordinator_task and not _daily_coordinator_task.done():
         _daily_coordinator_task.cancel()
@@ -73,16 +89,16 @@ async def on_shudown():
             await _daily_coordinator_task
         except asyncio.CancelledError:
             pass
-
-    if _vip_cleanup_task and not _vip_cleanup_task.done():
-        _vip_cleanup_task.cancel()
+    
+    if _edit_stats_task and not _edit_stats_task.done():
+        _edit_stats_task.cancel()
         try:
-            await _vip_cleanup_task
+            await _edit_stats_task
         except asyncio.CancelledError:
             pass
 
     await engine.dispose()
-    logger.error("Бот отключён")
+    logger.info("Бот отключён")
 
 if __name__ == "__main__":
     asyncio.run(dp.start_polling(bot))
