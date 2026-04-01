@@ -10,8 +10,9 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy import delete, select
 from loguru import logger
 
-from db import Verse,DB,VipSubscription,User,Clan
+from db import Verse, DB, VipSubscription, User, Clan, Card, Trade, Profile, ClanMember, Promo, UserCards
 from app.func import MSK_TIMEZONE
+from sqlalchemy import func, distinct, and_
 
 async def _update_daily_verse(session, db_session):
     """Обновляем ежедневную вселенную."""
@@ -218,3 +219,101 @@ async def _create_backup():
     except Exception as e:
         logger.exception(f"Неожиданная ошибка при создании бэкапа: {e}")
         return False
+
+async def _get_stats_text(db_session) -> str:
+    """Генерирует текст со статистикой бота."""
+    try:
+        # Основные счётчики
+        total_players = (await db_session.execute(select(func.count(User.id)))).scalar()
+        total_cards = (await db_session.execute(select(func.count(Card.id)))).scalar()
+        total_clans = (await db_session.execute(select(func.count(Clan.id)))).scalar()
+        
+        # Рефералы
+        total_referrals = (await db_session.execute(select(func.count()))).scalar()
+        
+        # VIP пользователи
+        current_time = datetime.now(MSK_TIMEZONE)
+        vip_count = (await db_session.execute(
+            select(func.count(VipSubscription.user_id))
+            .where(VipSubscription.end_date > current_time)
+        )).scalar()
+        
+        # Активные пользователи (открывали карты за последние 24 часа)
+        from datetime import timedelta
+        day_ago = current_time - timedelta(hours=24)
+        active_users = (await db_session.execute(
+            select(func.count(User.id))
+            .where(User.last_open >= day_ago)
+        )).scalar()
+        
+        # Общее количество карт у всех пользователей (открытые карты)
+        total_opened = (await db_session.execute(
+            select(func.count()).select_from(UserCards)
+        )).scalar()
+        
+        # Активные промокоды
+        active_promos = (await db_session.execute(
+            select(func.count(Promo.id))
+            .where(Promo.expire_at > current_time)
+        )).scalar()
+        
+        # Пользователи с профилем
+        users_with_profile = (await db_session.execute(
+            select(func.count(Profile.id))
+        )).scalar()
+        
+        # Формируем текст статистики
+        stats_text = (
+            "<i>📊 Статистика бота</i>\n\n"
+            "<b>👥 Пользователи:</b>\n"
+            f"  • Всего игроков: <b>{total_players or 0}</b>\n"
+            f"  • Активных за 24ч: <b>{active_users or 0}</b>\n"
+            f"  • С профилем: <b>{users_with_profile or 0}</b>\n\n"
+            
+            "<b>🃏 Карты:</b>\n"
+            f"  • Всего карт доступно: <b>{total_cards or 0}</b>\n"
+            f"  • Открыто карт игроками: <b>{total_opened or 0}</b>\n\n"
+            
+            "<b>🤝 Активность:</b>\n"
+            f"  • Рефералов: <b>{total_referrals or 0}</b>\n\n"
+            
+            "<b>🏰 Кланы:</b>\n"
+            f"  • Всего кланов: <b>{total_clans or 0}</b>\n\n"
+            
+            "<b>⭐ VIP:</b>\n"
+            f"  • VIP подписчиков: <b>{vip_count or 0}</b>\n\n"
+            
+            "<b>🎁 Промокоды:</b>\n"
+            f"  • Активных промокодов: <b>{active_promos or 0}</b>\n\n"
+        )
+        
+        return stats_text
+        
+    except Exception as e:
+        logger.exception(f"Ошибка при получении статистики: {e}")
+        return "<i>📊 Статистика бота</i>\n\n<i>Ошибка при загрузке данных...</i>"
+
+
+async def _edit_stats(bot: Bot, chat_id: int | str, message_id: int, db_sessionmaker, interval: int = 600):
+    while True:
+        try:
+            # Получаем актуальный текст статистики
+            async with db_sessionmaker() as db_session:
+                display_text = await _get_stats_text(db_session)
+            
+            await bot.edit_message_text(
+                text=display_text,
+                chat_id=chat_id,
+                message_id=message_id,
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            # Игнорируем ошибки, если сообщение не изменилось
+            if "message is not modified" not in str(e).lower():
+                # Проверяем, не было ли удалено сообщение
+                if "message to edit not found" in str(e).lower() or "message can't be edited" in str(e).lower():
+                    logger.warning(f"Сообщение {message_id} в чате {chat_id} больше недоступно для редактирования")
+                    break
+                logger.exception(f"Ошибка обновления статистики в чате {chat_id}, сообщение {message_id}: {e}")
+        
+        await asyncio.sleep(interval)

@@ -16,7 +16,8 @@ from app.middlewares import DBSessionMiddleware
 from db import Base
 from app.func import setup_logger
 from app.func.daily_updates import (
-    _daily_coordinator
+    _daily_coordinator,
+    _edit_stats
 )
 
 setup_logger()
@@ -42,8 +43,9 @@ engine = create_async_engine(
 )
 _sessionmaker = async_sessionmaker(engine,expire_on_commit=False)
 
-# Глобальная переменная для хранения ссылки на фоновую задачу
+# Глобальные переменные для хранения ссылок на фоновые задачи
 _daily_coordinator_task = None
+_edit_stats_task = None
 
 dp.message.middleware(DBSessionMiddleware(_sessionmaker))
 dp.callback_query.middleware(DBSessionMiddleware(_sessionmaker))
@@ -57,8 +59,25 @@ async def on_startup():
         await connection.run_sync(Base.metadata.create_all)
 
     # Запуск ежедневных обновлений в фоновом режиме
-    global _daily_coordinator_task
+    global _daily_coordinator_task, _edit_stats_task
+    
     _daily_coordinator_task = asyncio.create_task(_daily_coordinator(bot, _sessionmaker))
+    
+    # Запуск обновления статистики
+    try:
+        _edit_stats_task = asyncio.create_task(
+            _edit_stats(
+                bot=bot,
+                chat_id=config.CHAT_ID,
+                message_id=config.MESSAGE_ID,
+                db_sessionmaker=_sessionmaker,
+                interval=600
+            )
+        )
+        logger.info("Запущено обновление статистики")
+    except Exception as e:
+        logger.warning(f"Не удалось запустить обновление статистики: {e}")
+    
     logger.success("Бот успешно запущен")
     
 @dp.shutdown()
@@ -68,6 +87,13 @@ async def on_shutdown():
         _daily_coordinator_task.cancel()
         try:
             await _daily_coordinator_task
+        except asyncio.CancelledError:
+            pass
+    
+    if _edit_stats_task and not _edit_stats_task.done():
+        _edit_stats_task.cancel()
+        try:
+            await _edit_stats_task
         except asyncio.CancelledError:
             pass
 
