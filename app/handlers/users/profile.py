@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from loguru import logger
 
-from app.utils import user_photo_link
+from app.services.profile import user_photo_link
 from app.keyboards import profile_keyboard
 from app.messages import MText
 from app.states import ChangeDescribe

@@ -324,7 +324,7 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
     keyboard = await pagination_keyboard(card_index + 1, len(cards))
     try:
         # Определяем тип медиа по расширению файла
-        file_path = f"app/icons/{card.verse.name}/{card.icon}"
+        file_path = f"app/assets/cards/{card.verse.name}/{card.icon}"
         if card.icon.endswith('.mp4'):
             media = InputMediaVideo(media=FSInputFile(path=file_path))
         else:

@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.filters import Private
 from app.messages import MText
-from app.utils import open_card, CardOpen
+from app.services.random_card import open_card
+from app.utils.enums.open_card_enums import CardOpen
 from app.database import DB
 
 
@@ -54,7 +55,7 @@ async def _(message: Message, session: AsyncSession):
                 text += MText.get("pity").format(pity=100-user.pity)
 
                 await message.reply_photo(
-                    photo=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
+                    photo=FSInputFile(path=f"app/assets/cards/{card.verse.name}/{card.icon}"),
                     caption=text
                 )
 
@@ -98,7 +99,7 @@ async def _(message: Message, session: AsyncSession):
                 text += MText.get("pity").format(pity=100-user.pity)
 
                 await message.reply_photo(
-                    photo=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
+                    photo=FSInputFile(path=f"app/assets/cards/{card.verse.name}/{card.icon}"),
                     caption=text
                 )
 

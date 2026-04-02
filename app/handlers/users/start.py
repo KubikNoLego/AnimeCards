@@ -70,7 +70,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                 card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
                 # Отправляем карту с учетом типа файла
-                file_path = f"app/icons/{card.verse.name}/{card.icon}"
+                file_path = f"app/assets/cards/{card.verse.name}/{card.icon}"
                 if card.icon.endswith('.mp4'):
                     await message.answer_video(FSInputFile(path=file_path),
                         caption=card_info, reply_markup=await trade_kb_pagination())

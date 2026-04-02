@@ -1,4 +1,4 @@
-from aiogram import Router
+from aiogram import Dispatcher, Router
 
 from app.handlers.common import promo
 from app.handlers.common import (vip_callback)
@@ -7,21 +7,18 @@ from app.handlers.common import pagination
 from app.handlers.social import clan, referral, trade
 from app.handlers.users import daily, open_cards, profile, shop, start, top_players
 
-def setup_routers():
-    router = Router()
-
-    router.include_router(clan.router)
-    router.include_router(trade.router)
-    router.include_router(profile.router)
-    router.include_router(referral.router)
-    router.include_router(admin.router)
-    router.include_router(shop.router)
-    router.include_router(top_players.router)
-    router.include_router(open_cards.router)
-    router.include_router(start.router)
-    router.include_router(daily.router)
-    router.include_router(promo.router)
-    router.include_router(pagination.router)
-    router.include_router(vip_callback.router)
-
-    return router
+def setup_routers(dp: Dispatcher):
+    """Подключает все роутеры к диспетчеру."""
+    dp.include_router(clan.router)
+    dp.include_router(trade.router)
+    dp.include_router(profile.router)
+    dp.include_router(referral.router)
+    dp.include_router(admin.router)
+    dp.include_router(shop.router)
+    dp.include_router(top_players.router)
+    dp.include_router(open_cards.router)
+    dp.include_router(start.router)
+    dp.include_router(daily.router)
+    dp.include_router(promo.router)
+    dp.include_router(pagination.router)
+    dp.include_router(vip_callback.router)

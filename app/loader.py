@@ -3,7 +3,7 @@ import sys
 from aiogram import Dispatcher
 from loguru import logger
 
-from app.handlers import setup_routers as st
+from app.handlers import setup_routers as setup_handlers_routers
 from app.middlewares import DBSessionMiddleware
 
 
@@ -24,8 +24,8 @@ def setup_logger():
 
 
 def setup_routers(dp: Dispatcher):
-
-    st(dp)
+    """Подключает все роутеры к диспетчеру."""
+    setup_handlers_routers(dp)
 
 def setup_middlewares(dp: Dispatcher, session_factory):
 

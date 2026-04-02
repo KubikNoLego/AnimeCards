@@ -104,7 +104,7 @@ async def selected_card_callback(callback: CallbackQuery,
         card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
         # Отправляем карту партнеру с учетом типа файла
-        file_path = f"app/icons/{card.verse.name}/{card.icon}"
+        file_path = f"app/assets/cards/{card.verse.name}/{card.icon}"
         if card.icon.endswith('.mp4'):
             await callback.bot.send_video(trade.user_id, video=FSInputFile(
                         path=file_path),
@@ -478,7 +478,7 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
     keyboard = await pagination_keyboard(card_index + 1, len(cards), True, card.id)
     try:
         # Определяем тип медиа по расширению файла
-        file_path = f"app/icons/{card.verse.name}/{card.icon}"
+        file_path = f"app/assets/cards/{card.verse.name}/{card.icon}"
         if card.icon.endswith('.mp4'):
             media = InputMediaVideo(media=FSInputFile(path=file_path))
         else:

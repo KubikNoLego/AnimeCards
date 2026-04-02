@@ -5,7 +5,7 @@ from sqlalchemy import select
 from loguru import logger
 
 from app.database.models import Card, Verse, Rarity
-from app.services.random_card import random_card
+# Импортируем random_card внутри метода, чтобы избежать циклической зависимости
 
 class CardRepo:
 
@@ -54,6 +54,9 @@ class CardRepo:
 
     async def get_daily_shop_items(self) -> list[Card]:
         """Возвращает карточки для магазина"""
+        # Импортируем внутри метода, чтобы избежать циклической зависимости
+        from app.services.random_card import random_card
+        
         try:
             daily_cards = []
             attempts = 0

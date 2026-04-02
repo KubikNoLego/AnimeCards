@@ -5,7 +5,7 @@ from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.messages import MText
-from app.utils import create_qr
+from app.services.profile import create_qr
 from app.database import DB
 
 

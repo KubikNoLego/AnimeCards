@@ -91,7 +91,7 @@ async def shop_item_callback(callback: CallbackQuery,
 
         try:
             await callback.message.answer_photo(
-                FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
+                FSInputFile(path=f"app/assets/cards/{card.verse.name}/{card.icon}"),
                 caption=card_info,
                 reply_markup=builder
             )

@@ -2,7 +2,10 @@ import asyncio
 
 from loguru import logger
 
+# Импортируем config из app.config
 from app.config import config
+
+# Импортируем из app
 from app.loader import setup_logger, setup_dispatcher
 from app.bot import create_bot, create_dispatcher
 from app.database import Base, create_sessionmaker, create_engine
