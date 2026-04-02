@@ -1,4 +1,4 @@
-from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto
+from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, InputMediaVideo
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import and_, select
 from aiogram import Router,F
@@ -103,10 +103,18 @@ async def selected_card_callback(callback: CallbackQuery,
                                                     value=card.value)
         card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
-        await callback.bot.send_photo(trade.user_id, photo=FSInputFile(
-                    path=f"app/icons/{card.verse.name}/{card.icon}"),
-                    caption=card_info,
-                    reply_markup=await trade_action_kb())
+        # Отправляем карту партнеру с учетом типа файла
+        file_path = f"app/icons/{card.verse.name}/{card.icon}"
+        if card.icon.endswith('.mp4'):
+            await callback.bot.send_video(trade.user_id, video=FSInputFile(
+                        path=file_path),
+                        caption=card_info,
+                        reply_markup=await trade_action_kb())
+        else:
+            await callback.bot.send_photo(trade.user_id, photo=FSInputFile(
+                        path=file_path),
+                        caption=card_info,
+                        reply_markup=await trade_action_kb())
         
         trade.partner_card = card.id
         
@@ -204,16 +212,29 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
                 callback_data: TradeVerseFilterPagination, session: AsyncSession):
     """Обработчик callback для пагинации фильтра по вселенной."""
     try:
-
-        verses = await session.scalars(select(Verse))
-        verses = verses.all()
-        total_pages = len(verses)
+        # Получаем пользователя
+        user = await DB(session).get_user(callback.from_user.id)
+        
+        if not user or not user.inventory:
+            await callback.answer(MText.get("inventory_empty"), show_alert=True)
+            return
+        
+        # Получаем уникальные вселенные из карточек пользователя
+        user_verses = list({card.verse for card in user.inventory if card.verse})
+        # Сортируем по id
+        user_verses.sort(key=lambda v: v.id)
+        
+        if not user_verses:
+            await callback.answer(MText.get("inventory_empty"), show_alert=True)
+            return
+        
+        total_pages = (len(user_verses) + 3) // 4  # 4 вселенные на страницу
         current_page = callback_data.p
 
         if 1 <= current_page <= total_pages:
             # Создаем клавиатуру с обновленными кнопками пагинации
             keyboard = await verse_filter_pagination_keyboard(current_page,
-                                                            verses=verses,
+                                                            verses=user_verses,
                                                             trade = True)
             # Получаем сообщение из messages.json
             select_universe_message = MText.get("select_universe")
@@ -456,9 +477,15 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
 
     keyboard = await pagination_keyboard(card_index + 1, len(cards), True, card.id)
     try:
+        # Определяем тип медиа по расширению файла
+        file_path = f"app/icons/{card.verse.name}/{card.icon}"
+        if card.icon.endswith('.mp4'):
+            media = InputMediaVideo(media=FSInputFile(path=file_path))
+        else:
+            media = InputMediaPhoto(media=FSInputFile(path=file_path))
+        
         await callback.message.edit_media(
-            media=InputMediaPhoto(media=FSInputFile(
-                path=f"app/icons/{card.verse.name}/{card.icon}")),
+            media=media,
             reply_markup=keyboard
         )
         await callback.message.edit_caption(

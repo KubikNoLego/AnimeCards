@@ -4,6 +4,7 @@ from loguru import logger
 from redis.asyncio import Redis
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from db.models import (Card, Clan, ClanMember, Promo,
                         User, Profile, UserCards, Verse, Referrals,
@@ -131,8 +132,8 @@ class DB:
                 try:
                     card = await random_card(self.__session, pity=100)
 
-                    # Проверяем, что карта не является shiny и уникальна
-                    if not card.shiny and not any(c.id == card.id for c in daily_cards):
+                    # Проверяем, что карта не является shiny, не имеет редкость 6 (Лимитированный) и уникальна
+                    if not card.shiny and card.rarity.id != 6 and not any(c.id == card.id for c in daily_cards):
                         daily_cards.append(card)
                 except Exception as e:
                     logger.warning(
@@ -146,9 +147,11 @@ class DB:
 f"Не удалось получить достаточно карточек после {attempts} попыток, используем резервный метод")
 
                 # Резервный метод: случайный выбор, если random_card не сработал
-                # Гарантированно выбираем только не-shiny карты
-                cards = await self.__session.scalars(select(Card)
-                                                    .filter_by(shiny=False))
+                # Гарантированно выбираем только не-shiny карты и исключаем редкость 6 (Лимитированный)
+                cards = await self.__session.scalars(
+                    select(Card)
+                    .filter(Card.shiny == False, Card.rarity.id != 6)
+                )
                 cards = cards.all()
 
                 if len(cards) >= 4:
@@ -388,7 +391,11 @@ f"Ошибка при создании приглашения в клан для
             user1.inventory.append(card2)
             user2.inventory.append(card1)
 
-            await self.__session.commit()
+            try:
+                await self.__session.commit()
+            except IntegrityError:
+                await self.__session.rollback()
+                return False
             await self.delete_trade(trade.user_id)
             return True
 
