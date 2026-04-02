@@ -16,7 +16,7 @@ router = Router()
 
 @router.callback_query(F.data == "buy_vip")
 async def buy_vip(callback: CallbackQuery, session: AsyncSession):
-    user = await DB(session).get_user(callback.from_user.id)
+    user = await DB(session).user.get_user(callback.from_user.id)
 
     if not user:
         await callback.message.answer(MText.get("user_not_found_vip"))
@@ -73,7 +73,7 @@ async def process_successful_payment(message: Message, state: FSMContext,
     try:
         
         # Получаем пользователя
-        user = await DB(session).get_user(message.from_user.id)
+        user = await DB(session).user.get_user(message.from_user.id)
 
         if not user:
             await message.answer(MText.get("user_not_found_vip"))

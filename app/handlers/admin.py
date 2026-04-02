@@ -41,7 +41,7 @@ async def callback_balance(callback: CallbackQuery, session: AsyncSession, state
         return
     
     user_id = int(callback.data.replace("adm_bal_", ""))
-    user = await DB(session).get_user(user_id)
+    user = await DB(session).user.get_user(user_id)
     
     if user:
         await callback.message.answer(
@@ -64,7 +64,7 @@ async def callback_vip(callback: CallbackQuery, session: AsyncSession, state: FS
         return
     
     user_id = int(callback.data.replace("adm_vip_", ""))
-    user = await DB(session).get_user(user_id)
+    user = await DB(session).user.get_user(user_id)
     
     if user:
         await callback.message.answer(
@@ -87,7 +87,7 @@ async def callback_inventory(callback: CallbackQuery, session: AsyncSession, sta
         return
     
     user_id = int(callback.data.replace("adm_inv_", ""))
-    user = await DB(session).get_user(user_id)
+    user = await DB(session).user.get_user(user_id)
     
     if user:
         inventory_text = "<b>📋 Инвентарь пользователя:</b>\n\n"
@@ -119,7 +119,7 @@ async def search_user_result(message: Message, session: AsyncSession, state: FSM
     else:
         try:
             user_id = int(text)
-            user = await db.get_user(user_id)
+            user = await db.user.get_user(user_id)
         except ValueError:
             await message.answer("❌ Введите корректный ID или username")
             return
@@ -130,7 +130,7 @@ async def search_user_result(message: Message, session: AsyncSession, state: FSM
         return
     
     # Формируем информацию о пользователе
-    place = await db.get_user_place_on_top(user)
+    place = await db.user.get_user_place_on_top(user)
     
     vip_status = "✅ Да" if user.vip else "❌ Нет"
     vip_end = ""
@@ -167,7 +167,7 @@ async def change_balance_amount(message: Message, session: AsyncSession, state: 
     
     try:
         user_id = int(message.text.strip())
-        user = await DB(session).get_user(user_id)
+        user = await DB(session).user.get_user(user_id)
         
         if not user:
             await message.answer("❌ Пользователь не найден")
@@ -200,7 +200,7 @@ async def change_balance_apply(message: Message, session: AsyncSession, state: F
     
     data = await state.get_data()
     user_id = data.get("user_id")
-    user = await db.get_user(user_id)
+    user = await db.user.get_user(user_id)
     
     if not user:
         await message.answer("❌ Пользователь не найден")
@@ -251,7 +251,7 @@ async def vip_management_days(message: Message, session: AsyncSession,
     
     try:
         user_id = int(message.text.strip())
-        user = await DB(session).get_user(user_id)
+        user = await DB(session).user.get_user(user_id)
         
         if not user:
             await message.answer("❌ Пользователь не найден")
@@ -294,7 +294,7 @@ async def vip_management_apply(message: Message,
         days = int(text)
         data = await state.get_data()
         user_id = data.get("user_id")
-        user = await db.get_user(user_id)
+        user = await db.user.get_user(user_id)
         
         if not user:
             await message.answer("❌ Пользователь не найден")
@@ -557,7 +557,7 @@ async def create_promo_confirm(message: Message, session: AsyncSession, state: F
 
         # Создаём промокод
         db = DB(session)
-        promo = await db.create_promo(promocode, reward, days)
+        promo = await db.promo.create_promo(promocode, reward, days)
 
         if promo:
             await message.answer(

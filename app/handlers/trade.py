@@ -24,7 +24,7 @@ router = Router()
 @router.message(F.text == "🔁 Трейды", Private())
 async def _(message: Message, session: AsyncSession):
     db = DB(session)
-    user: User = await db.get_user(message.from_user.id)
+    user: User = await db.user.get_user(message.from_user.id)
 
     if len(user.inventory) > 0:
         await message.answer(MText.get("trade_message"),reply_markup=await trade_kb_pagination())
@@ -37,12 +37,12 @@ async def selected_card_callback(callback: CallbackQuery,
     db = DB(session)
     
     
-    trade = await db.get_trade(callback.from_user.id)
+    trade = await db.trade.get_trade(callback.from_user.id)
     
     if not trade:
         return
     
-    is_complete = await db.complete_trade(trade)
+    is_complete = await db.trade.complete_trade(trade)
     
     if not is_complete:
         await callback.answer(MText.get("error_completing"))
@@ -58,7 +58,7 @@ async def selected_card_callback(callback: CallbackQuery,
                                 session: AsyncSession):
     db = DB(session)
     
-    trade = await db.get_trade(callback.from_user.id)
+    trade = await db.trade.get_trade(callback.from_user.id)
     
     if not trade:
         return
@@ -76,7 +76,7 @@ async def selected_card_callback(callback: CallbackQuery,
 async def selected_card_callback(callback: CallbackQuery,
                 callback_data: SelectedCard, session: AsyncSession):
     db = DB(session)
-    user = await db.get_user(callback.from_user.id)
+    user = await db.user.get_user(callback.from_user.id)
     
     # Проверяем, является ли пользователь партнером другого игрока
     trade = await session.scalar(select(Trade).filter_by(
@@ -84,7 +84,7 @@ async def selected_card_callback(callback: CallbackQuery,
     
     if trade:
         # Проверяем, что выбранная карта доступна для обмена
-        partner = await db.get_user(trade.user_id)
+        partner = await db.user.get_user(trade.user_id)
         if partner:
             partner_card_ids = [card.id for card in partner.inventory]
             if callback_data.card_id in partner_card_ids:
@@ -92,7 +92,7 @@ async def selected_card_callback(callback: CallbackQuery,
                 return
 
         # Пользователь является партнером, отправляем карту владельцу трейда
-        card = await db.get_card(callback_data.card_id)
+        card = await db.card.get_card(callback_data.card_id)
 
         await callback.message.answer(MText.get("send_message"))
         await callback.message.delete()
@@ -123,14 +123,14 @@ async def selected_card_callback(callback: CallbackQuery,
         return
 
     # Проверяем, есть ли уже активный трейд у пользователя
-    existing_trade = await db.get_trade(user.id)
+    existing_trade = await db.trade.get_trade(user.id)
 
     if existing_trade:
         await callback.message.answer(MText.get("trade_exist"))
-        await db.delete_trade(user.id)
+        await db.trade.delete_trade(user.id)
 
     # Создаем новый трейд
-    trade = await db.create_trade(user.id, callback_data.card_id)
+    trade = await db.trade.create_trade(user.id, callback_data.card_id)
     bot_info = await callback.message.bot.get_me()
     trade_link = f"https://t.me/{bot_info.username}?start=t_{user.id}"
 
@@ -213,7 +213,7 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
     """Обработчик callback для пагинации фильтра по вселенной."""
     try:
         # Получаем пользователя
-        user = await DB(session).get_user(callback.from_user.id)
+        user = await DB(session).user.get_user(callback.from_user.id)
         
         if not user or not user.inventory:
             await callback.answer(MText.get("inventory_empty"), show_alert=True)
@@ -383,7 +383,7 @@ async def inventory_pagination_callback(callback: CallbackQuery,
     """Обработчик callback для пагинации инвентаря с фильтрацией."""
     try:
 
-        user = await DB(session).get_user(callback.from_user.id)
+        user = await DB(session).user.get_user(callback.from_user.id)
 
         if user and user.inventory and len(user.inventory) > 0:
             # Получаем текущие фильтры из FSM
@@ -398,7 +398,7 @@ async def inventory_pagination_callback(callback: CallbackQuery,
             partner_cards = []
             if trade:
                 # Получаем карты партнера
-                partner = await DB(session).get_user(trade.user_id)
+                partner = await DB(session).user.get_user(trade.user_id)
                 if partner:
                     partner_cards = [card.id for card in partner.inventory]
             

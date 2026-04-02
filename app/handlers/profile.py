@@ -25,7 +25,7 @@ router = Router()
 @router.message(Command("profile"))
 async def _(message: Message,session: AsyncSession):
     db = DB(session)
-    user = await db.get_user(message.from_user.id)
+    user = await db.user.get_user(message.from_user.id)
     if user:
         text = await MText.user_profile(session, user.id)
 
@@ -46,7 +46,7 @@ async def _(message:Message, session: AsyncSession, state: FSMContext):
             desc = len(message.text)))
     else:
         db = DB(session)
-        user = await db.get_user(message.from_user.id)
+        user = await db.user.get_user(message.from_user.id)
         user.profile.describe = escape(message.text.strip().replace('\n', ''))
         await session.commit()
         await message.answer(MText.get("describe_updated_success")
@@ -103,7 +103,7 @@ async def _(message: Message, session: AsyncSession):
     is_reply = message.reply_to_message
     match is_reply:
         case None:
-            user = await db.get_user(message.from_user.id)
+            user = await db.user.get_user(message.from_user.id)
             if user:
                 text = await MText.user_profile(session, user.id)
                 profile_photo = await user_photo_link(message)
@@ -120,7 +120,7 @@ async def _(message: Message, session: AsyncSession):
                     name=escape(message.from_user.full_name))
                 await message.reply(text)
         case _:
-            user = await db.get_user(message.reply_to_message.from_user.id)
+            user = await db.user.get_user(message.reply_to_message.from_user.id)
             if user:
                 text = await MText.user_profile(session, user.id)
                 profile_photo = await user_photo_link(message)

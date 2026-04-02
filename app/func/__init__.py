@@ -3,7 +3,6 @@ from .random_card import (
     random_card, open_card
 )
 from .profile import user_photo_link, create_qr
-from .logger import setup_logger
 from .daily_updates import (
     _update_daily_verse,
     _update_daily_shop,

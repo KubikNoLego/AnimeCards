@@ -18,7 +18,7 @@ router = Router()
 async def _(message:Message,session:AsyncSession):
     items = await RedisRequests.daily_items()
     db = DB(session)
-    user = await db.get_user(message.from_user.id)
+    user = await db.user.get_user(message.from_user.id)
     if items:
         try:
             items = items.decode("utf-8").split(",")
@@ -61,7 +61,7 @@ async def shop_item_callback(callback: CallbackQuery,
             return
 
         # Получаем пользователя
-        user = await DB(session).get_user(callback.from_user.id)
+        user = await DB(session).user.get_user(callback.from_user.id)
 
         if not user:
             await callback.answer(MText.get("user_not_found_short"),
@@ -129,7 +129,7 @@ async def buy_card_callback(callback: CallbackQuery, session: AsyncSession):
         if card_id in current_items:
             # Получаем карточку и пользователя
             card = await session.scalar(select(Card).filter_by(id=card_id))
-            user = await DB(session).get_user(callback.from_user.id)
+            user = await DB(session).user.get_user(callback.from_user.id)
 
             if not card or not user:
                 await callback.answer(MText.get("card_not_found"),

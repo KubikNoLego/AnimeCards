@@ -18,13 +18,13 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
         return
     
     db = DB(session)
-    user = await db.get_user(message.from_user.id)
+    user = await db.user.get_user(message.from_user.id)
     
     if not user:
         await message.reply(MText.get("user_not_found_short"))
         return
 
-    promo = await db.get_promo(command.args)
+    promo = await db.promo.get_promo(command.args)
 
     if not promo:
         await message.reply(MText.get("promo_expired"))

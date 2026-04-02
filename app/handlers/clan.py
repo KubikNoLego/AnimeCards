@@ -28,9 +28,9 @@ router = Router()
 @router.callback_query(F.data.startswith("delete_clan"))
 async def _(callback:CallbackQuery, session: AsyncSession):
     db = DB(session)
-    user = await db.get_user(callback.from_user.id)
+    user = await db.user.get_user(callback.from_user.id)
     if user.clan_member.is_leader:
-        await db.delete_clan(user.clan_member.clan_id)
+        await db.clan.delete_clan(user.clan_member.clan_id)
         
         await callback.message.delete()
         await callback.answer("Вы удалили клан")
@@ -48,11 +48,11 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
 @router.callback_query(F.data.startswith("leave_clan"))
 async def _(callback:CallbackQuery, session: AsyncSession):
     db = DB(session)
-    user = await db.get_user(callback.from_user.id)
+    user = await db.user.get_user(callback.from_user.id)
     if user.clan_member and user.clan_member.is_leader:
-        clan = await db.get_clan(user.clan_member.clan_id)
+        clan = await db.clan.get_clan(user.clan_member.clan_id)
         
-        await db.delete_member(user.id)
+        await db.clan.delete_member(user.id)
         
         new_leader = random.choice(clan.members)
         new_leader.is_leader = True
@@ -62,7 +62,7 @@ async def _(callback:CallbackQuery, session: AsyncSession):
 
         await callback.message.delete()
     elif user.clan_member:
-        await db.delete_member(user.id)
+        await db.clan.delete_member(user.id)
         await callback.message.delete()
     await callback.answer("Вы покинули клан")
 
@@ -71,15 +71,15 @@ async def _(callback:CallbackQuery, session: AsyncSession):
     user_id = int(callback.data.split("_")[1])
     
     db = DB(session)
-    user = await db.get_user(user_id)
+    user = await db.user.get_user(user_id)
 
-    moder = await db.get_user(callback.from_user.id)
-    clan = await db.get_clan(moder.clan_member.clan_id)
+    moder = await db.user.get_user(callback.from_user.id)
+    clan = await db.clan.get_clan(moder.clan_member.clan_id)
 
     if user.clan_member not in clan.members:
         return
 
-    await db.delete_member(user.id)
+    await db.clan.delete_member(user.id)
     await callback.message.delete()
     await callback.answer("Вы успешно выгнали пользователя")
     await callback.message.bot.send_message(user_id,MText.get(
@@ -94,12 +94,12 @@ async def _(callback:CallbackQuery,callback_data: MemberPagination,
 
     db = DB(session)
 
-    user = await db.get_user(callback.from_user.id)
+    user = await db.user.get_user(callback.from_user.id)
 
     if not user:
         return
 
-    clan = await db.get_clan(user.clan_member.clan_id)
+    clan = await db.clan.get_clan(user.clan_member.clan_id)
 
     clan_members = clan.members
     clan_members.remove(user.clan_member)
@@ -147,19 +147,19 @@ async def _(callback:CallbackQuery,callback_data: ClanInvite,
 
     match action:
         case 1:
-            member = await db.create_clan_member(callback.from_user.id, clan_id)
+            member = await db.clan.create_clan_member(callback.from_user.id, clan_id)
 
             await callback.message.delete()
             await callback.message.answer("Приглашение принято")
 
-            invite = await db.get_clan_invitation(clan_id,callback.from_user.id)
+            invite = await db.clan.get_clan_invitation(clan_id,callback.from_user.id)
 
             await session.delete(invite)
             await session.commit()
 
 
         case 0:
-            invite = await db.get_clan_invitation(clan_id,callback.from_user.id)
+            invite = await db.clan.get_clan_invitation(clan_id,callback.from_user.id)
 
             await session.delete(invite)
             await session.commit()
@@ -172,7 +172,7 @@ async def _(callback:CallbackQuery,callback_data: ClanInvite,
 @router.callback_query(F.data == "accept_create_clan")
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     db = DB(session)
-    user = await db.get_user(callback.from_user.id)
+    user = await db.user.get_user(callback.from_user.id)
 
     # Проверяем, достаточно ли у пользователя йен для создания клана
     clan_creation_cost = 500
@@ -187,7 +187,7 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     user.balance -= clan_creation_cost
     await session.commit()
 
-    await db.create_clan(data['name'],data['tag'],data['description'],
+    await db.clan.create_clan(data['name'],data['tag'],data['description'],
                         callback.from_user.id)
     await callback.message.delete()
     await callback.answer(
@@ -206,7 +206,7 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
 @router.callback_query(F.data == "create_clan")
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     db = DB(session)
-    user = await db.get_user(callback.from_user.id)
+    user = await db.user.get_user(callback.from_user.id)
 
     # Проверяем баланс пользователя перед созданием клана
     clan_creation_cost = 500
@@ -224,7 +224,7 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
 @router.callback_query(F.data == "delete_describe")
 async def delete_describe_user(callback: CallbackQuery,session : AsyncSession):
     await callback.message.answer(MText.get("describe_updated_empty"))
-    user = await DB(session).get_user(callback.from_user.id)
+    user = await DB(session).user.get_user(callback.from_user.id)
     user.profile.describe = ""
     await session.commit()
 
@@ -241,7 +241,7 @@ async def change_describe_user(callback: CallbackQuery, session: AsyncSession,
 @router.message(Command("пригласить",prefix="."))
 async def _(message: Message, session:AsyncSession):
     db = DB(session)
-    sender = await db.get_user(message.from_user.id)
+    sender = await db.user.get_user(message.from_user.id)
 
     # Проверка, является ли пользователь лидером клана
     if not sender.clan_member or sender.clan_member.clan.leader_id != sender.id:
@@ -258,7 +258,7 @@ async def _(message: Message, session:AsyncSession):
         return
 
     # Получаем пользователя, которого приглашаем
-    user = await db.get_user(message.reply_to_message.from_user.id)
+    user = await db.user.get_user(message.reply_to_message.from_user.id)
     if not user:
         await message.reply(MText.get("not_user").format(name=escape(message.reply_to_message.from_user.full_name)))
         return
@@ -269,14 +269,14 @@ async def _(message: Message, session:AsyncSession):
         return
 
     # Проверяем, не отправляли ли мы уже приглашение этому пользователю
-    existing_invitation = await db.get_clan_invitation(
+    existing_invitation = await db.clan.get_clan_invitation(
         sender.clan_member.clan.id, user.id)
     if existing_invitation:
         await message.reply(MText.get("clan_invite_already_sent"))
         return
 
     # Создаем приглашение в базе данных
-    invitation = await db.create_clan_invitation(
+    invitation = await db.clan.create_clan_invitation(
         sender.clan_member.clan.id,
         sender.id, user.id)
     if not invitation:
@@ -299,9 +299,9 @@ async def _(message: Message, session:AsyncSession):
 @router.message(ClanLeader.desc)
 async def _(message: Message, session:AsyncSession,state:FSMContext):
     db = DB(session)
-    user = await db.get_user(message.from_user.id)
+    user = await db.user.get_user(message.from_user.id)
     if len(message.text) <= 255:
-        clan = await db.get_clan(user.clan_member.clan_id)
+        clan = await db.clan.get_clan(user.clan_member.clan_id)
         clan.description = message.text
         await session.commit()
         await state.clear()
@@ -358,9 +358,9 @@ async def _(message: Message, session:AsyncSession,state:FSMContext):
 async def _(message:Message, session:AsyncSession):
     db = DB(session)
 
-    user = await db.get_user(message.from_user.id)
+    user = await db.user.get_user(message.from_user.id)
     if user and user.clan_member:
-        clan = await db.get_clan(user.clan_member.clan_id)
+        clan = await db.clan.get_clan(user.clan_member.clan_id)
         member = user.clan_member
 
         # Собираем информацию о клане

@@ -5,7 +5,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 
-from .config import Config
+from config import Config
 
 
 def create_bot(config: Config) -> Bot:
@@ -18,7 +18,7 @@ def create_bot(config: Config) -> Bot:
 
 
 def create_dispatcher(config: Config) -> Dispatcher:
-    Dispatcher(storage=RedisStorage.from_url(
+    return Dispatcher(storage=RedisStorage.from_url(
     config.REDIS_URL.get_secret_value(), 
     state_ttl=timedelta(days=3),
     data_ttl=timedelta(days=1))

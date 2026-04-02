@@ -1,44 +1,29 @@
 import asyncio
-from datetime import timedelta
 
-from aiogram import Bot,Dispatcher
-from aiogram.enums import ParseMode
-from aiogram.client.default import DefaultBotProperties
-from aiogram.fsm.storage.redis import RedisStorage
-from sqlalchemy.ext.asyncio import (create_async_engine,
-                                    async_sessionmaker
-                                    )
 from loguru import logger
 
 from config import config
-from .loader import setup_logger, setup_dispatcher
-from .bot import create_bot, create_dispatcher
-from db import Base
+from loader import setup_logger, setup_dispatcher
+from bot import create_bot, create_dispatcher
+from db import Base, create_sessionmaker, create_engine
 from app.func.daily_updates import (
     _daily_coordinator,
     _edit_stats
 )
 
 setup_logger()
+
 bot = create_bot(config)
 dp = create_dispatcher(config)
 
-
-engine = create_async_engine(
-    config.DB_URL.get_secret_value(),
-    pool_size=20,
-    max_overflow=30,
-    pool_timeout=60.0,
-    pool_recycle=3600,
-    pool_pre_ping=True
-)
-_sessionmaker = async_sessionmaker(engine,expire_on_commit=False)
+engine = create_engine(config)
+sessionmaker = create_sessionmaker(engine)
 
 # Глобальные переменные для хранения ссылок на фоновые задачи
 _daily_coordinator_task = None
 _edit_stats_task = None
 
-setup_dispatcher(dp,_sessionmaker)
+setup_dispatcher(dp, sessionmaker)
 
 @dp.startup()
 async def on_startup():
@@ -50,7 +35,7 @@ async def on_startup():
     # Запуск ежедневных обновлений в фоновом режиме
     global _daily_coordinator_task, _edit_stats_task
     
-    _daily_coordinator_task = asyncio.create_task(_daily_coordinator(bot, _sessionmaker))
+    _daily_coordinator_task = asyncio.create_task(_daily_coordinator(bot, sessionmaker))
     
     # Запуск обновления статистики
     try:
@@ -59,7 +44,7 @@ async def on_startup():
                 bot=bot,
                 chat_id=config.CHAT_ID,
                 message_id=config.MESSAGE_ID,
-                db_sessionmaker=_sessionmaker,
+                db_sessionmaker=sessionmaker,
                 interval=600
             )
         )

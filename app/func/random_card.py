@@ -68,7 +68,7 @@ async def open_card(session: AsyncSession, user_id):
     """Открывает случайную карту для пользователя."""
     try:
         db = DB(session)
-        user = await db.get_user(user_id)
+        user = await db.user.get_user(user_id)
         if not user:
             return CardOpen.NOT_REGISTERED
         

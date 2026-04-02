@@ -14,10 +14,10 @@ router = Router()
 @router.message(F.text == "🏆 Топ игроков", Private())
 async def _(message: Message, session: AsyncSession):
     db = DB(session)
-    user = await db.get_user(message.from_user.id)
+    user = await db.user.get_user(message.from_user.id)
     if user:
         # Получаем топ игроков по балансу (10 человек)
-        top_players_balance = await db.get_top_players_by_balance()
+        top_players_balance = await db.user.get_top_players_by_balance()
         text_balance = MText.top_players_formatter(top_players_balance,
                                                 user.id)
 
@@ -31,9 +31,9 @@ async def _(message: Message, session: AsyncSession):
 @router.message(Command("top"))
 async def _(message: Message, session: AsyncSession):
     db = DB(session)
-    user = await db.get_user(message.from_user.id)
+    user = await db.user.get_user(message.from_user.id)
     if user:
-        top_players_balance = await db.get_top_players_by_balance()
+        top_players_balance = await db.user.get_top_players_by_balance()
         text_balance = MText.top_players_formatter(top_players_balance,
                                                 user.id)
 

@@ -24,7 +24,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
     user = await message.bot.get_chat(message.from_user.id)
 
     db = DB(session)
-    user, action = await db.create_or_update_user(user.id,
+    user, action = await db.user.create_or_update_user(user.id,
                                 message.from_user.username,
                                 user.full_name,
                                 user.bio)
@@ -34,7 +34,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
         match option:
 
             case "t":
-                trader = await db.get_user(int(value))
+                trader = await db.user.get_user(int(value))
 
                 if not trader:
                     await message.answer(MText.get("user_not_found_short"))
@@ -44,7 +44,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                     await message.answer(MText.get("u_cant_trade_with_self"))
                     return
 
-                trade = await db.get_trade(trader.id)
+                trade = await db.trade.get_trade(trader.id)
                 
                 if not trade:
                     await message.answer(MText.get("user_not_found_short"))
@@ -57,7 +57,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                     return
 
 
-                card = await db.get_card(trade.card_id)
+                card = await db.card.get_card(trade.card_id)
 
                 if not card:
                     await message.answer(MText.get("user_not_found_short"))
@@ -104,7 +104,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                     await message.answer(MText.get("only_new_users"))
                     return
 
-                inviter = await db.get_user(inviter_id)
+                inviter = await db.user.get_user(inviter_id)
                 if not inviter:
                     await message.answer(MText.get("not_user_id"))
                     return
@@ -115,7 +115,7 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                                 else random.randint(100, 150))
 
                 # Добавляем реферальную связь с указанием награды
-                referral = await db.add_referral(referral_id=user.id,
+                referral = await db.referral.add_referral(referral_id=user.id,
                                                 referrer_id=inviter_id,
                                                 referrer_reward=reward_amount)
                 if not referral:
@@ -123,10 +123,10 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                     return
 
                 # Награждаем реферрера за реферала
-                await db.get_award(inviter_id, reward_amount)
+                await db.referral.get_award(inviter_id, reward_amount)
 
                 # Обновляем данные инвайтера для получения актуального баланса
-                inviter = await db.get_user(inviter_id)
+                inviter = await db.user.get_user(inviter_id)
 
                 referrer_link = f'<a href="tg://user?id={inviter.id}">{escape(inviter.name)}</a>'
                 new_user_link = f'<a href="tg://user?id={user.id}">{escape(user.name)}</a>'

@@ -87,7 +87,7 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
     """Обработчик callback для пагинации фильтра по вселенной."""
     try:
         # Получаем пользователя
-        user = await DB(session).get_user(callback.from_user.id)
+        user = await DB(session).user.get_user(callback.from_user.id)
         
         if not user or not user.inventory:
             await callback.answer(MText.get("inventory_empty"), show_alert=True)
@@ -254,7 +254,7 @@ async def inventory_pagination_callback(callback: CallbackQuery,
     """Обработчик callback для пагинации инвентаря с фильтрацией."""
     try:
 
-        user = await DB(session).get_user(callback.from_user.id)
+        user = await DB(session).user.get_user(callback.from_user.id)
 
         if user and user.inventory and len(user.inventory) > 0:
             # Получаем текущие фильтры из FSM

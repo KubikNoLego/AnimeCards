@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.filters import Private
 from app.messages import MText
 from app.func import open_card, CardOpen
-from db.requests import DB
+from db import DB
 
 
 router = Router()
@@ -31,7 +31,7 @@ async def _(message: Message, session: AsyncSession):
         result = await open_card(session, user_id)
 
         db = DB(session)
-        user = await db.get_user(user_id)
+        user = await db.user.get_user(user_id)
 
         match result:
             case CardOpen.NOT_REGISTERED:
@@ -75,7 +75,7 @@ async def _(message: Message, session: AsyncSession):
         result = await open_card(session,user_id)
 
         db = DB(session)
-        user = await db.get_user(user_id)
+        user = await db.user.get_user(user_id)
 
         match result:
 

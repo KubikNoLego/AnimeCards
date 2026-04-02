@@ -22,7 +22,7 @@ async def _(message: Message, session: AsyncSession):
             return
         # Получаем информацию о вселенной из базы данных
         db = DB(session)
-        verse = await db.get_verse(verse_id)
+        verse = await db.card.get_verse(verse_id)
 
         if verse:
             # Форматируем сообщение с информацией о ежедневной вселенной

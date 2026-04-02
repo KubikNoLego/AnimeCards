@@ -97,9 +97,9 @@ class Messages:
     
     async def user_profile(self,session,user_id):
         db = DB(session)
-        user = await db.get_user(user_id)
+        user = await db.user.get_user(user_id)
 
-        place_on_top = await db.get_user_place_on_top(user)
+        place_on_top = await db.user.get_user_place_on_top(user)
         referral_rewards = sum(referral.referrer_reward for referral 
                                 in user.referrals)
 

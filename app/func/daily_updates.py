@@ -16,7 +16,7 @@ from sqlalchemy import func, distinct, and_
 
 async def _update_daily_verse(session, db_session):
     """Обновляем ежедневную вселенную."""
-    new_verse: Verse = await DB(db_session).get_random_verse()
+    new_verse: Verse = await DB(db_session).card.get_random_verse()
     if new_verse:
         await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
         logger.info(
@@ -29,7 +29,7 @@ f"Ежедневная вселенная обновлена. ID: {new_verse.id}
 
 async def _update_daily_shop(session, db_session):
     """Обновляем ежедневный магазин."""
-    daily_items = await DB(db_session).get_daily_shop_items()
+    daily_items = await DB(db_session).card.get_daily_shop_items()
     if daily_items and len(daily_items) > 0:
         shop_items_ids = [str(card.id) for card in daily_items]
         await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)
@@ -162,7 +162,7 @@ async def _daily_coordinator(bot: Bot, sessionmaker: async_sessionmaker):
 async def _create_backup():
     """Создаёт бэкап базы данных PostgreSQL."""
     import subprocess
-    from configR import config
+    from config import config
 
     backup_dir = "backups"
     os.makedirs(backup_dir, exist_ok=True)

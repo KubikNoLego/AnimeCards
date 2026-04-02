@@ -16,7 +16,7 @@ router = Router()
 async def _(message: Message, session: AsyncSession):
     """Обработчик кнопки реферальной ссылки."""
     db = DB(session)
-    user = await db.get_user(message.from_user.id)
+    user = await db.user.get_user(message.from_user.id)
     if user:
         total_reward = 0
         for i in user.referrals:

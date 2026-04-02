@@ -31,7 +31,10 @@ def setup_routers(dp: Dispatcher):
 
 def setup_middlewares(dp: Dispatcher, session_factory):
 
-    dp.update.middleware(
+    dp.message.middleware(
+        DBSessionMiddleware(session_factory)
+    )
+    dp.callback_query.middleware(
         DBSessionMiddleware(session_factory)
     )
 
