@@ -1,6 +1,6 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from .CallbackDatas import (TradePagination)
+from .datas import (TradePagination)
 
 
 async def trade_kb_pagination():

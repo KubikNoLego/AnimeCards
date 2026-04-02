@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db import DB
-from db.models import Card, UserCards
-from ..func import MSK_TIMEZONE
+from app.database import DB
+from app.database.models import Card, UserCards
+from ..utils import MSK_TIMEZONE
 
 
 class Messages:

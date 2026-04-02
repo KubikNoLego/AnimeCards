@@ -1,6 +1,6 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from .CallbackDatas import ClanInvite, MemberPagination
+from .callbackdatas import ClanInvite, MemberPagination
 
 async def clan_invite_kb(clan_id: int):
     builder = InlineKeyboardBuilder()

@@ -1,7 +1,11 @@
 from aiogram import Router
 
-from . import (admin, daily, pagination, profile, promo, referral, 
-            shop, start, vip_callback, open_cards, top_players, trade, clan)
+from app.handlers.common import promo
+from app.handlers.common import (vip_callback)
+from app.handlers.admin import admin
+from app.handlers.common import pagination
+from app.handlers.social import clan, referral, trade
+from app.handlers.users import daily, open_cards, profile, shop, start, top_players
 
 def setup_routers():
     router = Router()
