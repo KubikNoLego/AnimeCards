@@ -10,27 +10,18 @@ from sqlalchemy.ext.asyncio import (create_async_engine,
                                     )
 from loguru import logger
 
-from configR import config
-from app.handlers import setup_routers
-from app.middlewares import DBSessionMiddleware
+from config import config
+from .loader import setup_logger, setup_dispatcher
+from .bot import create_bot, create_dispatcher
 from db import Base
-from app.func import setup_logger
 from app.func.daily_updates import (
     _cleanup_expired_vip_subscriptions,
     _daily_coordinator
 )
 
 setup_logger()
-
-bot = Bot(
-    config.BOT_TOKEN.get_secret_value(),
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-    )
-dp = Dispatcher(storage=RedisStorage.from_url(
-    config.REDIS_URL.get_secret_value(), 
-    state_ttl=timedelta(days=3),
-    data_ttl=timedelta(days=1))
-    )
+bot = create_bot(config)
+dp = create_dispatcher(config)
 
 
 engine = create_async_engine(
@@ -47,9 +38,7 @@ _sessionmaker = async_sessionmaker(engine,expire_on_commit=False)
 _daily_coordinator_task = None
 _vip_cleanup_task = None
 
-dp.message.middleware(DBSessionMiddleware(_sessionmaker))
-dp.callback_query.middleware(DBSessionMiddleware(_sessionmaker))
-dp.include_router(router=setup_routers())
+setup_dispatcher(dp,_sessionmaker)
 
 @dp.startup()
 async def on_startup():
