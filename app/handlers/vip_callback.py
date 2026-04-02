@@ -28,7 +28,7 @@ async def buy_vip(callback: CallbackQuery, session: AsyncSession):
 
 
     try:
-        vip_price_stars = 150
+        vip_price_stars = 45
 
         await callback.message.bot.send_invoice(
             chat_id=callback.from_user.id,
