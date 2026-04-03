@@ -1,6 +1,6 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from .CallbackDatas import Pagination
+from .datas import Pagination
 
 async def user_panel(user_id: int):
 

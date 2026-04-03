@@ -1,0 +1,119 @@
+import math
+import asyncio
+from collections import defaultdict
+
+from aiogram import Router,F
+from aiogram.filters import Command
+from aiogram.types import FSInputFile, Message, ReactionTypeEmoji
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.filters import Private
+from app.messages import MText
+from app.services.random_card import open_card
+from app.utils.enums.open_card_enums import CardOpen
+from app.database import DB
+
+
+router = Router()
+user_card_opens = defaultdict(asyncio.Lock)
+
+
+@router.message(F.text == "🌐 Открыть карту", Private())
+async def _(message: Message, session: AsyncSession):
+    user_id = message.from_user.id
+
+    # Проверяем, не открывает ли пользователь карту в данный момент
+    if user_card_opens[user_id].locked():
+        await message.reply(MText.get("wait"))
+        return
+    
+    
+    async with user_card_opens[user_id]:
+        result = await open_card(session, user_id)
+
+        db = DB(session)
+        user = await db.user.get_user(user_id)
+
+        match result:
+            case CardOpen.NOT_REGISTERED:
+                await message.reply(MText.get("not_registered"))
+            case CardOpen.NOT_TIME:
+                await message.reply(MText.nottime(user.last_open))
+                await message.react([ReactionTypeEmoji(emoji="😴")])
+            case CardOpen.ERROR:
+                await message.reply("Произошла ошибка при открытии карты.")
+            case Card:
+                card = result
+
+                text = MText.get("card").format(name=card.name,
+                                                verse=card.verse_name,
+                                                rarity=card.rarity_name,
+                                                value=(card.value
+                                                    if not user.vip
+                        else f"{card.value} (+{math.ceil(card.value * 0.1)})"))
+                text = text + "\n\n✨ Shiny" if card.shiny else text
+                text += MText.get("pity").format(pity=100-user.pity)
+
+<<<<<<< HEAD:app/handlers/open_cards.py
+                await message.reply_photo(InputMediaPhoto(
+                media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
+                caption=text))
+=======
+                await message.reply_photo(
+                    photo=FSInputFile(path=f"app/assets/cards/{card.verse.name}/{card.icon}"),
+                    caption=text
+                )
+
+>>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/users/open_cards.py
+
+
+@router.message(Command("card"))
+async def _(message: Message, session: AsyncSession):
+    user_id = message.from_user.id
+
+    # Проверяем, не открывает ли пользователь карту в данный момент
+    if user_card_opens[user_id].locked():
+        await message.reply(MText.get("wait"))
+        return
+    
+    
+    async with user_card_opens[user_id]:
+
+        # Параллельно обрабатываем открытие карты
+        result = await open_card(session,user_id)
+
+        db = DB(session)
+        user = await db.user.get_user(user_id)
+
+        match result:
+
+            case CardOpen.NOT_REGISTERED:
+                await message.reply(MText.get("not_registered"))
+            case CardOpen.NOT_TIME:
+                await message.reply(MText.nottime(user.last_open))
+                await message.react([ReactionTypeEmoji(emoji="😴")])
+            case CardOpen.ERROR: pass
+            case Card:
+                card = result
+
+                text = MText.get("card").format(name=card.name,
+                                                verse=card.verse_name,
+                                                rarity=card.rarity_name,
+                                                value=(card.value
+                                                    if not user.vip
+                        else f"{card.value} (+{math.ceil(card.value * 0.1)})"))
+                text = text + "\n\n✨ Shiny" if card.shiny else text
+                text += MText.get("pity").format(pity=100-user.pity)
+
+<<<<<<< HEAD:app/handlers/open_cards.py
+                await message.reply_photo(InputMediaPhoto(
+                media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
+                caption=text))
+=======
+                await message.reply_photo(
+                    photo=FSInputFile(path=f"app/assets/cards/{card.verse.name}/{card.icon}"),
+                    caption=text
+                )
+>>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/users/open_cards.py
+
+                await message.react([ReactionTypeEmoji(emoji="💘")])

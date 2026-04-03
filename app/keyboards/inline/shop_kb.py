@@ -1,6 +1,6 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from .CallbackDatas import ShopItemCallback
+from .datas import ShopItemCallback
 
 async def shop_keyboard_choice(card_id: int):
     builder = InlineKeyboardBuilder()
