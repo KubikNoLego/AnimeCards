@@ -500,7 +500,12 @@ async def select_slot_callback(callback: CallbackQuery, session: AsyncSession, s
         
         # Для не-лимитированных карт проверяем, что слот соответствует редкости
         if card.rarity_name != "Лимитированный":
-            expected_slot = [item for item, key in SLOT_RARITY_MAP.items() if key == card.rarity_name][0]
+            expected_slots = [item for item, key in SLOT_RARITY_MAP.items() if key == card.rarity_name]
+            if not expected_slots:
+                await callback.answer("Неизвестная редкость карты", show_alert=True)
+                return
+            
+            expected_slot = expected_slots[0]
             if expected_slot != slot:
                 await callback.answer(
                     f"Карту редкости '{card.rarity_name}' можно поставить только в слот '{expected_slot}'",
