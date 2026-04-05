@@ -36,7 +36,7 @@ async def _(message:Message,session:AsyncSession):
     user = await db.user.get_user(message.from_user.id)
 
     if not user.clan_member:
-        await message.answer("user_not_in_clan_pvp")
+        await message.answer(MText.get("user_not_in_clan_pvp"))
         return
     
     if not user.battle_inventory:
