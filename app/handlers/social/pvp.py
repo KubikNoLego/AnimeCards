@@ -500,7 +500,7 @@ async def select_slot_callback(callback: CallbackQuery, session: AsyncSession, s
         
         # Для не-лимитированных карт проверяем, что слот соответствует редкости
         if card.rarity_name != "Лимитированный":
-            expected_slots = [key for item, key in SLOT_RARITY_MAP.items() if item == card.rarity_name]
+            expected_slots = [slot for rarity, slot in SLOT_RARITY_MAP.items() if rarity == card.rarity_name]
             if not expected_slots:
                 await callback.answer("Неизвестная редкость карты", show_alert=True)
                 return
@@ -719,7 +719,14 @@ async def search_opponent_callback(callback: CallbackQuery, session: AsyncSessio
                 daily_verse
             )
             
-            # Отправляем результат
+            # Удаляем предыдущее сообщение с поиском
+            try:
+                await callback.message.delete()
+            except:
+                pass
+            
+            # Отправляем результат обоим игрокам
+            await callback.bot.send_message(opponent_user.id, result_text)
             await callback.message.answer(result_text)
             await callback.answer("⚔️ Соперник найден! Бой начинается!")
         else:
