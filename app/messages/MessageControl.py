@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import DB
 from app.database.models import Card, UserCards
-from ..utils import MSK_TIMEZONE
+from ..utils.consts import MSK_TIMEZONE, RARITY_EMOJIES
 
 
 class Messages:
@@ -73,11 +73,15 @@ class Messages:
             # Возвращаем сообщение по умолчанию, если что-то пошло не так
             return "<i>⏳ До следующего открытия осталось немного времени</i>"
 
-    def top_players_formatter(self,top:list,user_id:int) -> str:
+    def top_players_formatter(self,top:list,user_id:int, title:str = None, value_field:str = "balance", value_suffix:str = " ¥") -> str:
         if not top:
             return "<i>🏆 Топ игроков пока пуст.</i>"
 
-        header = "<b>🏆 Топ игроков по балансу</b>\n\n"
+        if title is None:
+            title = "<b>🏆 Топ игроков по балансу</b>\n\n"
+        else:
+            title = f"<b>{title}</b>\n\n"
+            
         players_text = []
 
         for i, player in enumerate(top, 1):
@@ -90,10 +94,12 @@ class Messages:
                 player_link = f'<a href="t.me/{player.username}">{escape(player.name)}</a>'
             else:
                 player_link = escape(player.name)
-            player_info = f"{place_emoji} {highlight}{player_link} — {player.balance} ¥{end_highlight}"
+                
+            player_value = getattr(player, value_field)
+            player_info = f"{place_emoji} {highlight}{player_link} — {player_value}{value_suffix}{end_highlight}"
             players_text.append(player_info)
 
-        return header + "\n".join(players_text)
+        return title + "\n".join(players_text)
     
     async def user_profile(self,session,user_id):
         db = DB(session)
@@ -123,13 +129,7 @@ class Messages:
                                     .filter_by(user_id = user_id)
                                     .order_by(Card.value.desc()).limit(3))
 
-        rarity_emojis = {
-            "Обычный": "🔵",
-            "Редкий": "🟢",
-            "Легендарный": "🟡",
-            "Мифический": "🟠",
-            "Хроно": "🔴"}
-        return "\n".join([f"{rarity_emojis.get(card.rarity_name, '🟡')} {card.name} {"(Shiny ✨) " if card.shiny else ""}- <b>{card.value} ¥</b>" for card in top])
+        return "\n".join([f"{RARITY_EMOJIES.get(card.rarity_name, '🟡')} {card.name} {"(Shiny ✨) " if card.shiny else ""}- <b>{card.value} ¥</b>" for card in top])
 
 
 MText = Messages()

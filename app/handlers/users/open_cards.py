@@ -11,6 +11,7 @@ from app.filters import Private
 from app.messages import MText
 from app.services.random_card import open_card
 from app.utils.enums.open_card_enums import CardOpen
+from app.utils.card_formater import format_open_card
 from app.database import DB
 
 
@@ -45,26 +46,12 @@ async def _(message: Message, session: AsyncSession):
             case Card:
                 card = result
 
-                text = MText.get("card").format(name=card.name,
-                                                verse=card.verse_name,
-                                                rarity=card.rarity_name,
-                                                value=(card.value
-                                                    if not user.vip
-                        else f"{card.value} (+{math.ceil(card.value * 0.1)})"))
-                text = text + "\n\n✨ Shiny" if card.shiny else text
-                text += MText.get("pity").format(pity=100-user.pity)
+                text = await format_open_card(card, user)
 
-<<<<<<< HEAD:app/handlers/open_cards.py
-                await message.reply_photo(InputMediaPhoto(
-                media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
-                caption=text))
-=======
                 await message.reply_photo(
                     photo=FSInputFile(path=f"app/assets/cards/{card.verse.name}/{card.icon}"),
                     caption=text
                 )
-
->>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/users/open_cards.py
 
 
 @router.message(Command("card"))
@@ -96,24 +83,11 @@ async def _(message: Message, session: AsyncSession):
             case Card:
                 card = result
 
-                text = MText.get("card").format(name=card.name,
-                                                verse=card.verse_name,
-                                                rarity=card.rarity_name,
-                                                value=(card.value
-                                                    if not user.vip
-                        else f"{card.value} (+{math.ceil(card.value * 0.1)})"))
-                text = text + "\n\n✨ Shiny" if card.shiny else text
-                text += MText.get("pity").format(pity=100-user.pity)
+                text = await format_open_card(card, user)
 
-<<<<<<< HEAD:app/handlers/open_cards.py
-                await message.reply_photo(InputMediaPhoto(
-                media=FSInputFile(path=f"app/icons/{card.verse.name}/{card.icon}"),
-                caption=text))
-=======
                 await message.reply_photo(
                     photo=FSInputFile(path=f"app/assets/cards/{card.verse.name}/{card.icon}"),
                     caption=text
                 )
->>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/users/open_cards.py
 
                 await message.react([ReactionTypeEmoji(emoji="💘")])

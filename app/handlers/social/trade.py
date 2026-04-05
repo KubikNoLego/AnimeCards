@@ -1,7 +1,4 @@
-<<<<<<< HEAD:app/handlers/trade.py
 from aiogram import Router, F
-=======
->>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/social/trade.py
 from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, InputMediaVideo
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import and_, select
@@ -34,17 +31,6 @@ async def _(message: Message, session: AsyncSession):
 async def selected_card_callback(callback: CallbackQuery,
                                 session: AsyncSession):
     db = DB(session)
-<<<<<<< HEAD:app/handlers/trade.py
-
-    trade = await db.get_trade(callback.from_user.id)
-
-    if not trade:
-        return
-
-    is_complete = await db.complete_trade(trade)
-
-=======
-    
     
     trade = await db.trade.get_trade(callback.from_user.id)
     
@@ -53,7 +39,6 @@ async def selected_card_callback(callback: CallbackQuery,
     
     is_complete = await db.trade.complete_trade(trade)
     
->>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/social/trade.py
     if not is_complete:
         await callback.answer(MText.get("error_completing"))
         return
@@ -67,15 +52,9 @@ async def selected_card_callback(callback: CallbackQuery,
 async def selected_card_callback(callback: CallbackQuery,
                                 session: AsyncSession):
     db = DB(session)
-<<<<<<< HEAD:app/handlers/trade.py
-
-    trade = await db.get_trade(callback.from_user.id)
-
-=======
     
     trade = await db.trade.get_trade(callback.from_user.id)
     
->>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/social/trade.py
     if not trade:
         return
 
@@ -92,13 +71,8 @@ async def selected_card_callback(callback: CallbackQuery,
 async def selected_card_callback(callback: CallbackQuery,
                 callback_data: SelectedCard, session: AsyncSession):
     db = DB(session)
-<<<<<<< HEAD:app/handlers/trade.py
-    user = await db.get_user(callback.from_user.id)
-
-=======
     user = await db.user.get_user(callback.from_user.id)
     
->>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/social/trade.py
     # Проверяем, является ли пользователь партнером другого игрока
     trade = await session.scalar(select(Trade).filter_by(
         partner_id=user.id))
@@ -124,13 +98,6 @@ async def selected_card_callback(callback: CallbackQuery,
                                                     value=card.value)
         card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
-<<<<<<< HEAD:app/handlers/trade.py
-        await callback.bot.send_photo(trade.user_id, photo=FSInputFile(
-                    path=f"app/icons/{card.verse.name}/{card.icon}"),
-                    caption=card_info,
-                    reply_markup=await trade_action_kb())
-
-=======
         # Отправляем карту партнеру с учетом типа файла
         file_path = f"app/assets/cards/{card.verse.name}/{card.icon}"
         if card.icon.endswith('.mp4'):
@@ -144,7 +111,6 @@ async def selected_card_callback(callback: CallbackQuery,
                         caption=card_info,
                         reply_markup=await trade_action_kb())
         
->>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/social/trade.py
         trade.partner_card = card.id
 
         await session.commit()
@@ -239,19 +205,6 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
                 callback_data: TradeVerseFilterPagination, session: AsyncSession):
     """Обработчик callback для пагинации фильтра по вселенной."""
     try:
-<<<<<<< HEAD:app/handlers/trade.py
-
-        # Получаем все вселенные, у которых есть хотя бы одна карта в инвентаре пользователя
-        user = await DB(session).get_user(callback.from_user.id)
-
-        verses = await session.scalars(
-            select(Verse).join(Card).join(UserCards).filter(
-                UserCards.user_id == user.id
-            ).distinct()
-        )
-        verses = verses.all()
-        total_pages = len(verses)
-=======
         # Получаем пользователя
         user = await DB(session).user.get_user(callback.from_user.id)
         
@@ -269,7 +222,6 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
             return
         
         total_pages = (len(user_verses) + 3) // 4  # 4 вселенные на страницу
->>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/social/trade.py
         current_page = callback_data.p
 
         if 1 <= current_page <= total_pages:

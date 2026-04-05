@@ -42,6 +42,7 @@ class User(Base):
     balance: Mapped[int] = mapped_column(default=0)
     pity: Mapped[int] = mapped_column(default=100)
     free_open: Mapped[int] = mapped_column(default=0)
+    pvp_wins: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     username: Mapped[str | None] = mapped_column(String(32), default=None)
     name: Mapped[str] = mapped_column(String(100))
@@ -241,3 +242,15 @@ class Trade(Base):
     partner_id: Mapped[int | None] = mapped_column(BigInteger,nullable=True, default=None)
     partner_card: Mapped[int | None] = mapped_column(BigInteger, nullable=True, default=None)
     partner_added_at: Mapped[datetime | None] = mapped_column(default=None)
+
+
+class PvPSearchQueue(Base):
+    """Очередь поиска соперников для PvP."""
+    __tablename__ = "pvp_search_queue"
+    
+    id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
+    deck_value: Mapped[int] = mapped_column(Integer, nullable=False)  # Стоимость колоды для поиска
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.now)
+    
+    user: Mapped["User"] = relationship("User", lazy="selectin")

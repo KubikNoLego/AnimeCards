@@ -12,7 +12,5 @@ from .inline import (
                     VerseFilter, VerseFilterPagination, RarityFilter,
                     RarityFilterPagination, TradePagination, TradeRarityFilter,
                     TradeRarityFilterPagination, TradeVerseFilter,
-                    TradeVerseFilterPagination, SelectedCard, PvPVerseFilter,
-                    PvPRarityFilter, PvPRarityFilterPagination, PvPSelectedCard,
-                    PvPVerseFilterPagination, PvPPagination
+                    TradeVerseFilterPagination, SelectedCard
                     )

@@ -7,6 +7,7 @@ from app.database.repositories.promo_repo import PromoRepo
 from app.database.repositories.trade_repo import TradeRepo
 from app.database.repositories.referral_repo import ReferralRepo
 from app.database.repositories.clan_repo import ClanRepo
+from app.database.repositories.pvp_repo import PVPRepo
 
 
 class DB:
@@ -20,6 +21,7 @@ class DB:
         self.trade = TradeRepo(session)
         self.referral = ReferralRepo(session)
         self.clan = ClanRepo(session)
+        self.pvp = PVPRepo(session)
 
 
 class RedisRequests:

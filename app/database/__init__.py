@@ -2,7 +2,7 @@
 from .models import (
     Base, User, Card, Profile, Verse, Rarity, Referrals, Clan,
     ClanMember, VipSubscription, UserCards, ClanInvitation,
-    Promo, PromoUsers, Trade
+    Promo, PromoUsers, Trade, BattleInventory, PvPSearchQueue
 )
 
 # Сессии и движок
@@ -24,7 +24,7 @@ __all__ = [
     # Models
     "Base", "User", "Card", "Profile", "Verse", "Rarity", "Referrals",
     "Clan", "ClanMember", "VipSubscription", "UserCards", "ClanInvitation",
-    "Promo", "PromoUsers", "Trade",
+    "Promo", "PromoUsers", "Trade", "BattleInventory", "PvPSearchQueue",
     # Session
     "create_engine", "create_sessionmaker",
     # Repositories

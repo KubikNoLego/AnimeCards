@@ -42,3 +42,28 @@ async def _(message: Message, session: AsyncSession):
     else:
         text = MText.get("not_user").format(name=message.from_user.full_name)
         await message.reply(text)
+
+
+@router.message(Command("top_pvp"))
+async def top_pvp_command(message: Message, session: AsyncSession):
+    """Обработчик команды /top_pvp для отображения топа игроков по победам в PvP."""
+    db = DB(session)
+    user = await db.user.get_user(message.from_user.id)
+    if user:
+        # Получаем топ игроков по количеству побед в PvP
+        top_players_pvp = await db.user.get_top_players_by_pvp_wins()
+        
+        # Используем общий форматтер как у топа по балансу
+        text = MText.top_players_formatter(
+            top_players_pvp, 
+            user.id,
+            title="⚔️ Топ игроков по победам в PvP",
+            value_field="pvp_wins",
+            value_suffix=" побед"
+        )
+        
+        await message.answer(text, disable_notification=True,
+                            disable_web_page_preview=True)
+    else:
+        text = MText.get("not_user").format(name=message.from_user.full_name)
+        await message.reply(text)

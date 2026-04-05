@@ -86,19 +86,6 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
                 callback_data: VerseFilterPagination, session: AsyncSession):
     """Обработчик callback для пагинации фильтра по вселенной."""
     try:
-<<<<<<< HEAD:app/handlers/pagination.py
-
-        # Получаем все вселенные, у которых есть хотя бы одна карта в инвентаре пользователя
-        user = await DB(session).get_user(callback.from_user.id)
-        
-        verses = await session.scalars(
-            select(Verse).join(Card).join(UserCards).filter(
-                UserCards.user_id == user.id
-            ).distinct()
-        )
-        verses = verses.all()
-        total_pages = len(verses)
-=======
         # Получаем пользователя
         user = await DB(session).user.get_user(callback.from_user.id)
         
@@ -116,7 +103,6 @@ async def verse_filter_pagination_callback(callback: CallbackQuery,
             return
         
         total_pages = (len(user_verses) + 3) // 4  # 4 вселенные на страницу
->>>>>>> 8e1e6d54f96265edc92ba14723034db72c204408:app/handlers/common/pagination.py
         current_page = callback_data.p
 
         if 1 <= current_page <= total_pages:
@@ -341,7 +327,7 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
         media = InputMediaVideo(media=FSInputFile(
             path=f"app/icons/{card.verse.name}/{card.icon}"))
     else:
-        media = media=InputMediaPhoto(media=FSInputFile(
+        media = InputMediaPhoto(media=FSInputFile(
                 path=f"app/icons/{card.verse.name}/{card.icon}"))
 
     try:

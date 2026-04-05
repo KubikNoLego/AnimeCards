@@ -71,3 +71,15 @@ class UserRepo:
         except Exception as exc:
             logger.exception(f"Ошибка при получении топ игроков по балансу: {exc}")
             return []
+
+    async def get_top_players_by_pvp_wins(self,
+                                        limit: int = 10) -> list[User]:
+        """Возвращает топ юзеров по количеству побед в PvP"""
+        try:
+            stmt = select(User).order_by(User.pvp_wins.desc()).limit(limit)
+            result = await self.session.execute(stmt)
+            top_players = result.scalars().all()
+            return top_players
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении топ игроков по победам PvP: {exc}")
+            return []
