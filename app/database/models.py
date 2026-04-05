@@ -67,7 +67,7 @@ class User(Base):
     used_promos: Mapped[list["Promo"]] = relationship("Promo", back_populates="used_by", secondary="promo_users", lazy="selectin")
 
 class BattleInventory(Base):
-    __tablename__ = "battle_invеntories"
+    __tablename__ = "battle_inventories"
     
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
 
