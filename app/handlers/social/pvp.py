@@ -429,7 +429,7 @@ async def select_slot_callback(callback: CallbackQuery, session: AsyncSession, s
     """Обработчик callback для выбора слота для карты."""
     try:
         # Извлекаем название слота из callback_data
-        slot = callback.data.split("select_slot_")[1]
+        slot = callback.data.split("_")[2]
         
         # Проверяем валидность слота
         valid_slots = ["common", "uncommon", "mythic", "legend", "hrono"]
