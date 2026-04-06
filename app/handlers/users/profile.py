@@ -12,6 +12,7 @@ from loguru import logger
 from app.services.profile import user_photo_link
 from app.keyboards import profile_keyboard
 from app.messages import MText
+from app.services.user_stat import user_profile
 from app.states import ChangeDescribe
 from app.utils import MSK_TIMEZONE
 from app.filters import ProfileFilter
@@ -27,7 +28,7 @@ async def _(message: Message,session: AsyncSession):
     db = DB(session)
     user = await db.user.get_user(message.from_user.id)
     if user:
-        text = await MText.user_profile(session, user.id)
+        text = await user_profile(session, user.id)
 
         profile_photo = await user_photo_link(message)
             
@@ -77,7 +78,7 @@ async def _(message: Message, session: AsyncSession):
             await message.reply(MText.get("user_not_found_short"))
             return
         
-        text = await MText.user_profile(session,user.id)
+        text = await user_profile(session,user.id)
 
         target_profile_photo = None
         try:
@@ -105,7 +106,7 @@ async def _(message: Message, session: AsyncSession):
         case None:
             user = await db.user.get_user(message.from_user.id)
             if user:
-                text = await MText.user_profile(session, user.id)
+                text = await user_profile(session, user.id)
                 profile_photo = await user_photo_link(message)
                 keyboard = await profile_keyboard(user.profile.describe != "", user.vip)
                 if profile_photo:
@@ -122,7 +123,7 @@ async def _(message: Message, session: AsyncSession):
         case _:
             user = await db.user.get_user(message.reply_to_message.from_user.id)
             if user:
-                text = await MText.user_profile(session, user.id)
+                text = await user_profile(session, user.id)
                 profile_photo = await user_photo_link(message)
                 if profile_photo:
                     await message.reply_photo(photo=profile_photo,caption=text)

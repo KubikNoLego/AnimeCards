@@ -28,8 +28,7 @@ async def _(message: Message, session: AsyncSession):
         stats_message = MText.get("refferal_text").format(
             link=referral_link,
             referral=len(user.referrals),
-            total=total_reward,
-            award="50 до 150" if not user.vip else "100 до 150")
+            total=total_reward)
         try:
             qr_file = await create_qr(referral_link)
             try:

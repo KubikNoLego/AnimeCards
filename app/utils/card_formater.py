@@ -1,8 +1,11 @@
+from datetime import datetime, timedelta
 import math
 from typing import Callable
 
 from aiogram.types import CallbackQuery, FSInputFile, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
 from loguru import logger
+
+from app.utils.consts import MSK_TIMEZONE
 
 from ..database.models import Card, User
 
@@ -62,3 +65,25 @@ async def show_inventory_card(callback: CallbackQuery,
 
     except Exception as e:
         logger.warning(f"Не удалось отредактировать сообщение: {e}")
+
+async def nottime(openc: datetime) -> str:
+        """Генерировать сообщение "еще не время" с обратным отсчетом"""
+        try:
+
+            hour = 2 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 3
+            target_time = openc + timedelta(hours=hour)
+
+            time_left = target_time - datetime.now(MSK_TIMEZONE)
+            total_seconds = int(time_left.total_seconds())
+
+            if total_seconds < 0:
+                formatted_time = "00:00"
+            else:
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                formatted_time = f"{hours:02d}:{minutes:02d}"
+
+            return "<b>⏳ Подождите</b>\n\n<i>До следующего открытия осталось <b>{time}</b></i>\n\n<i>Попробуйте открыть карту позже.</i>".format(time=formatted_time)
+        except Exception as e:
+            # Возвращаем сообщение по умолчанию, если что-то пошло не так
+            return "<i>⏳ До следующего открытия осталось немного времени</i>"
