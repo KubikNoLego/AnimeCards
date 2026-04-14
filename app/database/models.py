@@ -51,7 +51,7 @@ class User(Base):
     last_open: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     # Инвентарь — карточки пользователя (many-to-many)
-    inventory: Mapped[list["Card"]] = relationship("Card", back_populates="owners", secondary="usercards", lazy="selectin")
+    inventory: Mapped[list["Card"]] = relationship("Card", back_populates="owners", secondary="usercards", lazy="selectin", default=[])
     battle_inventory: Mapped["BattleInventory"] = relationship("BattleInventory", back_populates="user", lazy="selectin")
     # Профиль — 1 к 1 связь
     profile: Mapped["Profile"] = relationship("Profile", back_populates="owner", lazy="selectin")
