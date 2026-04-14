@@ -3,6 +3,7 @@ import asyncio
 import sys
 
 from loguru import logger
+from aiogram.types import Update
 
 # Импортируем config из app.config
 from app.config import config
@@ -64,7 +65,7 @@ def main() -> None:
     
     @dp.startup()
     async def on_startup():
-        await bot.delete_webhook(True)
+        await bot.delete_webhook(drop_pending_updates=True)
         
         async with engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)

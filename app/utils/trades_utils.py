@@ -6,7 +6,7 @@ from app.utils.card_formater import format_card
 
 
 async def send_trade_card(message: Message, card: Card) -> None:
-    card_info = await format_card(card)
+    card_info = format_card(card)
 
     # Отправляем карту с учетом типа файла
     file_path = f"app/assets/cards/{card.verse.name}/{card.icon}"

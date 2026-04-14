@@ -1,4 +1,5 @@
 from aiogram import Dispatcher, Router
+from loguru import logger
 
 from app.handlers.common import promo
 from app.handlers.common import (vip_callback)

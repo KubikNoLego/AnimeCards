@@ -5,11 +5,12 @@ from typing import Callable
 from aiogram.types import CallbackQuery, FSInputFile, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
 from loguru import logger
 
+from app.database.requests import RedisRequests
 from app.utils.consts import MSK_TIMEZONE
 
 from ..database.models import Card, User
 
-async def format_card(card: Card) -> str:
+def format_card(card: Card) -> str:
     template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥"
 
     text = template.format(name=card.name,
@@ -22,12 +23,22 @@ async def format_card(card: Card) -> str:
 async def format_open_card(card: Card, user: User) -> str:
     template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥"
 
+    vip_bonus = int(card.value * 0.1) if user.vip else 0
+    daily_bonus = (int(card.value * 0.2) if (card.verse.id ==
+                        await RedisRequests.daily_verse())
+                        else 0)
+    bonus = vip_bonus + daily_bonus
+
+    value = (str(card.value) if not bonus
+            else str(card.value)+f" (+{bonus})")
+
     text = template.format(name=card.name,
                         verse=card.verse_name,
                     rarity=card.rarity_name,
-                    value=card.value
-                    if not user.vip
-                    else str(card.value)+f" (+{math.ceil(card.value * 0.1)})") + (f"\n\n✨ Shiny\n\n🍀 Гарант на Хроно: {100-user.pity}/100" if card.shiny else f"\n\n🍀 Гарант на Хроно: {100-user.pity}/100")
+                    value= value + 
+                    (f"\n\n✨ Shiny\n\n🍀 Гарант на Хроно: {100-user.pity}/100"
+                    if card.shiny 
+                    else f"\n\n🍀 Гарант на Хроно: {100-user.pity}/100"))
     
     return text
 
@@ -35,7 +46,7 @@ async def show_inventory_card(callback: CallbackQuery,
                             total_cards: int, card: Card, index: int,
                         keyboard: Callable[[int, int],
                                 InlineKeyboardMarkup]) -> None:
-    info = await format_card(card) 
+    info = format_card(card) 
 
     keyboard = await keyboard(index + 1, total_cards)
 
@@ -66,7 +77,7 @@ async def show_inventory_card(callback: CallbackQuery,
     except Exception as e:
         logger.warning(f"Не удалось отредактировать сообщение: {e}")
 
-async def nottime(openc: datetime) -> str:
+def nottime(openc: datetime) -> str:
         """Генерировать сообщение "еще не время" с обратным отсчетом"""
         try:
 

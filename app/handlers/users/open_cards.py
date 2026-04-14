@@ -39,7 +39,7 @@ async def _(message: Message, session: AsyncSession):
             case CardOpen.NOT_REGISTERED:
                 await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
-                await message.reply(await nottime(user.last_open))
+                await message.reply(nottime(user.last_open))
                 await message.react([ReactionTypeEmoji(emoji="😴")])
             case CardOpen.ERROR:
                 await message.reply("Произошла ошибка при открытии карты.")
@@ -77,7 +77,7 @@ async def _(message: Message, session: AsyncSession):
             case CardOpen.NOT_REGISTERED:
                 await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
-                await message.reply(await nottime(user.last_open))
+                await message.reply(nottime(user.last_open))
                 await message.react([ReactionTypeEmoji(emoji="😴")])
             case CardOpen.ERROR: pass
             case Card:

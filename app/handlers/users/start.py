@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import CommandStart,CommandObject
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.filters import Private
@@ -25,6 +26,7 @@ router = Router()
 @router.message(CommandStart(),Private())
 async def _(message: Message, command: CommandObject,session: AsyncSession,
             state: FSMContext):
+    logger.success("Старт команда")
     user = await message.bot.get_chat(message.from_user.id)
 
     db = DB(session)
