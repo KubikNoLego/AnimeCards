@@ -39,7 +39,6 @@ class UserRepo:
                     last_open=now - timedelta(hours=3),
                 )
                 user.profile = Profile(user_id=id, describe=describe, joined=now)
-                user.inventory = []
                 self.session.add(user)
                 action = True
             else:
