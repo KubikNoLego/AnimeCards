@@ -63,7 +63,8 @@ async def open_card(session: AsyncSession, user_id):
         if card not in user.inventory:
             user.inventory.append(card)
         
-        user.pity = user.pity - 1 if user.pity > 0 else 100
+        if card.rarity.id == 5: user.pity = 0
+        else: user.pity = user.pity + 1 if user.pity < 100 else 0
         
         bonus = int(card.value * 0.1) if user.vip else 0
         daily_bonus = (int(card.value * 0.2) if (card.verse.id ==

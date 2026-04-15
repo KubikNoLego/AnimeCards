@@ -5,19 +5,21 @@ from app.utils.consts import CHANCES, RARITIES
 
 
 def soft_pity(pity: int) -> float:
-    MAX_PITY = 100
-    base_chance = 0.01
-    soft_start = 25
-    rpity = 100-pity
+    base = 0.01
+    soft_start = 75
+    max_pity = 100
 
-    if rpity > soft_start:
-        chance = (rpity - soft_start) / (MAX_PITY - soft_start)
-        return base_chance + chance * (1 - base_chance)
+    if pity >= max_pity:
+        return 1.0
 
-    return base_chance
+    if pity < soft_start:
+        return base
+
+    x = (pity - soft_start) / (max_pity - soft_start)
+    return base + (1 - base) * (x ** 2)
 
 def roll_rarity(pity: int) -> int:
-    if pity == 0:
+    if pity >= 100:
         return 5
     
     chances = CHANCES.copy()

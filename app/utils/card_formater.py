@@ -7,6 +7,7 @@ from loguru import logger
 
 from app.database.requests import RedisRequests
 from app.utils.consts import MSK_TIMEZONE
+from app.utils.random_card import soft_pity
 
 from ..database.models import Card, User
 
@@ -21,7 +22,7 @@ def format_card(card: Card) -> str:
     return text
     
 async def format_open_card(card: Card, user: User) -> str:
-    template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥"
+    template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
 
     vip_bonus = int(card.value * 0.1) if user.vip else 0
     daily_bonus = (int(card.value * 0.2) if (card.verse.id ==
@@ -35,10 +36,10 @@ async def format_open_card(card: Card, user: User) -> str:
     text = template.format(name=card.name,
                         verse=card.verse_name,
                     rarity=card.rarity_name,
-                    value= value + 
-                    (f"\n\n✨ Shiny\n\n🍀 Гарант на Хроно: {100-user.pity}/100"
+                    value=value,
+                    added=(f"\n\n✨ Shiny\n\n🍀 Гарант на Хроно: {user.pity}/100" + f"\n{100*soft_pity(user.pity)}%"
                     if card.shiny 
-                    else f"\n\n🍀 Гарант на Хроно: {100-user.pity}/100"))
+                    else f"\n\n🍀 Гарант на Хроно: {user.pity}/100" + f"\n{100*soft_pity(user.pity)}%"))
     
     return text
 
