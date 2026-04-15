@@ -40,7 +40,6 @@ async def _(message: Message, session: AsyncSession):
                 await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
                 await message.reply(nottime(user.last_open))
-                await message.react([ReactionTypeEmoji(emoji="😴")])
             case CardOpen.ERROR:
                 await message.reply("Произошла ошибка при открытии карты.")
             case Card:
