@@ -29,7 +29,7 @@ async def user_profile(session,user_id):
             tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
             name =  escape(user.name) + " 👑" if user.vip else escape(user.name),
             balance = user.balance,
-            pity = 100 - user.pity,
+            pity = user.pity,
             referrals = len(user.referrals),
             referral_rewards = referral_rewards,
             top_cards = await user_top_cards(session,user_id),

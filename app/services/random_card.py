@@ -13,11 +13,30 @@ from ..utils.consts import(SHINY_CHANCE, MSK_TIMEZONE, COOLDOWN)
 from ..utils.enums.open_card_enums import CardOpen
 from app.database import User, DB, Card, Clan, RedisRequests, Rarity
 
+
 @logger.catch()
-async def random_card(session: AsyncSession, pity: int):
+async def random_hrono(session: AsyncSession):
+
+    cards_result = await session.scalars(
+        select(Card).join(Rarity).where(
+            Card.shiny == False,
+            Card.can_drop == True,
+            Rarity.id == 5, 
+        )
+    )
+    cards = cards_result.all()
+
+    daily_verse = await RedisRequests.daily_verse()
+
+    return choose_card(cards,daily_verse)
+
+@logger.catch()
+async def random_card(session: AsyncSession, pity: int, user_id: int):
     """Выбрать случайную карту"""
 
-    random_rarity = roll_rarity(pity)
+    boost = True if await RedisRequests().luck_boosts(user_id) else False
+
+    random_rarity = roll_rarity(pity, boost)
     is_shiny = random.random() < SHINY_CHANCE
 
     daily_verse_task = RedisRequests.daily_verse()
@@ -59,7 +78,7 @@ async def open_card(session: AsyncSession, user_id):
                                                                 <= now):
             return CardOpen.NOT_TIME
         
-        card = await random_card(session, user.pity)
+        card = await random_card(session, user.pity, user.id)
         if card not in user.inventory:
             user.inventory.append(card)
         
@@ -70,14 +89,20 @@ async def open_card(session: AsyncSession, user_id):
         daily_bonus = (int(card.value * 0.2) if (card.verse.id ==
                                         await RedisRequests.daily_verse())
                                         else 0)
-        added_sum = card.value + bonus + daily_bonus
+        yens_boost = int(card.value * 0.3) if await RedisRequests().yens_boosts(user.id) > 0 else 0
+
+
+        added_sum = card.value + bonus + daily_bonus + yens_boost
         user.balance += added_sum
         
+        await RedisRequests().remove_yens_boost(user.id)
+
         if user.clan_member:
             clan_bonus = int(added_sum * 0.3)
             user.clan_member.contribution += clan_bonus
             user.clan_member.clan.balance += clan_bonus
         
+        await RedisRequests().remove_luck_boost(user.id)
         await session.commit()
 
         logger.info("Получена карта {id} для {user_id}", user_id=user_id, id=card.id)

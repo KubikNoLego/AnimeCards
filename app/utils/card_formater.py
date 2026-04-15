@@ -11,13 +11,27 @@ from app.utils.random_card import soft_pity
 
 from ..database.models import Card, User
 
-def format_card(card: Card) -> str:
-    template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥"
+def format_buyed_card(card: Card) -> str:
+    template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
+
 
     text = template.format(name=card.name,
                         verse=card.verse_name,
                     rarity=card.rarity_name,
-                    value=card.value) + ("\n\n✨ Shiny" if card.shiny else "")
+                    value=str(int(card.value)) + f" (-{int(card.value*0.2)})",
+                    added = ("\n\n✨ Shiny" if card.shiny else ""))
+    
+    return text
+
+def format_card(card: Card) -> str:
+    template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
+
+
+    text = template.format(name=card.name,
+                        verse=card.verse_name,
+                    rarity=card.rarity_name,
+                    value=card.value,
+                    added = ("\n\n✨ Shiny" if card.shiny else ""))
     
     return text
     
@@ -28,7 +42,8 @@ async def format_open_card(card: Card, user: User) -> str:
     daily_bonus = (int(card.value * 0.2) if (card.verse.id ==
                         await RedisRequests.daily_verse())
                         else 0)
-    bonus = vip_bonus + daily_bonus
+    yens_boost = int(card.value * 0.3) if await RedisRequests().yens_boosts(user.id) > 0 else 0
+    bonus = vip_bonus + daily_bonus + yens_boost
 
     value = (str(card.value) if not bonus
             else str(card.value)+f" (+{bonus})")
@@ -37,9 +52,9 @@ async def format_open_card(card: Card, user: User) -> str:
                         verse=card.verse_name,
                     rarity=card.rarity_name,
                     value=value,
-                    added=(f"\n\n✨ Shiny\n\n🍀 Гарант на Хроно: {user.pity}/100" + f"\n{100*soft_pity(user.pity)}%"
+                    added=(f"\n\n✨ Shiny\n\n🍀 Гарант на Хроно: {user.pity}/100"
                     if card.shiny 
-                    else f"\n\n🍀 Гарант на Хроно: {user.pity}/100" + f"\n{100*soft_pity(user.pity)}%"))
+                    else f"\n\n🍀 Гарант на Хроно: {user.pity}/100"))
     
     return text
 
