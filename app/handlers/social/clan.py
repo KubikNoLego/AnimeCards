@@ -106,7 +106,13 @@ async def _(callback:CallbackQuery,callback_data: MemberPagination,
 
     # Проверяем, есть ли участники в клане (кроме лидера)
     if not clan_members:
-        await callback.message.edit_text(text=MText.get("clan_no_members"))
+        try:
+            await callback.message.edit_text(text=MText.get("clan_no_members"))
+        except Exception:
+            try:
+                await callback.message.edit_caption(caption=MText.get("clan_no_members"))
+            except Exception:
+                pass
         return
 
     current_member = (clan_members[page-1].user, clan_members[page-1])
@@ -119,22 +125,36 @@ async def _(callback:CallbackQuery,callback_data: MemberPagination,
         contribution=current_member[1].contribution
     )
 
+    keyboard = await member_pagination_keyboard(page,
+        len(clan_members), current_member[0].id, user.clan_member.is_leader)
+
     profile_photos = await callback.message.bot.get_user_profile_photos(
         current_member[0].id, limit=1)
     photo = profile_photos.photos[0][-1].file_id if profile_photos and len(
         profile_photos.photos) > 0 else None
 
-    if photo:
-        await callback.message.edit_media(media=InputMediaPhoto(media=photo),
-    reply_markup=await member_pagination_keyboard(page,
-        len(clan_members), current_member[0].id,user.clan_member.is_leader))
-        await callback.message.edit_caption(caption=member_info,
-    reply_markup=await member_pagination_keyboard(page,
-        len(clan_members), current_member[0].id,user.clan_member.is_leader))
-    else:
-        await callback.message.edit_text(text=member_info,
-    reply_markup=await member_pagination_keyboard(page,
-        len(clan_members), current_member[0].id,user.clan_member.is_leader))
+    try:
+        if photo:
+            await callback.message.edit_media(
+                media=InputMediaPhoto(media=photo),
+                reply_markup=keyboard)
+            await callback.message.edit_caption(
+                caption=member_info,
+                reply_markup=keyboard)
+        else:
+            await callback.message.edit_text(
+                text=member_info,
+                reply_markup=keyboard)
+    except Exception as e:
+        logger.error(f"Ошибка редактирования сообщения в клане: {e}")
+        # Фоллбэк: пробуем другой метод
+        try:
+            await callback.message.edit_caption(caption=member_info, reply_markup=keyboard)
+        except Exception:
+            try:
+                await callback.message.edit_text(text=member_info, reply_markup=keyboard)
+            except Exception:
+                await callback.answer("Произошла ошибка при отображении участника")
 
     await callback.answer()
 

@@ -38,8 +38,9 @@ class UserRepo:
                     name=name,
                     last_open=now - timedelta(hours=3),
                 )
-                user.profile = Profile(user_id=id, describe=describe, joined=now)
+                profile = Profile(user_id=id, describe=describe, joined=now)
                 self.session.add(user)
+                self.session.add(profile)
                 action = True
             else:
                 user.username = username
@@ -48,6 +49,7 @@ class UserRepo:
             await self.session.commit()
             return (user, action) # возвращает пользователя и True если он создан, False - обновлён
         except Exception as exc:
+            await self.session.rollback()
             logger.exception(f"Ошибка при сохранении пользователя id={id}: {exc}")
             return None
     
