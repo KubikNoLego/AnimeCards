@@ -3,50 +3,34 @@ from datetime import datetime
 import os
 
 from aiogram import Bot
-from sqlalchemy.ext.asyncio import (
-                                    AsyncSession,
-                                    async_sessionmaker
-                                    )
-from sqlalchemy import delete, select
 from loguru import logger
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import Verse, DB, VipSubscription, User, Clan, Card, Trade, Profile, ClanMember, Promo, UserCards, PromoUsers
-from app.utils import MSK_TIMEZONE
-from sqlalchemy import func, distinct, and_
+from app.database.models import Card, Clan, PromoUsers, User, UserCards, VipSubscription
+from app.database.requests import DB, RedisRequests
+from app.utils.consts import MSK_TIMEZONE
 
-async def _update_daily_verse(session, db_session):
-    """Обновляем ежедневную вселенную."""
-    new_verse: Verse = await DB(db_session).card.get_random_verse()
+
+@logger.catch
+async def update_verse(db: DB) -> bool:
+    """Обновляет ежедневную вселенную в Redis."""
+    new_verse = await db.card.get_random_verse()
     if new_verse:
-        await session.set("daily_verse", str(new_verse.id), ex=24*60*60)
-        logger.info(
-f"Ежедневная вселенная обновлена. ID: {new_verse.id}")
+        await RedisRequests.set_verse(new_verse.id)
+        logger.info(f"Ежедневная вселенная обновлена. ID: {new_verse.id}")
         return True
     else:
         logger.error(
-        "Не удалось получить новую вселенную для ежедневного обновления")
+            "Не удалось получить новую вселенную для ежедневного обновления")
         return False
 
-async def _update_daily_shop(session, db_session):
-    """Обновляем ежедневный магазин."""
-    daily_items = await DB(db_session).card.get_daily_shop_items()
-    if daily_items and len(daily_items) > 0:
-        shop_items_ids = [str(card.id) for card in daily_items]
-        await session.set("shop_items", ",".join(shop_items_ids), ex=24*60*60)
-        logger.info(
-f"Ежедневный магазин обновлен. Товары: {len(daily_items)} шт.")
-        return True
-    else:
-        logger.error("Не удалось получить товары для ежедневного магазина")
-        return False
-
-async def _add_vip_free_opens(db_session):
-    """Добавляем бесплатные открытия VIP пользователям."""
-    current_time = datetime.now(MSK_TIMEZONE)
-    result = await db_session.execute(
+@logger.catch
+async def add_free_opens(session: AsyncSession) -> bool:
+    result = await session.execute(
         select(User)
         .join(User.vip)
-        .where(VipSubscription.end_date > current_time)
+        .where(VipSubscription.end_date > 0)
     )
     vip_users = result.scalars().all()
 
@@ -56,14 +40,14 @@ async def _add_vip_free_opens(db_session):
         updated_count += 1
 
     if updated_count > 0:
-        await db_session.commit()
+        await session.commit()
         logger.info(
             f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
     return updated_count > 0
 
 @logger.catch
-async def _rebalance_clans(db_session: AsyncSession):
-    clans = await db_session.scalars(select(Clan))
+async def clan_rebalance(session: AsyncSession) -> None:
+    clans = await session.scalars(select(Clan))
     clans_result = clans.all()
     for clan in clans_result:
 
@@ -76,12 +60,11 @@ async def _rebalance_clans(db_session: AsyncSession):
             user.balance += added_sum
         clan.balance = 0
 
-    await db_session.commit()
+    await session.commit()
 
 @logger.catch
-async def _update_users_info(bot: Bot, db_session: AsyncSession) -> bool:
-    """Обновляет имена и username пользователей из Telegram."""
-    users = await db_session.scalars(select(User))
+async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
+    users = await session.scalars(select(User))
     users_list = users.all()
     
     updated_count = 0
@@ -110,56 +93,14 @@ async def _update_users_info(bot: Bot, db_session: AsyncSession) -> bool:
                 logger.error(f"Ошибка при обновлении пользователя {user.id}: {e}")
     
     if updated_count > 0:
-        await db_session.commit()
+        await session.commit()
         logger.info(f"Обновлено {updated_count} пользователей, {failed_count} ошибок")
     
     return updated_count > 0
 
-@logger.catch
-async def _daily_coordinator(bot: Bot, sessionmaker: async_sessionmaker):
-    """Главная координирующая функция для всех ежедневных задач."""
-    from redis.asyncio import Redis
-    while True:
-        try:
-            current_date = datetime.now(MSK_TIMEZONE).date()
-            session = Redis()
-
-            last_update_date_str = await session.get("last_update")
-
-            if last_update_date_str:
-                last_update_date_str = last_update_date_str.decode('utf-8')
-                last_update_date = datetime.strptime(last_update_date_str,
-                                                    "%Y-%m-%d").date()
-            else:
-                last_update_date = None
-
-            # Если сегодня еще не обновляли, выполняем все ежедневные задачи
-            if not last_update_date or last_update_date < current_date:
-                async with sessionmaker() as db_session:
-                    verse_updated = await _update_daily_verse(session, db_session)
-                    shop_updated = await _update_daily_shop(session, db_session)
-                    vip_updated = await _add_vip_free_opens(db_session)
-                    users_updated = await _update_users_info(bot, db_session)
-                    await _create_backup()
-
-                if current_date.weekday() == 0:
-                    await _rebalance_clans(db_session)
-
-                # Обновляем дату последнего обновления только если хотя бы одна задача выполнилась успешно
-                if verse_updated or shop_updated or vip_updated or users_updated:
-                    await session.set("last_update",
-                        current_date.strftime("%Y-%m-%d"), ex=24*60*60)
-
-            await session.aclose()
-        except Exception as e:
-            logger.exception(f"Ошибка в _daily_coordinator")
-            await asyncio.sleep(60)
-
-        await asyncio.sleep(3600)
-
 
 @logger.catch
-async def _create_backup():
+async def _create_backup() -> bool:
     """Создаёт бэкап базы данных PostgreSQL."""
     import subprocess
     from app.config import config
@@ -196,7 +137,7 @@ async def _create_backup():
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
-        stdout, stderr = await process.communicate()
+        _, stderr = await process.communicate()
 
         if process.returncode == 0:
             logger.info(f"Бэкап базы данных создан: {backup_file}")
@@ -219,21 +160,21 @@ async def _create_backup():
     except Exception as e:
         logger.exception(f"Неожиданная ошибка при создании бэкапа: {e}")
         return False
-
-async def _get_stats_text(db_session) -> str:
-    """Генерирует текст со статистикой бота."""
+    
+@logger.catch
+async def get_stats(session: AsyncSession) -> str:
     try:
         # Основные счётчики
-        total_players = (await db_session.execute(select(func.count(User.id)))).scalar()
-        total_cards = (await db_session.execute(select(func.count(Card.id)))).scalar()
-        total_clans = (await db_session.execute(select(func.count(Clan.id)))).scalar()
+        total_players = (await session.execute(select(func.count(User.id)))).scalar()
+        total_cards = (await session.execute(select(func.count(Card.id)))).scalar()
+        total_clans = (await session.execute(select(func.count(Clan.id)))).scalar()
         
         # Рефералы
-        total_referrals = (await db_session.execute(select(func.count()))).scalar()
+        total_referrals = (await session.execute(select(func.count()))).scalar()
         
         # VIP пользователи
         current_time = datetime.now(MSK_TIMEZONE)
-        vip_count = (await db_session.execute(
+        vip_count = (await session.execute(
             select(func.count(VipSubscription.user_id))
             .where(VipSubscription.end_date > current_time)
         )).scalar()
@@ -241,18 +182,18 @@ async def _get_stats_text(db_session) -> str:
         # Активные пользователи (открывали карты за последние 24 часа)
         from datetime import timedelta
         day_ago = current_time - timedelta(hours=24)
-        active_users = (await db_session.execute(
+        active_users = (await session.execute(
             select(func.count(User.id))
             .where(User.last_open >= day_ago)
         )).scalar()
         
         # Общее количество карт у всех пользователей (открытые карты)
-        total_opened = (await db_session.execute(
+        total_opened = (await session.execute(
             select(func.count()).select_from(UserCards)
         )).scalar()
         
         # Количество активаций всех промокодов
-        total_promo_activations = (await db_session.execute(
+        total_promo_activations = (await session.execute(
             select(func.count(PromoUsers.user_id))
         )).scalar()
         
@@ -285,28 +226,24 @@ async def _get_stats_text(db_session) -> str:
     except Exception as e:
         logger.exception(f"Ошибка при получении статистики: {e}")
         return "<i>📊 Статистика бота</i>\n\n<i>Ошибка при загрузке данных...</i>"
-
-
-async def _edit_stats(bot: Bot, chat_id: int | str, message_id: int, db_sessionmaker, interval: int = 600):
-    while True:
-        try:
-            # Получаем актуальный текст статистики
-            async with db_sessionmaker() as db_session:
-                display_text = await _get_stats_text(db_session)
-            
-            await bot.edit_message_text(
-                text=display_text,
-                chat_id=chat_id,
-                message_id=message_id,
-                parse_mode="HTML"
-            )
-        except Exception as e:
-            # Игнорируем ошибки, если сообщение не изменилось
-            if "message is not modified" not in str(e).lower():
-                # Проверяем, не было ли удалено сообщение
-                if "message to edit not found" in str(e).lower() or "message can't be edited" in str(e).lower():
-                    logger.warning(f"Сообщение {message_id} в чате {chat_id} больше недоступно для редактирования")
-                    break
-                logger.exception(f"Ошибка обновления статистики в чате {chat_id}, сообщение {message_id}: {e}")
+    
+@logger.catch
+async def edit_stats(session: AsyncSession, bot: Bot, chat_id: int | str,
+                    message_id: int):
+    try:
+        display_text = await get_stats(session)
         
-        await asyncio.sleep(interval)
+        await bot.edit_message_text(
+            text=display_text,
+            chat_id=chat_id,
+            message_id=message_id,
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        # Игнорируем ошибки, если сообщение не изменилось
+        if "message is not modified" not in str(e).lower():
+            # Проверяем, не было ли удалено сообщение
+            if "message to edit not found" in str(e).lower() or "message can't be edited" in str(e).lower():
+                logger.warning(f"Сообщение {message_id} в чате {chat_id} больше недоступно для редактирования")
+                return
+            logger.exception(f"Ошибка обновления статистики в чате {chat_id}, сообщение {message_id}: {e}")

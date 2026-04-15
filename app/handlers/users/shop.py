@@ -6,7 +6,7 @@ from loguru import logger
 from app.filters import Private
 from app.keyboards import shop_keyboard, ShopItemCallback
 from app.messages import MText
-from app.database import DB, RedisRequests, Card
+from app.database import DB, RedisRequests, Card, get_redis
 from app.services.random_card import random_hrono
 from app.services.shop import delete_item
 from app.utils.card_formater import format_buyed_card
@@ -22,7 +22,9 @@ async def _(message:Message,session:AsyncSession):
     user = await db.user.get_user(message.from_user.id)
     if not user:
         return
-    items = await RedisRequests().get_user_items(user)
+    redis = get_redis()
+    redis_requests = RedisRequests(redis)
+    items = await redis_requests.get_user_items(user)
     keyboard = await shop_keyboard(items)
     await message.answer(MText.get("daily_shop"), reply_markup=keyboard)
 
@@ -31,6 +33,9 @@ async def _(message:Message,session:AsyncSession):
 async def shop_item_callback(callback: CallbackQuery,
                     callback_data: ShopItemCallback, session: AsyncSession):
     """Обработчик callback для покупки карточки из магазина."""
+    redis = get_redis()
+    redis_requests = RedisRequests(redis)
+    
     item = callback_data.item
     db = DB(session)
     user = await db.user.get_user(callback.from_user.id)
@@ -79,8 +84,8 @@ async def shop_item_callback(callback: CallbackQuery,
                 await callback.answer(MText.get("not_enough_yens"))
                 return
             user.balance -= 35
-            await RedisRequests().add_luck_boost(user.id)
-            boosts = await RedisRequests().luck_boosts(user.id)
+            await redis_requests.add_luck_boost(user.id)
+            boosts = await redis_requests.luck_boosts(user.id)
             await callback.message.answer(MText.get("boost_message").format(
                                                     boosts = boosts))
             await delete_item(user, ShopEnum.BOOST)
@@ -90,8 +95,8 @@ async def shop_item_callback(callback: CallbackQuery,
                 await callback.answer(MText.get("not_enough_yens"))
                 return
             user.balance -= 35
-            await RedisRequests().add_yens_boost(user.id)
-            boosts = await RedisRequests().yens_boosts(user.id)
+            await redis_requests.add_yens_boost(user.id)
+            boosts = await redis_requests.yens_boosts(user.id)
             await callback.message.answer(MText.get("boost_message").format(
                                                     boosts = boosts))
             await delete_item(user, ShopEnum.YENS_BOOST)

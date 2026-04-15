@@ -9,13 +9,11 @@ from aiogram.types import Update
 from app.config import config
 
 # Импортируем из app
+from app.database.requests import RedisRequests, get_redis
 from app.loader import setup_logger, setup_dispatcher
 from app.bot import create_bot, create_dispatcher
 from app.database import Base, create_sessionmaker, create_engine
-from app.services.daily_updates import (
-    _daily_coordinator,
-    _edit_stats
-)
+from app.services.schedule import SchedulerManager
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,11 +54,9 @@ def main() -> None:
     
     engine = create_engine(config)
     sessionmaker = create_sessionmaker(engine)
-    
-    # Глобальные переменные для хранения ссылок на фоновые задачи
-    _daily_coordinator_task = None
-    _edit_stats_task = None
-    
+
+    scheduler = SchedulerManager(bot, sessionmaker)
+
     setup_dispatcher(dp, sessionmaker)
     
     @dp.startup()
@@ -72,26 +68,13 @@ def main() -> None:
         
         # Запуск фоновых задач только в обычном режиме (не debug)
         if not args.debug:
-            global _daily_coordinator_task, _edit_stats_task
-            
-            _daily_coordinator_task = asyncio.create_task(
-                _daily_coordinator(bot, sessionmaker)
-            )
-            
-            # Запуск обновления статистики
-            try:
-                _edit_stats_task = asyncio.create_task(
-                    _edit_stats(
-                        bot=bot,
-                        chat_id=config.CHAT_ID,
-                        message_id=config.MESSAGE_ID,
-                        db_sessionmaker=sessionmaker,
-                        interval=600
-                    )
-                )
-                logger.info("Запущено обновление статистики")
-            except Exception as e:
-                logger.warning(f"Не удалось запустить обновление статистики: {e}")
+            scheduler.set_stats_target(chat_id=config.CHAT_ID,
+                                    message_id=config.MESSAGE_ID)
+            redis = get_redis()
+            redis = RedisRequests(redis)
+            if not await redis.daily_verse():
+                await scheduler._run_update_verse()            
+            scheduler.start()
         else:
             logger.info("Фоновые задачи пропущены (debug режим)")
         
@@ -99,20 +82,9 @@ def main() -> None:
     
     @dp.shutdown()
     async def on_shutdown():
-        # Отменяем фоновые задачи при завершении работы
-        if _daily_coordinator_task and not _daily_coordinator_task.done():
-            _daily_coordinator_task.cancel()
-            try:
-                await _daily_coordinator_task
-            except asyncio.CancelledError:
-                pass
-        
-        if _edit_stats_task and not _edit_stats_task.done():
-            _edit_stats_task.cancel()
-            try:
-                await _edit_stats_task
-            except asyncio.CancelledError:
-                pass
+
+        if not args.debug:
+            await scheduler.shutdown()
         
         await engine.dispose()
         logger.info("Бот отключён")

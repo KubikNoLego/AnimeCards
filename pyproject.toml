@@ -21,4 +21,5 @@ dependencies = [
     "pillow>=12.1.0",
     "pyyaml>=6.0.3",
     "aiogram>=3.27.0",
+    "apscheduler>=3.11.2",
 ]

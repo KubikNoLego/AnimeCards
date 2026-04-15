@@ -19,16 +19,12 @@ from .repositories.clan_repo import ClanRepo
 # Requests (DB и RedisRequests) - импортируются в конце, чтобы избежать циклических зависимостей
 # DB использует репозитории, поэтому должен импортироваться после них
 from .requests import DB, RedisRequests
+from .requests import DB, RedisRequests, get_redis, close_redis
 
 __all__ = [
     # Models
-    "Base", "User", "Card", "Profile", "Verse", "Rarity", "Referrals",
-    "Clan", "ClanMember", "VipSubscription", "UserCards", "ClanInvitation",
-    "Promo", "PromoUsers", "Trade", "BattleInventory", "PvPSearchQueue",
-    # Session
-    "create_engine", "create_sessionmaker",
     # Repositories
     "UserRepo", "CardRepo", "PromoRepo", "TradeRepo", "ReferralRepo", "ClanRepo",
     # Requests
-    "DB", "RedisRequests",
+    "DB", "RedisRequests", "get_redis", "close_redis",
 ]

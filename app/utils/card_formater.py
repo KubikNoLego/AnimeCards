@@ -6,12 +6,15 @@ from aiogram.types import CallbackQuery, FSInputFile, InlineKeyboardMarkup, Inpu
 from loguru import logger
 
 from app.database.requests import RedisRequests
+from app.database import get_redis
 from app.utils.consts import MSK_TIMEZONE
 from app.utils.random_card import soft_pity
 
 from ..database.models import Card, User
 
+
 def format_buyed_card(card: Card) -> str:
+    """Форматирует информацию о полученной карте."""
     template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
 
 
@@ -20,10 +23,11 @@ def format_buyed_card(card: Card) -> str:
                     rarity=card.rarity_name,
                     value=str(int(card.value)) + f" (-{int(card.value*0.2)})",
                     added = ("\n\n✨ Shiny" if card.shiny else ""))
-    
+
     return text
 
 def format_card(card: Card) -> str:
+    """Форматирует информацию о карте."""
     template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
 
 
@@ -32,17 +36,21 @@ def format_card(card: Card) -> str:
                     rarity=card.rarity_name,
                     value=card.value,
                     added = ("\n\n✨ Shiny" if card.shiny else ""))
-    
+
     return text
-    
+
 async def format_open_card(card: Card, user: User) -> str:
+    """Форматирует информацию о открываемой карте с учетом бонусов."""
     template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
 
+    redis = get_redis()
+    redis_requests = RedisRequests(redis)
+    
     vip_bonus = int(card.value * 0.1) if user.vip else 0
     daily_bonus = (int(card.value * 0.2) if (card.verse.id ==
                         await RedisRequests.daily_verse())
                         else 0)
-    yens_boost = int(card.value * 0.3) if await RedisRequests().yens_boosts(user.id) > 0 else 0
+    yens_boost = int(card.value * 0.3) if await redis_requests.yens_boosts(user.id) > 0 else 0
     bonus = vip_bonus + daily_bonus + yens_boost
 
     value = (str(card.value) if not bonus
@@ -53,9 +61,9 @@ async def format_open_card(card: Card, user: User) -> str:
                     rarity=card.rarity_name,
                     value=value,
                     added=(f"\n\n✨ Shiny\n\n🍀 Гарант на Хроно: {user.pity}/100"
-                    if card.shiny 
+                    if card.shiny
                     else f"\n\n🍀 Гарант на Хроно: {user.pity}/100"))
-    
+
     return text
 
 async def show_inventory_card(callback: CallbackQuery,

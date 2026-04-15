@@ -11,6 +11,8 @@ SHOP_ITEMS = {
     'r': ShopEnum.RANDOM_HRONO
 }
 
+DAILY_VERSE_TTL = 24 * 60 * 60
+BOOST_TTL = 3 * 24 * 60 * 60
 
 RARITIES = [1, 2, 3, 4, 5]
 CHANCES = [.55, .27, .12, .045, .01]
