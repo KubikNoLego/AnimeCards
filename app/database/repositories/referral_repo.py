@@ -35,14 +35,22 @@ class ReferralRepo:
         return None
 
     async def get_award(self,
-                        referrer_id: int, award: int) -> bool:
+                        referrer_id: int, user_id: int) -> bool:
         """Выдаёт награду за реферала"""
         try:
             referrer = await self.session.scalar(
                 select(User).filter_by(id=referrer_id)
             )
+            user = await self.session.scalar(
+                select(User).filter_by(id=user_id)
+            )
+
             if referrer:
-                referrer.balance += award
+                referrer.free_open += 1 if not referrer.vip else 2
+                await self.session.commit()
+                return True
+            if user:
+                user.free_open += 1
                 await self.session.commit()
                 return True
             return False

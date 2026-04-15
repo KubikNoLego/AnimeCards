@@ -6,7 +6,7 @@ class ClanInvite(CallbackData,prefix = "clan"):
 
 class ShopItemCallback(CallbackData, prefix="shop"):
     """Данные обратного вызова для кнопок товаров магазина."""
-    item_id: int
+    item: str
 
 class MemberPagination(CallbackData, prefix="pc"):
     """Данные обратного вызова для кнопок пагинации."""

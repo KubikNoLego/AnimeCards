@@ -9,7 +9,15 @@ def create_engine(config: Config):
         max_overflow=30,
         pool_timeout=60.0,
         pool_recycle=3600,
-        pool_pre_ping=True
+        pool_pre_ping=True,
+        connect_args={
+            "timeout": 30,
+            "command_timeout": 60,
+            "server_settings": {
+                "jit": "off"
+            }
+        }
     )
+
 def create_sessionmaker(engine):
-    return async_sessionmaker(engine,expire_on_commit=False)
+    return async_sessionmaker(engine, expire_on_commit=False)

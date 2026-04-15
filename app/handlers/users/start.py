@@ -4,16 +4,21 @@ from html import escape
 
 from aiogram.fsm.context import FSMContext
 from aiogram import Router
-from aiogram.types import FSInputFile, Message
+from aiogram.types import Message
 from aiogram.filters import CommandStart,CommandObject
-from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.filters import Private
-from app.utils.consts import MSK_TIMEZONE
-from app.keyboards import main_kb, trade_kb_pagination
+from app.services.invite import new_referral
+from app.keyboards import main_kb
 from app.messages import MText
 from app.database import DB
+from app.utils.enums.invite_enums import InviteEnum
+from app.utils.invite_utils import check_user_invite, send_message_to_users
+from app.utils.trades_utils import send_trade_card
+from app.services.trades import add_partner_to_trade, check_trade_request
+from app.utils.enums.trades_enums import TradeEnum
 
 
 router = Router()
@@ -21,6 +26,7 @@ router = Router()
 @router.message(CommandStart(),Private())
 async def _(message: Message, command: CommandObject,session: AsyncSession,
             state: FSMContext):
+    logger.success("Старт команда")
     user = await message.bot.get_chat(message.from_user.id)
 
     db = DB(session)
@@ -38,55 +44,21 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
         match option:
 
             case "t":
-                trader = await db.user.get_user(int(value))
+                try:
+                    trader_id = int(value)
+                except:
+                    trader_id = None
 
-                if not trader:
-                    await message.answer(MText.get("user_not_found_short"))
+                if (enum := await check_trade_request(db, trader_id, 
+                                            user.id)) != TradeEnum.SUCCESS:
+                    await message.answer(MText.get(enum.value))
                     return
 
-                if trader.id == user.id:
-                    await message.answer(MText.get("u_cant_trade_with_self"))
-                    return
-
-                trade = await db.trade.get_trade(trader.id)
-                
-                if not trade:
-                    await message.answer(MText.get("user_not_found_short"))
-                    return
-
-                if (trade.partner_id and trade.partner_id != user.id and
-            trade.partner_added_at + timedelta(minutes=10) >= datetime.now(MSK_TIMEZONE)):
-                    
-                    await message.answer(MText.get("user_already_trading"))
-                    return
-
-
+                trade = await db.trade.get_trade(trader_id)
                 card = await db.card.get_card(trade.card_id)
 
-                if not card:
-                    await message.answer(MText.get("user_not_found_short"))
-                    return
-
-                card_info = MText.get("card").format(name=card.name,
-                                                    verse=card.verse_name,
-                                                    rarity=card.rarity_name,
-                                                    value=card.value)
-                card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
-
-                # Отправляем карту с учетом типа файла
-                file_path = f"app/assets/cards/{card.verse.name}/{card.icon}"
-                if card.icon.endswith('.mp4'):
-                    await message.answer_video(FSInputFile(path=file_path),
-                        caption=card_info, reply_markup=await trade_kb_pagination())
-                else:
-                    await message.answer_photo(FSInputFile(path=file_path),
-                        caption=card_info, reply_markup=await trade_kb_pagination())
-                
-                trade.partner_id = user.id
-                trade.partner_card = None
-                trade.partner_added_at = datetime.now(MSK_TIMEZONE).replace(tzinfo=None)
-
-                await session.commit()
+                await send_trade_card(message, card)
+                await add_partner_to_trade(db, trade, user.id)
 
                 return
 
@@ -96,60 +68,22 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                 except:
                     inviter_id = None
 
-                if not inviter_id:
-                    await message.answer(MText.get("not_user_id"))
-                    return
+                if (enum := await check_user_invite(message.from_user.id,
+                                    inviter_id, action)) != InviteEnum.SUCCESS:
 
-                if not inviter_id != message.from_user.id:
-                    await message.answer(MText.get("u_cant_be_referral"))
+                    await message.answer(MText.get(enum.value))
                     return
+                
+                inviter = await db.user.get_user(inviter_id)
 
-                if not action:
-                    await message.answer(MText.get("only_new_users"))
+                if (enum := await new_referral(db,inviter_id, 
+                                            user.id)) != InviteEnum.SUCCESS:
+                    
+                    await message.answer(MText.get(enum.value))
                     return
 
                 inviter = await db.user.get_user(inviter_id)
-                if not inviter:
-                    await message.answer(MText.get("not_user_id"))
-                    return
-
-                # Вычисляем награду до создания реферала
-                reward_amount = (random.randint(50, 150)
-                                if not inviter.vip
-                                else random.randint(100, 150))
-
-                # Добавляем реферальную связь с указанием награды
-                referral = await db.referral.add_referral(referral_id=user.id,
-                                                referrer_id=inviter_id,
-                                                referrer_reward=reward_amount)
-                if not referral:
-                    await message.answer(MText.get("sorry"))
-                    return
-
-                # Награждаем реферрера за реферала
-                await db.referral.get_award(inviter_id, reward_amount)
-
-                # Обновляем данные инвайтера для получения актуального баланса
-                inviter = await db.user.get_user(inviter_id)
-
-                referrer_link = f'<a href="tg://user?id={inviter.id}">{escape(inviter.name)}</a>'
-                new_user_link = f'<a href="tg://user?id={user.id}">{escape(user.name)}</a>'
-
-                await message.reply(MText.get("referral_welcome").format(referrer_link=referrer_link))
-
-                try:
-                    await message.bot.send_message(
-                        inviter.id,
-                        MText.get("new_referral").format(link=new_user_link)
-                        )
-                    await message.bot.send_message(
-                            inviter.id,
-                            MText.get("reward_message").format(
-                                reward=reward_amount,
-                                yens=inviter.balance)
-                            )
-                except Exception as e:
-                    logger.exception(f"Не удалось отправить сообщение реферреру {inviter.id}: {e}")
+                await send_message_to_users(message,inviter,user)
 
     message_text = MText.get("start")
     keyboard = await main_kb()

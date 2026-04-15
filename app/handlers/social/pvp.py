@@ -396,7 +396,7 @@ async def selected_card_pvp_callback(callback: CallbackQuery,
                     current_slot = slot_name
                     break
         
-        card_info = await format_card(card)
+        card_info = format_card(card)
         
         # Создаем клавиатуру для выбора слота
         keyboard = await select_slot_keyboard(card.rarity_name, is_limited, is_in_slot, current_slot)

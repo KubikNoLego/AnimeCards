@@ -11,7 +11,7 @@ from app.filters import Private
 from app.messages import MText
 from app.services.random_card import open_card
 from app.utils.enums.open_card_enums import CardOpen
-from app.utils.card_formater import format_open_card
+from app.utils.card_formater import format_open_card, nottime
 from app.database import DB
 
 
@@ -39,8 +39,7 @@ async def _(message: Message, session: AsyncSession):
             case CardOpen.NOT_REGISTERED:
                 await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
-                await message.reply(MText.nottime(user.last_open))
-                await message.react([ReactionTypeEmoji(emoji="😴")])
+                await message.reply(nottime(user.last_open))
             case CardOpen.ERROR:
                 await message.reply("Произошла ошибка при открытии карты.")
             case Card:
@@ -77,7 +76,7 @@ async def _(message: Message, session: AsyncSession):
             case CardOpen.NOT_REGISTERED:
                 await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
-                await message.reply(MText.nottime(user.last_open))
+                await message.reply(nottime(user.last_open))
                 await message.react([ReactionTypeEmoji(emoji="😴")])
             case CardOpen.ERROR: pass
             case Card:

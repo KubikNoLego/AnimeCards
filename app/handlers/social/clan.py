@@ -183,11 +183,21 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
 
     data = await state.get_data()
 
+    # Проверяем, что все обязательные поля присутствуют в состоянии
+    required_fields = ['name', 'tag', 'description']
+    missing_fields = [field for field in required_fields if field not in data]
+    
+    if missing_fields:
+        await callback.answer(
+            f"Ошибка: отсутствуют обязательные поля: {', '.join(missing_fields)}",
+            show_alert=True)
+        return
+
     # Списываем йены за создание клана
     user.balance -= clan_creation_cost
     await session.commit()
 
-    await db.clan.create_clan(data['name'],data['tag'],data['description'],
+    await db.clan.create_clan(data['name'], data['tag'], data['description'],
                         callback.from_user.id)
     await callback.message.delete()
     await callback.answer(

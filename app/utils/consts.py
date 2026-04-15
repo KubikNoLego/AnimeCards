@@ -1,7 +1,19 @@
 from datetime import timezone, timedelta
 
+from app.utils.enums.shop import ShopEnum
+
+
+SHOP_ITEMS = {
+    'f': ShopEnum.FREE_OPEN,
+    'b': ShopEnum.BOOST,
+    'a': ShopEnum.ADD_PITY,
+    'y': ShopEnum.YENS_BOOST,
+    'r': ShopEnum.RANDOM_HRONO
+}
+
+
 RARITIES = [1, 2, 3, 4, 5]
-CHANCES = [55, 27, 12, 4.5, 1]
+CHANCES = [.55, .27, .12, .045, .01]
 SHINY_CHANCE = 0.05
 MSK_TIMEZONE = timezone(timedelta(hours=3))
 COOLDOWN = 3
