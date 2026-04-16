@@ -112,6 +112,9 @@ class SchedulerManager:
     def start(self) -> None:
         """Запускает планировщик."""
         if not self.scheduler.running:
+            # Убедимся, что задачи настроены перед запуском
+            if not self.scheduler.get_jobs():
+                self.setup_jobs()
             self.scheduler.start()
             logger.info("Планировщик запущен.")
         else:
