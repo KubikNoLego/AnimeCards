@@ -1,6 +1,8 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from .CallbackDatas import ShopItemCallback
+from app.utils.enums.shop import ShopEnum
+
+from .datas import ShopItemCallback
 
 async def shop_keyboard_choice(card_id: int):
     builder = InlineKeyboardBuilder()
@@ -11,13 +13,14 @@ async def shop_keyboard_choice(card_id: int):
     return builder.as_markup()
 
 
-async def shop_keyboard(cards: list):
+async def shop_keyboard(items: list[ShopEnum] | list):
     """Создать инлайн-клавиатуру для магазина"""
     builder = InlineKeyboardBuilder()
 
-    [builder.button(text=f"{card.name} ({int(card.value)} ¥)",
-                callback_data=ShopItemCallback(item_id=card.id).pack(),
-                style = "primary") for card in cards]
+    if len(items) <= 0:
+        builder.button(text="Уже всё куплено", callback_data="pass")
+    else:
+        [builder.button(text=x.value[0], callback_data=ShopItemCallback(item=x.value[1]).pack()) for x in items]
         
 
     builder.adjust(2)
