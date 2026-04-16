@@ -22,8 +22,6 @@ async def user_profile(session,user_id):
         user = await db.user.get_user(user_id)
 
         place_on_top = await db.user.get_user_place_on_top(user)
-        referral_rewards = sum(referral.referrer_reward for referral 
-                                in user.referrals)
 
         text = MText.get("profile").format(
             tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
@@ -31,7 +29,6 @@ async def user_profile(session,user_id):
             balance = user.balance,
             pity = user.pity,
             referrals = len(user.referrals),
-            referral_rewards = referral_rewards,
             top_cards = await user_top_cards(session,user_id),
             place = (place_on_top if place_on_top <= 99 else "99+"),
             cards = len(user.inventory),
