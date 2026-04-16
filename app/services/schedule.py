@@ -1,118 +1,124 @@
-from datetime import datetime, timedelta
-import math
-import random
+# schedule.py (полностью исправленная версия)
 
-from aiogram.types import FSInputFile
+from datetime import datetime, time
+import asyncio
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from loguru import logger
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.utils.random_card import roll_rarity, choose_card
+from app.database.requests import RedisRequests, get_redis
+from app.services.updates import (
+    update_info_users, update_verse, add_free_opens,
+    clan_rebalance, _create_backup, edit_stats
+)
+from app.utils.consts import MSK_TIMEZONE
 
-from ..utils.consts import(SHINY_CHANCE, MSK_TIMEZONE, COOLDOWN)
-from ..utils.enums.open_card_enums import CardOpen
-from app.database import User, DB, Card, Clan, RedisRequests, Rarity, get_redis
 
+class SchedulerManager:
+    """Менеджер планировщика для выполнения фоновых задач."""
 
-@logger.catch()
-async def random_hrono(session: AsyncSession):
-    """Выбирает случайную карту Хроно."""
-    cards_result = await session.scalars(
-        select(Card).join(Rarity).where(
-            Card.shiny == False,
-            Card.can_drop == True,
-            Rarity.id == 5,
+    def __init__(self, bot, sessionmaker):
+        self.bot = bot
+        self.sessionmaker = sessionmaker
+        self.scheduler = AsyncIOScheduler(timezone=MSK_TIMEZONE)
+        self.stats_chat_id = None
+        self.stats_message_id = None
+
+    def set_stats_target(self, chat_id: int | str, message_id: int) -> None:
+        """Устанавливает целевой чат и сообщение для обновления статистики."""
+        self.stats_chat_id = chat_id
+        self.stats_message_id = message_id
+
+    async def _run_update_verse(self):
+        """Выполняет обновление ежедневной вселенной (обёртка)."""
+        async with self.sessionmaker() as session:
+            await update_verse(session)
+            await RedisRequests(get_redis()).clear_all_shop()
+
+    async def _update_stats(self):
+        """Периодическое обновление сообщения со статистикой."""
+        if self.stats_chat_id is None or self.stats_message_id is None:
+            logger.warning("Целевое сообщение для статистики не задано, пропуск обновления.")
+            return
+        async with self.sessionmaker() as session:
+            logger.warning("Статистика обновляется")
+            await edit_stats(session, self.bot, self.stats_chat_id, self.stats_message_id)
+
+    async def full_update(self):
+        """Комплексное ежедневное обновление: вселенная, бэкап, VIP-открытия, кланы, пользователи."""
+        logger.info("Запуск комплексного ежедневного обновления...")
+        try:
+            await self._run_update_verse()
+            logger.info("Ежедневная вселенная обновлена.")
+        except Exception as e:
+            logger.exception(f"Ошибка при обновлении вселенной: {e}")
+
+        async with self.sessionmaker() as session:
+
+            try:
+                await add_free_opens(session)
+                logger.info("Бесплатные открытия добавлены VIP-пользователям.")
+            except Exception as e:
+                logger.exception(f"Ошибка при добавлении бесплатных открытий: {e}")
+
+            try:
+                await clan_rebalance(session)
+                logger.info("Ребаланс кланов выполнен.")
+            except Exception as e:
+                logger.exception(f"Ошибка при ребалансе кланов: {e}")
+
+            try:
+                await update_info_users(self.bot, session)
+                logger.info("Информация о пользователях обновлена.")
+            except Exception as e:
+                logger.exception(f"Ошибка при обновлении информации пользователей: {e}")
+
+        logger.info("Комплексное ежедневное обновление завершено.")
+
+    def setup_jobs(self) -> None:
+        """Настраивает все периодические задачи планировщика."""
+        sdl = self.scheduler
+
+        # 1. Комплексное обновление каждый день в 00:00 (полночь)
+        sdl.add_job(
+            self.full_update,
+            CronTrigger(hour=0, minute=0, timezone=MSK_TIMEZONE),
+            id="daily_full_update",
+            replace_existing=True,
+            max_instances=1
         )
-    )
-    cards = cards_result.all()
 
-    daily_verse = await RedisRequests.daily_verse()
-
-    return choose_card(cards, daily_verse)
-
-@logger.catch()
-async def random_card(session: AsyncSession, pity: int, user_id: int):
-    """Выбрать случайную карту"""
-    redis = get_redis()
-    redis_requests = RedisRequests(redis)
-
-    boost = await redis_requests.luck_boosts(user_id) > 0
-
-    random_rarity = roll_rarity(pity, boost)
-    is_shiny = random.random() < SHINY_CHANCE
-
-    daily_verse_task = RedisRequests.daily_verse()
-
-    cards_result = await session.scalars(
-        select(Card).join(Rarity).where(
-            Card.shiny == is_shiny,
-            Card.can_drop == True,
-            Rarity.id == random_rarity,
-        )
-    )
-    cards = cards_result.all()
-
-    if not cards:
-        raise ValueError(
-        f"Нет доступных карт с редкостью {random_rarity} и shiny={is_shiny}"
+        # 2. Обновление статистики каждые 5 минут
+        sdl.add_job(
+            self._update_stats,
+            "interval",
+            minutes=5,
+            id="stats_update",
+            replace_existing=True,
+            max_instances=1
         )
 
-    daily_verse = await daily_verse_task
+        sdl.add_job(
+            _create_backup,
+            CronTrigger(hour=4, minute=0, timezone=MSK_TIMEZONE),
+            id="backup_only",
+            replace_existing=True,
+            max_instances=1
+        )
 
-    return choose_card(cards, daily_verse)
+        logger.info("Все задачи планировщика настроены.")
 
-@logger.catch()
-async def open_card(session: AsyncSession, user_id):
-    """Открывает случайную карту для пользователя."""
-    try:
-        redis = get_redis()
-        redis_requests = RedisRequests(redis)
-        
-        db = DB(session)
+    def start(self) -> None:
+        """Запускает планировщик."""
+        if not self.scheduler.running:
+            self.scheduler.start()
+            logger.info("Планировщик запущен.")
+        else:
+            logger.warning("Планировщик уже запущен.")
 
-        user = await db.user.get_user(user_id)
-        if not user:
-            return CardOpen.NOT_REGISTERED
-
-        now = datetime.now(MSK_TIMEZONE)
-        last_open = (user.last_open.astimezone(MSK_TIMEZONE) if
-                        user.last_open.tzinfo is None else user.last_open)
-        cooldown_hours = COOLDOWN - (1 if now.weekday() >= 5 else 0)
-
-        if not (user.free_open or last_open + timedelta(hours=cooldown_hours)
-                                                                <= now):
-            return CardOpen.NOT_TIME
-
-        card = await random_card(session, user.pity, user.id)
-        if card not in user.inventory:
-            user.inventory.append(card)
-
-        if card.rarity.id == 5: user.pity = 0
-        else: user.pity = user.pity + 1 if user.pity < 100 else 0
-
-        bonus = int(card.value * 0.1) if user.vip else 0
-        daily_bonus = (int(card.value * 0.2) if (card.verse.id ==
-                                        await RedisRequests.daily_verse())
-                                        else 0)
-        yens_boost = int(card.value * 0.3) if await redis_requests.yens_boosts(user.id) > 0 else 0
-
-
-        added_sum = card.value + bonus + daily_bonus + yens_boost
-        user.balance += added_sum
-
-        await redis_requests.remove_yens_boost(user.id)
-
-        if user.clan_member:
-            clan_bonus = int(added_sum * 0.3)
-            user.clan_member.contribution += clan_bonus
-            user.clan_member.clan.balance += clan_bonus
-
-        await redis_requests.remove_luck_boost(user.id)
-        await session.commit()
-
-        logger.info("Получена карта {id} для {user_id}", user_id=user_id, id=card.id)
-        return card
-
-    except Exception as e:
-        logger.exception("Ошибка при открытии карт {id}: {error}", id=user_id, error=str(e))
-        return CardOpen.ERROR
+    def shutdown(self) -> None:
+        """Останавливает планировщик (корректное завершение)."""
+        if self.scheduler.running:
+            self.scheduler.shutdown(wait=True)
+            logger.info("Планировщик остановлен.")

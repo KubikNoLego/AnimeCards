@@ -13,8 +13,9 @@ from app.utils.consts import MSK_TIMEZONE
 
 
 @logger.catch
-async def update_verse(db: DB) -> bool:
+async def update_verse(session: AsyncSession) -> bool:
     """Обновляет ежедневную вселенную в Redis."""
+    db = DB(session)
     new_verse = await db.card.get_random_verse()
     if new_verse:
         await RedisRequests.set_verse(new_verse.id)

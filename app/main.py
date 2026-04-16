@@ -23,9 +23,9 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Примеры использования:
-  python -m app.main              # Запуск в обычном режиме
-  python -m app.main --debug      # Запуск в режиме отладки
-  python -m app.main -d           # Короткая форма для debug режима
+    python -m app.main              # Запуск в обычном режиме
+    python -m app.main --debug      # Запуск в режиме отладки
+    python -m app.main -d           # Короткая форма для debug режима
         """
     )
     
@@ -73,7 +73,7 @@ def main() -> None:
             redis = get_redis()
             redis = RedisRequests(redis)
             if not await redis.daily_verse():
-                await scheduler._run_update_verse()            
+                await scheduler._run_update_verse()
             scheduler.start()
         else:
             logger.info("Фоновые задачи пропущены (debug режим)")
