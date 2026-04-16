@@ -96,7 +96,6 @@ async def open_card(session: AsyncSession, user_id):
                                         else 0)
         yens_boost = int(card.value * 0.3) if await redis_requests.yens_boosts(user.id) > 0 else 0
 
-
         added_sum = card.value + bonus + daily_bonus + yens_boost
         user.balance += added_sum
 
@@ -106,6 +105,9 @@ async def open_card(session: AsyncSession, user_id):
             clan_bonus = int(added_sum * 0.3)
             user.clan_member.contribution += clan_bonus
             user.clan_member.clan.balance += clan_bonus
+
+        if user.free_open > 0:
+            user.free_open -= 1
 
         await redis_requests.remove_luck_boost(user.id)
         await session.commit()
