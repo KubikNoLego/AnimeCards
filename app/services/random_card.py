@@ -79,8 +79,14 @@ async def open_card(session: AsyncSession, user_id):
                         user.last_open.tzinfo is None else user.last_open)
         cooldown_hours = COOLDOWN - (1 if now.weekday() >= 5 else 0)
 
-        if not (user.free_open or last_open + timedelta(hours=cooldown_hours)
-                                                                <= now):
+        # Проверяем, можно ли открыть карту
+        can_open = False
+        if user.free_open > 0:
+            can_open = True
+        elif last_open + timedelta(hours=cooldown_hours) <= now:
+            can_open = True
+
+        if not can_open:
             return CardOpen.NOT_TIME
 
         card = await random_card(session, user.pity, user.id)
@@ -106,8 +112,12 @@ async def open_card(session: AsyncSession, user_id):
             user.clan_member.contribution += clan_bonus
             user.clan_member.clan.balance += clan_bonus
 
+        # Уменьшаем free_open на 1, если есть бесплатные открытия
         if user.free_open > 0:
             user.free_open -= 1
+
+        # Обновляем время последнего открытия
+        user.last_open = now
 
         await redis_requests.remove_luck_boost(user.id)
         await session.commit()
