@@ -14,4 +14,4 @@ class ProfileFilter(BaseFilter):
     """Фильтр для сообщений, связанных с профилем."""
 
     async def __call__(self, message: Message):
-        return (message.chat.type == "private" and message.text == "👤 Профиль") or message.text == ".профиль"
+        return message.chat.type == "private" and message.text == "👤 Профиль"

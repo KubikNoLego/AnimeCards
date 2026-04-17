@@ -1,20 +1,18 @@
 import re
 from html import escape
 
-from aiogram import Router,F
-from aiogram.filters import Command
+from aiogram import Router
+from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from loguru import logger
 
 from app.services.profile import user_photo_link
 from app.keyboards import profile_keyboard
 from app.messages import MText
 from app.services.user_stat import user_profile
 from app.states import ChangeDescribe
-from app.utils import MSK_TIMEZONE
 from app.filters import ProfileFilter
 from app.database import DB, User
 
@@ -27,10 +25,12 @@ router = Router()
 async def _(message: Message,session: AsyncSession):
     db = DB(session)
     user = await db.user.get_user(message.from_user.id)
+    if message.reply_to_message:
+        return
     if user:
         text = await user_profile(session, user.id)
 
-        profile_photo = await user_photo_link(message)
+        profile_photo = await user_photo_link(message, message.from_user.id)
             
         if profile_photo:
             await message.reply_photo(photo=profile_photo,caption=text)
@@ -54,41 +54,23 @@ async def _(message:Message, session: AsyncSession, state: FSMContext):
                 .format(desc=escape(message.text.strip().replace('\n', ''))))
         await state.set_state(None)
 
-@router.message(F.text.startswith(".профиль @"))
-async def _(message: Message, session: AsyncSession):
-    """Обработчик команды .профиль @username - показывает профиль пользователя по username"""
+@router.message(Command("профиль", prefix='.'))
+async def _(message: Message, session: AsyncSession, command: CommandObject):
     try:
-        # Извлекаем username из команды
-        pattern = r'\.профиль @([a-zA-Z0-9_]+)'
-        match = re.search(pattern, message.text)
-
-        if not match:
-            await message.reply(MText.get("invalid_profile_command"))
-            return
-
-        target_username = match.group(1)
-
-        # Ищем пользователя по username
-        user = await session.scalar(
-            select(User)
-            .filter_by(username=target_username)
-        )
-
-        if not user:
-            await message.reply(MText.get("user_not_found_short"))
+        
+        if command.args:
+            user = await session.scalar(select(User)
+                                        .filter_by(username=command.args
+                                                .replace('@', '')))
+        elif message.reply_to_message:
+            user = await session.scalar(select(User)
+                                        .filter_by(id=message.reply_to_message
+                                                .from_user.id))
+        else:
             return
         
         text = await user_profile(session,user.id)
-
-        target_profile_photo = None
-        try:
-            profile_photos = await message.bot.get_user_profile_photos(user.id,
-                                                                    limit=1)
-            if profile_photos and len(profile_photos.photos) > 0:
-                photo = profile_photos.photos[0][-1]
-                target_profile_photo = photo.file_id
-        except Exception as photo_error:
-            logger.error(f"Ошибка при получении фото пользователя {user.id}: {photo_error}")
+        target_profile_photo = await user_photo_link(message.bot,user.id)
 
         if target_profile_photo:
             await message.reply_photo(photo=target_profile_photo, caption=text)
@@ -101,35 +83,28 @@ async def _(message: Message, session: AsyncSession):
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):
     db = DB(session)
-    is_reply = message.reply_to_message
-    match is_reply:
-        case None:
-            user = await db.user.get_user(message.from_user.id)
-            if user:
-                text = await user_profile(session, user.id)
-                profile_photo = await user_photo_link(message)
-                keyboard = await profile_keyboard(user.profile.describe != "", user.vip)
-                if profile_photo:
-                    await message.reply_photo(photo=profile_photo,caption=text,
-                            reply_markup= (keyboard 
-                                if message.chat.type == "private" else None))
-                else:
-                    await message.reply(text,reply_markup=(keyboard
-                                if message.chat.type == "private" else None))
-            else:
-                text = MText.get("not_user").format(
-                    name=escape(message.from_user.full_name))
-                await message.reply(text)
-        case _:
-            user = await db.user.get_user(message.reply_to_message.from_user.id)
-            if user:
-                text = await user_profile(session, user.id)
-                profile_photo = await user_photo_link(message)
-                if profile_photo:
-                    await message.reply_photo(photo=profile_photo,caption=text)
-                else:
-                    await message.reply(text)
-            else:
-                text = MText.get("not_user").format(name=
-                                message.reply_to_message.from_user.full_name)
-                await message.reply(text)
+    user = db.user.get_user(message.from_user.id)
+
+    if not user:
+        name = message.from_user.full_name
+
+        await message.reply(
+            MText.get("not_user").format(name=escape(name)))
+        return
+    
+    text, photo = (await user_profile(session,user.id),
+                await user_photo_link(message.bot,user.id))
+    
+    keyboard = await profile_keyboard(user.profile.describe != "", user.vip)
+
+    if photo:
+        return await message.reply_photo(
+            photo=photo,
+            caption=text,
+            reply_markup=keyboard
+        )
+
+    return await message.reply(
+        text,
+        reply_markup=keyboard
+    )

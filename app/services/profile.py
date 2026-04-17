@@ -1,8 +1,9 @@
 import os
 import tempfile
 
+from aiogram import Bot
 import qrcode
-from aiogram.types import FSInputFile, Message
+from aiogram.types import FSInputFile
 from loguru import logger
 
 async def create_qr(link:str) -> FSInputFile:
@@ -28,23 +29,21 @@ async def create_qr(link:str) -> FSInputFile:
         logger.exception("Ошибкв при создании QR")
         return
 
-async def user_photo_link(message: Message) -> str | None:
+async def user_photo_link(bot: Bot, user_id: int) -> str | None:
     """Получить file_id фото профиля пользователя"""
     try:
-        target_id = (message.reply_to_message.from_user.id 
-            if message.reply_to_message and message.reply_to_message.from_user
-            else message.from_user.id)
 
-        profile_photos = await message.bot.get_user_profile_photos(
-                                                                target_id,
-                                                                limit=1
-                                                                )
+        profile_photos = await bot.get_user_profile_photos(
+                                                        user_id,
+                                                        limit=1
+                                                        )
 
-        # Проверяем, есть ли хоть одна фотография
         if profile_photos and len(profile_photos.photos) > 0:
             photo = profile_photos.photos[0][-1]
             file_id = photo.file_id
             return file_id
+        else:
+            return None
     except Exception as exc:
         logger.exception(f"Ошибка при получении фото пользователя: {exc}")
 
