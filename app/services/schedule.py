@@ -42,7 +42,6 @@ class SchedulerManager:
             logger.warning("Целевое сообщение для статистики не задано, пропуск обновления.")
             return
         async with self.sessionmaker() as session:
-            logger.warning("Статистика обновляется")
             await edit_stats(session, self.bot, self.stats_chat_id, self.stats_message_id)
 
     async def full_update(self):
