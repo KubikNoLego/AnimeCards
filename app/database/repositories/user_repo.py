@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.dialects.postgresql import insert
 from loguru import logger
 
 from app.database.models import Profile, User
@@ -22,36 +23,55 @@ class UserRepo:
                 f"Ошибка при получении пользователя id={user_id}: {exc}")
             return None
 
-    async def create_or_update_user(self, id: int,
-                                    username: str | None,
-                                    name: str,
-                                    describe: str):
-        """Создаёт пользователя, если нет, иначе обновляет поля."""
+    async def create_or_update_user(self, id: int, username: str | None,
+                                    name: str,describe: str):
         from app.utils import MSK_TIMEZONE
+
         now = datetime.now(MSK_TIMEZONE)
+
+        if not isinstance(id, int) or id < 0 or id > 2**63 - 1:
+            raise ValueError(f"Invalid user id: {id}")
+
         try:
-            user = await self.get_user(id)
-            if user is None:
-                user = User(
-                    id=id,
-                    username=username,
-                    name=name,
-                    last_open=now - timedelta(hours=3),
-                )
-                profile = Profile(user_id=id, describe=describe, joined=now)
-                self.session.add(user)
-                self.session.add(profile)
-                action = True
-            else:
-                user.username = username
-                user.name = name
-                action = False
+            stmt = insert(User).values(
+                id=id,
+                username=username,
+                name=name,
+                last_open=now
+            ).on_conflict_do_update(
+                index_elements=[User.id],
+                set_={
+                    "username": username,
+                    "name": name,
+                    "last_open": now
+                }
+            ).returning(User)
+
+            result = await self.session.execute(stmt)
+            user = result.scalar_one()
+
+            profile_exists = await self.session.scalar(
+                select(Profile.user_id).where(Profile.user_id == id)
+            )
+
+            if not profile_exists:
+                profile_stmt = insert(Profile).values(
+                    user_id=id,
+                    describe=describe,
+                    joined=now).on_conflict_do_nothing()
+
+                await self.session.execute(profile_stmt)
+
             await self.session.commit()
-            return (user, action) # возвращает пользователя и True если он создан, False - обновлён
+
+            action = result.rowcount == 1
+
+            return user, action
+
         except Exception as exc:
             await self.session.rollback()
-            logger.exception(f"Ошибка при сохранении пользователя id={id}: {exc}")
-            return None
+            logger.exception(f"Ошибка создания пользователя: {exc}")
+            return user, False
     
     async def get_user_place_on_top(self,user: User):
         """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
