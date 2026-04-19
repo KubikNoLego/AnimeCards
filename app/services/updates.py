@@ -28,10 +28,11 @@ async def update_verse(session: AsyncSession) -> bool:
 
 @logger.catch
 async def add_free_opens(session: AsyncSession) -> bool:
+    now = datetime.now(MSK_TIMEZONE)
     result = await session.execute(
         select(User)
         .join(User.vip)
-        .where(VipSubscription.end_date > 0)
+        .where(VipSubscription.end_date > now)
     )
     vip_users = result.scalars().all()
 
