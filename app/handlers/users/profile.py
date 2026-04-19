@@ -30,7 +30,7 @@ async def _(message: Message,session: AsyncSession):
     if user:
         text = await user_profile(session, user.id)
 
-        profile_photo = await user_photo_link(message, message.from_user.id)
+        profile_photo = await user_photo_link(message.bot, message.from_user.id)
             
         if profile_photo:
             await message.reply_photo(photo=profile_photo,caption=text)
