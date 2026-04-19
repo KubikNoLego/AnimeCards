@@ -83,7 +83,7 @@ async def _(message: Message, session: AsyncSession, command: CommandObject):
 @router.message(ProfileFilter())
 async def _(message: Message, session: AsyncSession):
     db = DB(session)
-    user = db.user.get_user(message.from_user.id)
+    user = await db.user.get_user(message.from_user.id)
 
     if not user:
         name = message.from_user.full_name

@@ -37,13 +37,13 @@ class UserRepo:
                 id=id,
                 username=username,
                 name=name,
-                last_open=now
+                last_open=now - timedelta(hours=3)
             ).on_conflict_do_update(
                 index_elements=[User.id],
                 set_={
                     "username": username,
                     "name": name,
-                    "last_open": now
+                    "last_open": now - timedelta(hours=3)
                 }
             ).returning(User)
 
@@ -57,7 +57,7 @@ class UserRepo:
             if not profile_exists:
                 profile_stmt = insert(Profile).values(
                     user_id=id,
-                    describe=describe,
+                    describe=describe or '',
                     joined=now).on_conflict_do_nothing()
 
                 await self.session.execute(profile_stmt)
