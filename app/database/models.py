@@ -138,6 +138,7 @@ class Rarity(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
 
     cards: Mapped[list["Card"]] = relationship("Card", back_populates="rarity", lazy="selectin")
+    titles: Mapped[list["Title"]] = relationship("Title", back_populates="rarity", lazy="selectin")
 
 class Verse(Base):
     __tablename__ = "verses"
@@ -163,6 +164,7 @@ class Profile(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
 
+    title: Mapped["Title"] = relationship("Title", back_populates="owners", lazy="selectin")
     joined: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     describe: Mapped[str] = mapped_column(String(255), default="", nullable=False)
 
@@ -265,3 +267,5 @@ class Title(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     percent: Mapped[int] = mapped_column(Integer, nullable=False)
     target: Mapped[str] = mapped_column(String(2), nullable=False)
+    rarity: Mapped["Rarity"] = relationship("Rarity", back_populates="cards", lazy="selectin")
+    owners: Mapped[list["Profile"]] = relationship("Profile", back_populates="title", lazy="selectin")
