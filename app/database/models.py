@@ -250,7 +250,18 @@ class PvPSearchQueue(Base):
     
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
-    deck_value: Mapped[int] = mapped_column(Integer, nullable=False)  # Стоимость колоды для поиска
+    deck_value: Mapped[int] = mapped_column(Integer, nullable=False)
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.now)
     
     user: Mapped["User"] = relationship("User", lazy="selectin")
+
+
+class Title(Base):
+    """Титулы"""
+    __tablename__ = "titles"
+
+    id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
+    
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    percent: Mapped[int] = mapped_column(Integer, nullable=False)
+    target: Mapped[str] = mapped_column(String(2), nullable=False)
