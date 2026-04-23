@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime,timedelta
 import os
 
 from aiogram import Bot
@@ -71,6 +71,11 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
     updated_count = 0
     failed_count = 0
     
+    async def send_notification(user: User):
+        if datetime.now(MSK_TIMEZONE) - user.last_open >= timedelta(hours=5):
+            await bot.send_message(user.id, "💤 Вы давно не открывали карту!\n\n<b>Может сейчас вам повезёт?</b>")
+        
+
     for user in users_list:
         try:
             # Получаем актуальную информацию о пользователе из Telegram
@@ -84,11 +89,14 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
                 user.username = new_username
                 user.name = new_name
                 updated_count += 1
+            await send_notification(user)
         except Exception as e:
             # Проверяем, не заблокировал ли пользователь бота
             if "Forbidden" in str(e) or "blocked" in str(e).lower():
                 failed_count += 1
                 logger.warning(f"Пользователь {user.id} заблокировал бота")
+            elif "chat not found" in str(e):
+                failed_count +=1
             else:
                 failed_count += 1
                 logger.error(f"Ошибка при обновлении пользователя {user.id}: {e}")
@@ -99,9 +107,8 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
     
     return updated_count > 0
 
-
 @logger.catch
-async def _create_backup() -> bool:
+async def create_backup() -> bool:
     """Создаёт бэкап базы данных PostgreSQL."""
     import subprocess
     from app.config import config

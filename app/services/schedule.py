@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.requests import RedisRequests, get_redis
 from app.services.updates import (
     update_info_users, update_verse, add_free_opens,
-    clan_rebalance, _create_backup, edit_stats
+    clan_rebalance, create_backup, edit_stats
 )
 from app.utils.consts import MSK_TIMEZONE
 
@@ -29,6 +29,10 @@ class SchedulerManager:
         """Устанавливает целевой чат и сообщение для обновления статистики."""
         self.stats_chat_id = chat_id
         self.stats_message_id = message_id
+
+    async def _update_info_users(self):
+        async with self.sessionmaker() as session:
+            await update_info_users(self.bot, session)
 
     async def _run_update_verse(self):
         """Выполняет обновление ежедневной вселенной (обёртка)."""
@@ -99,7 +103,7 @@ class SchedulerManager:
         )
 
         sdl.add_job(
-            _create_backup,
+            create_backup,
             CronTrigger(hour=4, minute=0, timezone=MSK_TIMEZONE),
             id="backup_only",
             replace_existing=True,
