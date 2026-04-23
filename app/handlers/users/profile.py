@@ -1,14 +1,14 @@
 import re
 from html import escape
 
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command, CommandObject
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.services.profile import user_photo_link
+from app.services.profile import change_visible_for_profile, user_photo_link
 from app.keyboards import profile_keyboard
 from app.messages import MText
 from app.services.user_stat import user_profile
@@ -19,6 +19,12 @@ from app.database import DB, User
 
 router = Router()
 
+
+@router.callback_query(F.data == "change_visible")
+async def _(callback: CallbackQuery,session: AsyncSession):
+    await callback.message.answer(await change_visible_for_profile(session,
+                                                        callback.from_user.id))
+    await callback.message.delete()
 
 
 @router.message(Command("profile"))
@@ -95,7 +101,8 @@ async def _(message: Message, session: AsyncSession):
     text, photo = (await user_profile(session,user.id),
                 await user_photo_link(message.bot,user.id))
     
-    keyboard = await profile_keyboard(user.profile.describe != "", user.vip)
+    keyboard = await profile_keyboard(user.profile.describe != "", user.vip,
+                                    user.profile.visible)
 
     if photo:
         return await message.reply_photo(
