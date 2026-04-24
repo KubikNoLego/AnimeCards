@@ -24,6 +24,7 @@ class Referrals(Base):
     user_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
     referral_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
     referrer_reward: Mapped[int] = mapped_column(Integer, default=0)
+    referral: Mapped["User"] = relationship("User", foreign_keys=[referral_id], lazy="selectin")
 
     referrer: Mapped["User"] = relationship("User",back_populates="referrals",foreign_keys=[user_id],lazy="selectin")
 
@@ -52,14 +53,14 @@ class User(Base):
 
     # Инвентарь — карточки пользователя (many-to-many)
     inventory: Mapped[list["Card"]] = relationship("Card", back_populates="owners", secondary="usercards", lazy="selectin")
-    battle_inventory: Mapped["BattleInventory"] = relationship("BattleInventory", back_populates="user", lazy="selectin")
+    battle_inventory: Mapped["BattleInventory"] = relationship("BattleInventory", back_populates="user", uselist=False)
     # Профиль — 1 к 1 связь
     profile: Mapped["Profile"] = relationship("Profile", back_populates="owner", lazy="selectin")
     # VIP подписка — 1 к 1 связь
     vip: Mapped["VipSubscription"] = relationship("VipSubscription", back_populates="user", lazy="selectin", uselist=False)
 
     # Рефералы — один ко многим связь (пользователи, которых пригласил этот пользователь)
-    referrals: Mapped[list["Referrals"]] = relationship("Referrals", back_populates="referrer", foreign_keys="[Referrals.user_id]", lazy="selectin")
+    referrals: Mapped[list["Referrals"]] = relationship("Referrals", back_populates="referrer", foreign_keys=[Referrals.user_id], lazy="selectin")
 
     clan_member: Mapped["ClanMember"] = relationship("ClanMember", back_populates="user", lazy="selectin", uselist=False)
 
@@ -129,7 +130,7 @@ class Card(Base):
     shiny: Mapped[bool] = mapped_column(Boolean, default=False)
     can_drop: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    owners: Mapped[list["User"] | None] = relationship("User", back_populates="inventory", secondary="usercards", lazy="selectin")
+    owners: Mapped[list["User"]] = relationship("User", back_populates="inventory", secondary="usercards", lazy="selectin")
 
 class Rarity(Base):
     __tablename__ = "rarities"
@@ -162,8 +163,9 @@ class Profile(Base):
     __tablename__ = "profiles"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
 
+    title_id: Mapped[int | None] = mapped_column(ForeignKey("titles.id"))
     title: Mapped["Title"] = relationship("Title", back_populates="owners", lazy="selectin")
     joined: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     describe: Mapped[str] = mapped_column(String(255), default="", nullable=False)
@@ -241,10 +243,10 @@ class Trade(Base):
     __tablename__ = "trades"
 
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
-    user_id: Mapped[int] = mapped_column(BigInteger, nullable= False)
-    card_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_id = mapped_column(BigInteger, ForeignKey("users.id"))
+    card_id = mapped_column(Integer, ForeignKey("cards.id"))
     partner_id: Mapped[int | None] = mapped_column(BigInteger,nullable=True, default=None)
-    partner_card: Mapped[int | None] = mapped_column(BigInteger, nullable=True, default=None)
+    partner_card: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     partner_added_at: Mapped[datetime | None] = mapped_column(default=None)
 
 
@@ -269,5 +271,5 @@ class Title(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     percent: Mapped[int] = mapped_column(Integer, nullable=False)
     target: Mapped[str] = mapped_column(String(2), nullable=False)
-    rarity: Mapped["Rarity"] = relationship("Rarity", back_populates="cards", lazy="selectin")
+    rarity: Mapped["Rarity"] = relationship("Rarity", back_populates="titles", lazy="selectin")
     owners: Mapped[list["Profile"]] = relationship("Profile", back_populates="title", lazy="selectin")
