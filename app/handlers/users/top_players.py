@@ -17,12 +17,11 @@ async def _(message: Message, session: AsyncSession):
     db = DB(session)
     user = await db.user.get_user(message.from_user.id)
     if user:
-        # Получаем топ игроков по балансу (10 человек)
-        top_players_balance = await db.user.get_top_players_by_balance()
+        top_players_balance = await db.user.get_top_players_by_balance(15
+        )
         text_balance = await top_players_by_balance_formatter(top_players_balance,
                                                 user.id)
-
-        # Отправляем только топ по балансу
+        
         await message.answer(text_balance, disable_notification=True,
                             disable_web_page_preview=True)
     else:
@@ -34,7 +33,7 @@ async def _(message: Message, session: AsyncSession):
     db = DB(session)
     user = await db.user.get_user(message.from_user.id)
     if user:
-        top_players_balance = await db.user.get_top_players_by_balance()
+        top_players_balance = await db.user.get_top_players_by_balance(15)
         text_balance = await top_players_by_balance_formatter(top_players_balance,
                                                 user.id)
 

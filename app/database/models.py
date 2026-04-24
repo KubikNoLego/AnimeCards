@@ -170,6 +170,8 @@ class Profile(Base):
 
     owner: Mapped["User"] = relationship("User", back_populates="profile", lazy="selectin")
 
+    visible: Mapped[bool] = mapped_column(Boolean, default=True)
+
 class ClanMember(Base):
     __tablename__ = "clan_members"
 

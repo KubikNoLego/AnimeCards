@@ -64,7 +64,8 @@ class UserRepo:
 
             await self.session.commit()
 
-            action = result.rowcount == 1
+            profile_just_created = not profile_exists
+            action = profile_just_created
 
             return user, action
 
@@ -86,7 +87,8 @@ class UserRepo:
                                         limit: int = 10) -> list[User]:
         """Возвращает топ юзеров по балансу"""
         try:
-            stmt = select(User).order_by(User.balance.desc()).limit(limit)
+            stmt = select(User).join(Profile).filter(
+                Profile.visible == True).order_by(User.balance.desc()).limit(limit)
             result = await self.session.execute(stmt)
             top_players = result.scalars().all()
             return top_players
@@ -98,7 +100,8 @@ class UserRepo:
                                         limit: int = 10) -> list[User]:
         """Возвращает топ юзеров по количеству побед в PvP"""
         try:
-            stmt = select(User).order_by(User.pvp_wins.desc()).limit(limit)
+            stmt = select(User).filter(
+                Profile.visible == True).order_by(User.pvp_wins.desc()).limit(limit)
             result = await self.session.execute(stmt)
             top_players = result.scalars().all()
             return top_players
