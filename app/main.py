@@ -84,7 +84,7 @@ def main() -> None:
     async def on_shutdown():
 
         if not args.debug:
-            await scheduler.shutdown()
+            scheduler.shutdown()
         
         await engine.dispose()
         logger.info("Бот отключён")

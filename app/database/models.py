@@ -3,7 +3,7 @@ from datetime import datetime
 
 # Сторонние библиотеки
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Boolean
+from sqlalchemy import ARRAY, CHAR, BigInteger, DateTime, ForeignKey, Integer, String, Boolean
 
 class Base(DeclarativeBase):
     def __repr__(self) -> str:
@@ -269,7 +269,43 @@ class Title(Base):
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
     
     title: Mapped[str] = mapped_column(String, nullable=False)
-    percent: Mapped[int] = mapped_column(Integer, nullable=False)
-    target: Mapped[str] = mapped_column(String(2), nullable=False)
+    
+    buff1: Mapped[int] = mapped_column(Integer,nullable=False)
+    target1: Mapped[str] = mapped_column(String(1), nullable=False)
+    buff2: Mapped[int | None] = mapped_column(Integer,nullable=True)
+    target2: Mapped[str | None] = mapped_column(String(1), nullable=True)
+    
+    rarity_id: Mapped[int] = mapped_column(Integer, ForeignKey("rarities.id"))
     rarity: Mapped["Rarity"] = relationship("Rarity", back_populates="titles", lazy="selectin")
     owners: Mapped[list["Profile"]] = relationship("Profile", back_populates="title", lazy="selectin")
+
+    @property
+    def buffs(self) -> list[tuple[int, str]]:
+        result = [(self.buff1, self.target1)]
+        if self.buff2:
+            result.append((self.buff2, self.target2))
+        return result
+    
+    @property
+    def free_open_buff(self) -> int:
+        if not any(target == 'f' for _,target in self.buffs):
+            return 0
+        return [value for value,target in self.buffs if target == 'f'][0]
+    
+    @property
+    def time_skip(self) -> int:
+        if not any(target == 't' for _,target in self.buffs):
+            return 0
+        return [value for value,target in self.buffs if target == 't'][0]
+    
+    @property
+    def yen_boost(self) -> int:
+        if not any(target=='y' for _, target in self.buffs):
+            return 0
+        return [value for value,target in self.buffs if target == 'y'][0]
+    
+    @property
+    def luck_boost(self) -> int:
+        if not any(target=='b' for _, target in self.buffs):
+            return 0
+        return [value for value,target in self.buffs if target == 'b'][0]

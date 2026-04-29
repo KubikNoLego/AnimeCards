@@ -7,7 +7,7 @@ from loguru import logger
 
 from app.database.requests import RedisRequests
 from app.database import get_redis
-from app.utils.consts import MSK_TIMEZONE
+from app.utils.consts import COOLDOWN, MSK_TIMEZONE
 from app.utils.random_card import soft_pity
 
 from ..database.models import Card, User
@@ -51,7 +51,9 @@ async def format_open_card(card: Card, user: User) -> str:
                         await RedisRequests.daily_verse())
                         else 0)
     yens_boost = int(card.value * 0.3) if await redis_requests.yens_boosts(user.id) > 0 else 0
-    bonus = vip_bonus + daily_bonus + yens_boost
+    yens_title = int(card.value * (user.profile.title.yen_boost/100)) if user.profile.title else 0
+
+    bonus = vip_bonus + daily_bonus + yens_boost + yens_title
 
     value = (str(card.value) if not bonus
             else str(card.value)+f" (+{bonus})")
@@ -101,12 +103,14 @@ async def show_inventory_card(callback: CallbackQuery,
     except Exception as e:
         logger.warning(f"Не удалось отредактировать сообщение: {e}")
 
-def nottime(openc: datetime) -> str:
+def nottime(openc: datetime, buff: None | int = 0) -> str:
         """Генерировать сообщение "еще не время" с обратным отсчетом"""
         try:
 
-            hour = 2 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 3
+            hour = COOLDOWN - (1 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 0)
             target_time = openc + timedelta(hours=hour)
+            if buff:
+                target_time -= timedelta(minutes=buff)
 
             time_left = target_time - datetime.now(MSK_TIMEZONE)
             total_seconds = int(time_left.total_seconds())
@@ -121,4 +125,5 @@ def nottime(openc: datetime) -> str:
             return "<b>⏳ Подождите</b>\n\n<i>До следующего открытия осталось <b>{time}</b></i>\n\n<i>Попробуйте открыть карту позже.</i>".format(time=formatted_time)
         except Exception as e:
             # Возвращаем сообщение по умолчанию, если что-то пошло не так
+            logger.exception(f"Nottime error: {e}")
             return "<i>⏳ До следующего открытия осталось немного времени</i>"

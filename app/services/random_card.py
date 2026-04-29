@@ -2,16 +2,16 @@ from datetime import datetime, timedelta
 import math
 import random
 
-from aiogram.types import FSInputFile
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.models import User
 from app.utils.random_card import roll_rarity, choose_card
 
 from ..utils.consts import(SHINY_CHANCE, MSK_TIMEZONE, COOLDOWN)
 from ..utils.enums.open_card_enums import CardOpen
-from app.database import User, DB, Card, Clan, RedisRequests, Rarity, get_redis
+from app.database import DB, Card, RedisRequests, Rarity, get_redis
 
 
 @logger.catch()
@@ -31,14 +31,14 @@ async def random_hrono(session: AsyncSession):
     return choose_card(cards, daily_verse)
 
 @logger.catch()
-async def random_card(session: AsyncSession, pity: int, user_id: int):
+async def random_card(session: AsyncSession, pity: int, user: User):
     """Выбрать случайную карту"""
     redis = get_redis()
     redis_requests = RedisRequests(redis)
 
-    boost = await redis_requests.luck_boosts(user_id) > 0
+    boost = await redis_requests.luck_boosts(user.id) > 0
 
-    random_rarity = roll_rarity(pity, boost)
+    random_rarity = roll_rarity(pity, boost, user.profile.title.luck_boost)
     is_shiny = random.random() < SHINY_CHANCE
 
     daily_verse_task = RedisRequests.daily_verse()
@@ -78,17 +78,21 @@ async def open_card(session: AsyncSession, user_id):
         last_open = (user.last_open.astimezone(MSK_TIMEZONE) if
                         user.last_open.tzinfo is None else user.last_open)
         cooldown_hours = COOLDOWN - (1 if now.weekday() >= 5 else 0)
+        
+        if user.profile.title and user.profile.title.time_skip > 0:
+            last_open -= timedelta(minutes=user.profile.title.time_skip)
 
         can_open = False
+
         if user.free_open > 0:
             can_open = True
-        elif last_open + timedelta(hours=cooldown_hours) <= now:
+        elif last_open + timedelta(hours=cooldown_hours)<= now:
             can_open = True
 
         if not can_open:
             return CardOpen.NOT_TIME
 
-        card = await random_card(session, user.pity, user.id)
+        card = await random_card(session, user.pity, user)
         if card not in user.inventory:
             user.inventory.append(card)
 
@@ -100,8 +104,9 @@ async def open_card(session: AsyncSession, user_id):
                                         await RedisRequests.daily_verse())
                                         else 0)
         yens_boost = int(card.value * 0.3) if await redis_requests.yens_boosts(user.id) > 0 else 0
+        yens_title = int(card.value * (user.profile.title.yen_boost/100)) if user.profile.title else 0
 
-        added_sum = card.value + bonus + daily_bonus + yens_boost
+        added_sum = card.value + bonus + daily_bonus + yens_boost + yens_title
         user.balance += added_sum
 
         await redis_requests.remove_yens_boost(user.id)

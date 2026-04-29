@@ -75,7 +75,14 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
     async def send_notification(user: User):
         if datetime.now(MSK_TIMEZONE) - user.last_open >= timedelta(hours=5):
             await bot.send_message(user.id, "💤 Вы давно не открывали карту!\n\n<b>Может сейчас вам повезёт?</b>")
-        
+        return
+
+    async def add_free_opens_title(user: User, session: AsyncSession):
+        title = user.profile.title
+        if title and title.free_open_buff:
+            user.free_open += title.free_open_buff
+            await session.commit()
+        return
 
     for user in users_list:
         try:
@@ -90,7 +97,8 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
                 user.username = new_username
                 user.name = new_name
                 updated_count += 1
-            await send_notification(user)
+            #await send_notification(user)
+            await add_free_opens_title(user, session)
         except Exception as e:
             # Проверяем, не заблокировал ли пользователь бота
             if "Forbidden" in str(e) or "blocked" in str(e).lower():

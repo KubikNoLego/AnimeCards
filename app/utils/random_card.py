@@ -1,5 +1,7 @@
 import random
 
+from loguru import logger
+
 from app.database.models import Card
 from app.utils.consts import CHANCES, RARITIES
 
@@ -18,7 +20,7 @@ def soft_pity(pity: int) -> float:
     x = (pity - soft_start) / (max_pity - soft_start)
     return base + (1 - base) * (x ** 2)
 
-def roll_rarity(pity: int, boost: bool) -> int:
+def roll_rarity(pity: int, boost: bool, luck_boost: int) -> int:
     if pity >= 100:
         return 5
 
@@ -38,6 +40,12 @@ def roll_rarity(pity: int, boost: bool) -> int:
 
     if boost:
         hrono_chance *= 2.5
+
+    if luck_boost:
+        logger.success(f"ТИТУЛ ПРИСУТСВУЕТ {luck_boost}")
+        hrono_chance += luck_boost/100
+        
+    logger.success(f"ШАНС НА ХРОНО {hrono_chance}")
 
     other_sum = sum(chances[:-1])
     scale = (1 - hrono_chance) / other_sum
