@@ -42,8 +42,7 @@ class UserRepo:
                 index_elements=[User.id],
                 set_={
                     "username": username,
-                    "name": name,
-                    "last_open": now - timedelta(hours=3)
+                    "name": name
                 }
             ).returning(User)
 
