@@ -279,6 +279,8 @@ class Title(Base):
     rarity: Mapped["Rarity"] = relationship("Rarity", back_populates="titles", lazy="selectin")
     owners: Mapped[list["Profile"]] = relationship("Profile", back_populates="title", lazy="selectin")
 
+    droppable: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
     @property
     def buffs(self) -> list[tuple[int, str]]:
         result = [(self.buff1, self.target1)]

@@ -4,7 +4,7 @@ from app.database.models import Title
 def format_buffs(title: Title) -> str:
     mapping = {
         'y': '💰 +{}% к йенам',
-        'b': '⏳ +{}% к удаче Хроно',
+        'b': '🍀 +{}% к удаче Хроно',
         'f': '🎴 +{} бесплатное открытие/день',
         't': '⏳ -{} мин к кулдауну',
     }
