@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from loguru import logger
 
+from app.services.clan_service import get_member_page
+from app.services.profile import user_photo_link
 from app.states.states import ChangeDescribe, ClanLeader,CreateClan
 from app.filters import Private
 from app.keyboards import (
@@ -20,6 +22,7 @@ from app.keyboards import (member_pagination_keyboard, ClanInvite,
 from app.messages import MText
 from app.utils import MSK_TIMEZONE
 from app.database import DB, Clan
+from app.utils.clan_pagination_message import edit_message
 
 
 router = Router()
@@ -94,67 +97,32 @@ async def _(callback:CallbackQuery,callback_data: MemberPagination,
 
     db = DB(session)
 
-    user = await db.user.get_user(callback.from_user.id)
+    data = await get_member_page(db, page, callback.from_user.id)
 
-    if not user:
-        return
+    if not data:
+        return await callback.answer()
 
-    clan = await db.clan.get_clan(user.clan_member.clan_id)
+    if data['empty']:
+        return await edit_message(
+            callback.message,
+            MText.get("clan_no_members")
+        )
 
-    clan_members = clan.members
-    clan_members.remove(user.clan_member)
+    member = data['member']
 
-    # Проверяем, есть ли участники в клане (кроме лидера)
-    if not clan_members:
-        try:
-            await callback.message.edit_text(text=MText.get("clan_no_members"))
-        except Exception:
-            try:
-                await callback.message.edit_caption(caption=MText.get("clan_no_members"))
-            except Exception:
-                pass
-        return
-
-    current_member = (clan_members[page-1].user, clan_members[page-1])
-
-    # Форматируем информацию об участнике
-    member_info = MText.get("clan_member_info").format(
-        member_name=escape(current_member[0].name),
-        join_date=current_member[1].joined_at.astimezone(MSK_TIMEZONE)
+    text = MText.get("clan_member_info").format(
+        member_name=escape(member.user.name),
+        join_date=member.joined_at.astimezone(MSK_TIMEZONE)
             .strftime('%d.%m.%Y %H:%M'),
-        contribution=current_member[1].contribution
+        contribution=member.contribution
     )
 
     keyboard = await member_pagination_keyboard(page,
-        len(clan_members), current_member[0].id, user.clan_member.is_leader)
+        data['total'], member.user.id, data['is_leader'])
 
-    profile_photos = await callback.message.bot.get_user_profile_photos(
-        current_member[0].id, limit=1)
-    photo = profile_photos.photos[0][-1].file_id if profile_photos and len(
-        profile_photos.photos) > 0 else None
+    photo = await user_photo_link(callback.bot, member.user.id)
 
-    try:
-        if photo:
-            await callback.message.edit_media(
-                media=InputMediaPhoto(media=photo),
-                reply_markup=keyboard)
-            await callback.message.edit_caption(
-                caption=member_info,
-                reply_markup=keyboard)
-        else:
-            await callback.message.edit_text(
-                text=member_info,
-                reply_markup=keyboard)
-    except Exception as e:
-        logger.error(f"Ошибка редактирования сообщения в клане: {e}")
-        # Фоллбэк: пробуем другой метод
-        try:
-            await callback.message.edit_caption(caption=member_info, reply_markup=keyboard)
-        except Exception:
-            try:
-                await callback.message.edit_text(text=member_info, reply_markup=keyboard)
-            except Exception:
-                await callback.answer("Произошла ошибка при отображении участника")
+    await edit_message(callback.message, text, keyboard, photo)
 
     await callback.answer()
 
