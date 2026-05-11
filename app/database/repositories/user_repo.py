@@ -63,7 +63,8 @@ class UserRepo:
 
             await self.session.commit()
 
-            action = result.rowcount == 1
+            profile_just_created = not profile_exists
+            action = profile_just_created
 
             return user, action
 

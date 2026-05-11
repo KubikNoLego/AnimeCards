@@ -6,10 +6,10 @@ from app.handlers.common import (vip_callback)
 from app.handlers.admin import admin
 from app.handlers.common import pagination
 from app.handlers.social import clan, referral, trade, pvp
-from app.handlers.users import daily, open_cards, profile, shop, start, top_players
+from app.handlers.users import daily, open_cards, profile, shop, start, top_players, titles
 
 def setup_routers(dp: Dispatcher):
-    """Подключает все роутеры к диспетчеру."""
+    """Подключает все роутера к диспетчеру."""
     dp.include_router(clan.router)
     dp.include_router(trade.router)
     dp.include_router(profile.router)
@@ -24,3 +24,4 @@ def setup_routers(dp: Dispatcher):
     dp.include_router(promo.router)
     dp.include_router(pagination.router)
     dp.include_router(vip_callback.router)
+    dp.include_router(titles.router)
