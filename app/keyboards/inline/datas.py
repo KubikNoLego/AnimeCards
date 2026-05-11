@@ -55,3 +55,5 @@ class TradeRarityFilter(CallbackData, prefix="trf"):
 class SelectedCard(CallbackData, prefix="ts"):
     card_id: int
 
+class ClanKickData(CallbackData, prefix="kick"):
+    user_id: int    
