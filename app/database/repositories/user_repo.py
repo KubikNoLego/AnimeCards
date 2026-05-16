@@ -56,6 +56,7 @@ class UserRepo:
             if not profile_exists:
                 profile_stmt = insert(Profile).values(
                     user_id=id,
+                    title_id=16,  # Устанавливаем титул 16 по умолчанию
                     describe=describe or '',
                     joined=now).on_conflict_do_nothing()
 

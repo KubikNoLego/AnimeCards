@@ -14,7 +14,6 @@ from ..utils.enums.open_card_enums import CardOpen
 from app.database import DB, Card, RedisRequests, Rarity, get_redis
 
 
-@logger.catch()
 async def random_hrono(session: AsyncSession):
     """Выбирает случайную карту Хроно."""
     cards_result = await session.scalars(
@@ -30,7 +29,7 @@ async def random_hrono(session: AsyncSession):
 
     return choose_card(cards, daily_verse)
 
-@logger.catch()
+
 async def random_card(session: AsyncSession, pity: int, user: User):
     """Выбрать случайную карту"""
     redis = get_redis()
@@ -61,7 +60,7 @@ async def random_card(session: AsyncSession, pity: int, user: User):
 
     return choose_card(cards, daily_verse)
 
-@logger.catch()
+
 async def open_card(session: AsyncSession, user_id):
     """Открывает случайную карту для пользователя."""
     try:

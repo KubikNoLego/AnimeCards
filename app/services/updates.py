@@ -12,7 +12,7 @@ from app.database.requests import DB, RedisRequests
 from app.utils.consts import MSK_TIMEZONE
 
 
-@logger.catch
+
 async def update_verse(session: AsyncSession) -> bool:
     """Обновляет ежедневную вселенную в Redis."""
     db = DB(session)
@@ -26,7 +26,7 @@ async def update_verse(session: AsyncSession) -> bool:
             "Не удалось получить новую вселенную для ежедневного обновления")
         return False
 
-@logger.catch
+
 async def add_free_opens(session: AsyncSession) -> bool:
     now = datetime.now(MSK_TIMEZONE)
     result = await session.execute(
@@ -47,7 +47,7 @@ async def add_free_opens(session: AsyncSession) -> bool:
             f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
     return updated_count > 0
 
-@logger.catch
+
 async def clan_rebalance(session: AsyncSession) -> None:
     clans = await session.scalars(select(Clan))
     clans_result = clans.all()
@@ -64,7 +64,7 @@ async def clan_rebalance(session: AsyncSession) -> None:
 
     await session.commit()
 
-@logger.catch
+
 async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
     users = await session.scalars(select(User))
     users_list = users.all()
@@ -116,7 +116,7 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
     
     return updated_count > 0
 
-@logger.catch
+
 async def create_backup() -> bool:
     """Создаёт бэкап базы данных PostgreSQL."""
     import subprocess
@@ -178,7 +178,7 @@ async def create_backup() -> bool:
         logger.exception(f"Неожиданная ошибка при создании бэкапа: {e}")
         return False
     
-@logger.catch
+
 async def get_stats(session: AsyncSession) -> str:
     try:
         # Основные счётчики
@@ -244,7 +244,7 @@ async def get_stats(session: AsyncSession) -> str:
         logger.exception(f"Ошибка при получении статистики: {e}")
         return "<i>📊 Статистика бота</i>\n\n<i>Ошибка при загрузке данных...</i>"
     
-@logger.catch
+
 async def edit_stats(session: AsyncSession, bot: Bot, chat_id: int | str,
                     message_id: int):
     try:
