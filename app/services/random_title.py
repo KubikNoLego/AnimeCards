@@ -70,10 +70,10 @@ async def open_title(session: AsyncSession, user_id: int) -> Title | TitleOpen:
         if not user:
             return TitleOpen.NOT_REGISTERED
 
-        if user.balance < 250:
+        if user.balance < 100:
             return TitleOpen.NOT_ENOUGH_YENS
 
-        user.balance -= 250
+        user.balance -= 100
 
         title = await random_title(session, user)
 

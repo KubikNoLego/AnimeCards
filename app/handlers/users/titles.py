@@ -38,7 +38,7 @@ async def open_title_callback(callback: CallbackQuery, session: AsyncSession):
         case TitleOpen.NOT_REGISTERED:
             await callback.answer("❌ Вы не зарегистрированы", show_alert=True)
         case TitleOpen.NOT_ENOUGH_YENS:
-            await callback.answer("❌ Недостаточно йен (нужно 250 ¥)", show_alert=True)
+            await callback.answer("❌ Недостаточно йен (нужно 100 ¥)", show_alert=True)
         case TitleOpen.ERROR:
             await callback.answer("❌ Ошибка при открытии титула", show_alert=True)
         case _:
