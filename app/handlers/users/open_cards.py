@@ -82,7 +82,9 @@ async def _(message: Message, session: AsyncSession):
             case CardOpen.NOT_REGISTERED:
                 await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
-                await message.reply(nottime(user.last_open))
+                await message.reply(nottime(user.last_open,
+                                user.profile.title.time_skip if
+                                    user.profile.title else None))
                 await message.react([ReactionTypeEmoji(emoji="😴")])
             case CardOpen.ERROR: pass
             case Card:
