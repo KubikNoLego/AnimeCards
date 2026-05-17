@@ -76,8 +76,8 @@ class UserRepo:
     
     async def get_user_place_on_top(self,user: User):
         """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
-        stmt = select(func.count(User.id)).where(User.balance > user.balance, 
-                                                User.profile.visible == True)
+        stmt = select(func.count(User.id)).join(Profile).where(User.balance > user.balance, 
+                                                Profile.visible == True)
         result = await self.session.execute(stmt)
         count_higher = result.scalar()
 
