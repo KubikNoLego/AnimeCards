@@ -20,12 +20,28 @@ from app.database import DB, User
 router = Router()
 
 
+@router.callback_query(F.data == "delete_describe")
+async def delete_describe_user(callback: CallbackQuery,session : AsyncSession):
+    await callback.message.answer(MText.get("describe_updated_empty"))
+    user = await DB(session).user.get_user(callback.from_user.id)
+    user.profile.describe = ""
+    await session.commit()
+
+    await callback.answer()
+
+@router.callback_query(F.data == "change_describe")
+async def change_describe_user(callback: CallbackQuery, session: AsyncSession,
+                            state:FSMContext):
+    await state.set_state(ChangeDescribe.text)
+    await callback.message.answer(MText.get("change_describe_prompt"))
+
+    await callback.answer()
+
 @router.callback_query(F.data == "change_visible")
 async def _(callback: CallbackQuery,session: AsyncSession):
     await callback.message.answer(await change_visible_for_profile(session,
                                                         callback.from_user.id))
     await callback.message.delete()
-
 
 @router.message(Command("profile"))
 async def _(message: Message,session: AsyncSession):

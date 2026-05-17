@@ -1,4 +1,3 @@
-import math
 import asyncio
 from collections import defaultdict
 
@@ -30,16 +29,21 @@ async def _(message: Message, session: AsyncSession):
     
     
     async with user_card_opens[user_id]:
-        result = await open_card(session, user_id)
-
         db = DB(session)
         user = await db.user.get_user(user_id)
+        if not user:
+            await message.reply(MText.get("not_registered"))
+            return
+
+        result = await open_card(session, user_id)
 
         match result:
             case CardOpen.NOT_REGISTERED:
                 await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
-                await message.reply(nottime(user.last_open))
+                await message.reply(nottime(user.last_open,
+                                user.profile.title.time_skip if
+                                    user.profile.title else None))
             case CardOpen.ERROR:
                 await message.reply("Произошла ошибка при открытии карты.")
             case Card:
@@ -64,19 +68,23 @@ async def _(message: Message, session: AsyncSession):
     
     
     async with user_card_opens[user_id]:
+        db = DB(session)
+        user = await db.user.get_user(user_id)
+        if not user:
+            await message.reply(MText.get("not_registered"))
+            return
 
         # Параллельно обрабатываем открытие карты
         result = await open_card(session,user_id)
-
-        db = DB(session)
-        user = await db.user.get_user(user_id)
 
         match result:
 
             case CardOpen.NOT_REGISTERED:
                 await message.reply(MText.get("not_registered"))
             case CardOpen.NOT_TIME:
-                await message.reply(nottime(user.last_open))
+                await message.reply(nottime(user.last_open,
+                                user.profile.title.time_skip if
+                                    user.profile.title else None))
                 await message.react([ReactionTypeEmoji(emoji="😴")])
             case CardOpen.ERROR: pass
             case Card:

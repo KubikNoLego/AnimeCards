@@ -9,6 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from loguru import logger
 
+from app.keyboards.inline.datas import ClanKickData
+from app.services.clan_service import create_clan_service, get_member_page, handle_invite, invite_member, kick_member, leave_clan_user
+from app.services.profile import user_photo_link
 from app.states.states import ChangeDescribe, ClanLeader,CreateClan
 from app.filters import Private
 from app.keyboards import (
@@ -20,6 +23,9 @@ from app.keyboards import (member_pagination_keyboard, ClanInvite,
 from app.messages import MText
 from app.utils import MSK_TIMEZONE
 from app.database import DB, Clan
+from app.utils.clan_pagination_message import edit_message
+from app.utils.consts import CLAN_CREATION_COST
+from app.utils.enums.clan_enums import ClanActions, ClanInviteResult, ClanKick, CreateClanResult
 
 
 router = Router()
@@ -47,45 +53,38 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
 
 @router.callback_query(F.data.startswith("leave_clan"))
 async def _(callback:CallbackQuery, session: AsyncSession):
-    db = DB(session)
-    user = await db.user.get_user(callback.from_user.id)
-    if user.clan_member and user.clan_member.is_leader:
-        clan = await db.clan.get_clan(user.clan_member.clan_id)
-        
-        await db.clan.delete_member(user.id)
-        
-        new_leader = random.choice(clan.members)
-        new_leader.is_leader = True
-        clan.leader_id = new_leader.user_id
-
-        await session.commit()
-
-        await callback.message.delete()
-    elif user.clan_member:
-        await db.clan.delete_member(user.id)
-        await callback.message.delete()
+    await leave_clan_user(session, callback.from_user.id)
+    
+    await callback.message.delete()
     await callback.answer("Вы покинули клан")
 
-@router.callback_query(F.data.startswith("kick_"))
-async def _(callback:CallbackQuery, session: AsyncSession):
-    user_id = int(callback.data.split("_")[1])
+@router.callback_query(ClanKickData.filter())
+async def _(callback:CallbackQuery, callback_data: ClanKickData,session: AsyncSession):
+    user_id = callback_data.user_id
     
     db = DB(session)
-    user = await db.user.get_user(user_id)
+    result = await kick_member(
+        db,
+        user_id,
+        callback.from_user.id)
 
-    moder = await db.user.get_user(callback.from_user.id)
-    clan = await db.clan.get_clan(moder.clan_member.clan_id)
+    if isinstance(result, ClanKick):
+        return await callback.answer(
+            result.value,
+            show_alert=True)
 
-    if user.clan_member not in clan.members:
-        return
-
-    await db.clan.delete_member(user.id)
     await callback.message.delete()
-    await callback.answer("Вы успешно выгнали пользователя")
-    await callback.message.bot.send_message(user_id,MText.get(
-        "u_have_been_kicked"))
 
-    await callback.answer()
+    await callback.answer(show_alert=True, text="Пользователь исключён")
+
+    try:
+
+        await callback.bot.send_message(
+            result.id,
+            MText.get("u_have_been_kicked"))
+        
+    except Exception:
+        pass
 
 @router.callback_query(MemberPagination.filter())
 async def _(callback:CallbackQuery,callback_data: MemberPagination,
@@ -94,135 +93,75 @@ async def _(callback:CallbackQuery,callback_data: MemberPagination,
 
     db = DB(session)
 
-    user = await db.user.get_user(callback.from_user.id)
+    data = await get_member_page(db, page, callback.from_user.id)
 
-    if not user:
-        return
+    if not data:
+        return await callback.answer()
 
-    clan = await db.clan.get_clan(user.clan_member.clan_id)
+    if data['empty']:
+        return await edit_message(
+            callback.message,
+            MText.get("clan_no_members")
+        )
 
-    clan_members = clan.members
-    clan_members.remove(user.clan_member)
+    member = data['member']
 
-    # Проверяем, есть ли участники в клане (кроме лидера)
-    if not clan_members:
-        try:
-            await callback.message.edit_text(text=MText.get("clan_no_members"))
-        except Exception:
-            try:
-                await callback.message.edit_caption(caption=MText.get("clan_no_members"))
-            except Exception:
-                pass
-        return
-
-    current_member = (clan_members[page-1].user, clan_members[page-1])
-
-    # Форматируем информацию об участнике
-    member_info = MText.get("clan_member_info").format(
-        member_name=escape(current_member[0].name),
-        join_date=current_member[1].joined_at.astimezone(MSK_TIMEZONE)
+    text = MText.get("clan_member_info").format(
+        member_name=escape(member.user.name),
+        join_date=member.joined_at.astimezone(MSK_TIMEZONE)
             .strftime('%d.%m.%Y %H:%M'),
-        contribution=current_member[1].contribution
+        contribution=member.contribution
     )
 
     keyboard = await member_pagination_keyboard(page,
-        len(clan_members), current_member[0].id, user.clan_member.is_leader)
+        data['total'], member.user.id, data['is_leader'])
 
-    profile_photos = await callback.message.bot.get_user_profile_photos(
-        current_member[0].id, limit=1)
-    photo = profile_photos.photos[0][-1].file_id if profile_photos and len(
-        profile_photos.photos) > 0 else None
+    photo = await user_photo_link(callback.bot, member.user.id)
 
-    try:
-        if photo:
-            await callback.message.edit_media(
-                media=InputMediaPhoto(media=photo),
-                reply_markup=keyboard)
-            await callback.message.edit_caption(
-                caption=member_info,
-                reply_markup=keyboard)
-        else:
-            await callback.message.edit_text(
-                text=member_info,
-                reply_markup=keyboard)
-    except Exception as e:
-        logger.error(f"Ошибка редактирования сообщения в клане: {e}")
-        # Фоллбэк: пробуем другой метод
-        try:
-            await callback.message.edit_caption(caption=member_info, reply_markup=keyboard)
-        except Exception:
-            try:
-                await callback.message.edit_text(text=member_info, reply_markup=keyboard)
-            except Exception:
-                await callback.answer("Произошла ошибка при отображении участника")
+    await edit_message(callback.message, text, keyboard, photo)
 
     await callback.answer()
 
 @router.callback_query(ClanInvite.filter())
 async def _(callback:CallbackQuery,callback_data: ClanInvite,
             session: AsyncSession):
-    clan_id,action = callback_data.clan_id,callback_data.act
-
     db = DB(session)
 
-    match action:
-        case 1:
-            member = await db.clan.create_clan_member(callback.from_user.id, clan_id)
+    result = await handle_invite(db=db, session=session,
+                                user_id=callback.from_user.id,
+                                clan_id=callback_data.clan_id,
+                                action=ClanActions(callback_data.act))
 
-            await callback.message.delete()
-            await callback.message.answer("Приглашение принято")
+    await callback.message.delete()
 
-            invite = await db.clan.get_clan_invitation(clan_id,callback.from_user.id)
-
-            await session.delete(invite)
-            await session.commit()
-
-
-        case 0:
-            invite = await db.clan.get_clan_invitation(clan_id,callback.from_user.id)
-
-            await session.delete(invite)
-            await session.commit()
-
-            await callback.message.delete()
-            await callback.answer("Приглашение отклонено")
-    
-    await callback.answer()
+    await callback.answer(
+        result.value,
+        show_alert=True
+    )
 
 @router.callback_query(F.data == "accept_create_clan")
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     db = DB(session)
-    user = await db.user.get_user(callback.from_user.id)
 
-    # Проверяем, достаточно ли у пользователя йен для создания клана
-    clan_creation_cost = 500
-    if user.balance < clan_creation_cost:
-        await callback.answer(MText.get("not_enough_yens_clan"),
-                            show_alert=True)
-        return
+    result = await create_clan_service(
+        db=db,
+        session=session,
+        user_id=callback.from_user.id,
+        data=await state.get_data()
+    )
 
-    data = await state.get_data()
+    if result != CreateClanResult.SUCCESS:
+        return await callback.answer(
+            result.value,
+            show_alert=True
+        )
 
-    # Проверяем, что все обязательные поля присутствуют в состоянии
-    required_fields = ['name', 'tag', 'description']
-    missing_fields = [field for field in required_fields if field not in data]
-    
-    if missing_fields:
-        await callback.answer(
-            f"Ошибка: отсутствуют обязательные поля: {', '.join(missing_fields)}",
-            show_alert=True)
-        return
-
-    # Списываем йены за создание клана
-    user.balance -= clan_creation_cost
-    await session.commit()
-
-    await db.clan.create_clan(data['name'], data['tag'], data['description'],
-                        callback.from_user.id)
     await callback.message.delete()
+
     await callback.answer(
-        f"Клан успешно создан! Списано {clan_creation_cost} ¥")
-    
+        f"{result.value}! Списано {CLAN_CREATION_COST} ¥"
+    )
+
     await state.clear()
 
 @router.callback_query(F.data == "cancel_create_clan")
@@ -236,95 +175,63 @@ async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
 @router.callback_query(F.data == "create_clan")
 async def _(callback:CallbackQuery, session: AsyncSession, state: FSMContext):
     db = DB(session)
-    user = await db.user.get_user(callback.from_user.id)
 
-    # Проверяем баланс пользователя перед созданием клана
-    clan_creation_cost = 500
-    if user.balance < clan_creation_cost:
-        await callback.answer(MText.get("not_enough_yens_clan"),
-                            show_alert=True)
-        return
+    user = await db.user.get_user(
+        callback.from_user.id
+    )
+
+    if user.balance < CLAN_CREATION_COST:
+        return await callback.answer(
+            MText.get("not_enough_yens_clan"),
+            show_alert=True
+        )
 
     await state.set_state(CreateClan.name)
-    await callback.message.answer(MText.get("clan_name_prompt"),
-                                reply_markup=await clan_create_exit())
-    
-    await callback.answer()
 
-@router.callback_query(F.data == "delete_describe")
-async def delete_describe_user(callback: CallbackQuery,session : AsyncSession):
-    await callback.message.answer(MText.get("describe_updated_empty"))
-    user = await DB(session).user.get_user(callback.from_user.id)
-    user.profile.describe = ""
-    await session.commit()
-
-    await callback.answer()
-
-@router.callback_query(F.data == "change_describe")
-async def change_describe_user(callback: CallbackQuery, session: AsyncSession,
-                            state:FSMContext):
-    await state.set_state(ChangeDescribe.text)
-    await callback.message.answer(MText.get("change_describe_prompt"))
+    await callback.message.answer(
+        MText.get("clan_name_prompt"),
+        reply_markup=await clan_create_exit()
+    )
 
     await callback.answer()
 
 @router.message(Command("пригласить",prefix="."))
 async def _(message: Message, session:AsyncSession):
     db = DB(session)
-    sender = await db.user.get_user(message.from_user.id)
 
-    # Проверка, является ли пользователь лидером клана
-    if not sender.clan_member or sender.clan_member.clan.leader_id != sender.id:
-        await message.reply(MText.get("not_clan_leader"))
-        return
+    target_id = (
+        message.reply_to_message.from_user.id
+        if message.reply_to_message
+        else None)
 
-    # Проверка, что команда используется в групповом чате и как ответ на сообщение
-    if message.chat.type == "private":
-        await message.reply(MText.get("not_in_private_chat"))
-        return
+    result = await invite_member(
+        db=db,
+        sender_id=message.from_user.id,
+        target_id=target_id,
+        chat_type=message.chat.type,
+        is_reply=bool(message.reply_to_message))
 
-    if not message.reply_to_message:
-        await message.reply(MText.get("not_in_private_chat"))
-        return
+    if isinstance(result, ClanInviteResult):
+        return await message.reply(result.value)
 
-    # Получаем пользователя, которого приглашаем
-    user = await db.user.get_user(message.reply_to_message.from_user.id)
-    if not user:
-        await message.reply(MText.get("not_user").format(name=escape(message.reply_to_message.from_user.full_name)))
-        return
+    sender = result["sender"]
+    target = result["target"]
 
-    # Проверка, что пользователь не состоит в клане
-    if user.clan_member:
-        await message.reply(MText.get("user_already_in_clan"))
-        return
+    await message.reply(
+        ClanInviteResult.SUCCESS.value)
 
-    # Проверяем, не отправляли ли мы уже приглашение этому пользователю
-    existing_invitation = await db.clan.get_clan_invitation(
-        sender.clan_member.clan.id, user.id)
-    if existing_invitation:
-        await message.reply(MText.get("clan_invite_already_sent"))
-        return
-
-    # Создаем приглашение в базе данных
-    invitation = await db.clan.create_clan_invitation(
-        sender.clan_member.clan.id,
-        sender.id, user.id)
-    if not invitation:
-        await message.reply(MText.get("clan_invite_already_sent"))
-        return
-
-    # Отправляем приглашение
     try:
-        await message.reply(MText.get("clan_invite_success"))
-        await message.bot.send_message(user.id,
-                        text=MText.get("clan_invite_prompt")
-                        .format(clan=sender.clan_member.clan.name),
-                        reply_markup= await clan_invite_kb(
-                            sender.clan_member.clan_id)
-                            )
-    except Exception as e:
-        logger.error(f"Ошибка при отправке приглашения: {str(e)}", exc_info=True)
-        await message.answer(MText.get("invite_send_error"))
+        await message.bot.send_message(
+            target.id,
+            text=MText.get("clan_invite_prompt").format(
+                clan=sender.clan_member.clan.name
+            ),
+            reply_markup=await clan_invite_kb(
+                sender.clan_member.clan_id
+            ))
+
+    except Exception:
+        logger.exception("Ошибка отправки инвайта")
 
 @router.message(ClanLeader.desc)
 async def _(message: Message, session:AsyncSession,state:FSMContext):
@@ -399,7 +306,7 @@ async def _(message:Message, session:AsyncSession):
                                                     members = len(clan.members),
                                                     balance = clan.balance,
         created_at = clan.created_at.astimezone(MSK_TIMEZONE)
-        .strftime('%d.%m.%Y %H:%M'),
+                                                .strftime('%d.%m.%Y %H:%M'),
         link = f'<a href="tg://user?id={clan.leader_id}">{escape(clan.leader.name)}</a>',
         role = '👑 Лидер' if member.is_leader else '👥 Участник',
         contribution = member.contribution,

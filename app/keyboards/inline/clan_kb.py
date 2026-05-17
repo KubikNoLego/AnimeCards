@@ -1,6 +1,6 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from .datas import ClanInvite, MemberPagination
+from .datas import ClanInvite, ClanKickData, MemberPagination
 
 async def clan_invite_kb(clan_id: int):
     builder = InlineKeyboardBuilder()
@@ -108,7 +108,7 @@ async def member_pagination_keyboard(current_page: int, total_pages: int,
             builder.button(text=text, callback_data=callback_data)
 
     if leader:
-        builder.button(text="Выгнать", callback_data=f"kick_{id}",
+        builder.button(text="Выгнать", callback_data=ClanKickData(user_id=id).pack(),
                 style = "danger")
         builder.adjust(len(buttons),1)
 

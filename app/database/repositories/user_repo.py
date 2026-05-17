@@ -56,6 +56,7 @@ class UserRepo:
             if not profile_exists:
                 profile_stmt = insert(Profile).values(
                     user_id=id,
+                    title_id=16,  # Устанавливаем титул 16 по умолчанию
                     describe=describe or '',
                     joined=now).on_conflict_do_nothing()
 
@@ -75,7 +76,8 @@ class UserRepo:
     
     async def get_user_place_on_top(self,user: User):
         """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
-        stmt = select(func.count(User.id)).where(User.balance > user.balance)
+        stmt = select(func.count(User.id)).join(Profile).where(User.balance > user.balance, 
+                                                Profile.visible == True)
         result = await self.session.execute(stmt)
         count_higher = result.scalar()
 

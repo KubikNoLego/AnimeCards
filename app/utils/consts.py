@@ -42,3 +42,5 @@ SLOT_RARITY_MAP = {
     "Легендарный": "legend",
     "Хроно": "hrono",
 }
+
+CLAN_CREATION_COST = 500
