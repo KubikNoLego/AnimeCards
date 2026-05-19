@@ -9,16 +9,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Card, Clan, PromoUsers, User, UserCards, VipSubscription
 from app.database.requests import DB, RedisRequests
-from app.utils.consts import MSK_TIMEZONE
+from app.utils.constants import MSK_TIMEZONE
 
 
 
 async def update_verse(session: AsyncSession) -> bool:
     """Обновляет ежедневную вселенную в Redis."""
     db = DB(session)
-    new_verse = await db.card.get_random_verse()
+    new_verse = await db.card.update_daily_verse()
     if new_verse:
-        await RedisRequests.set_verse(new_verse.id)
         logger.info(f"Ежедневная вселенная обновлена. ID: {new_verse.id}")
         return True
     else:
@@ -81,8 +80,6 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
         title = user.profile.title
         if title and title.free_open_buff:
             user.free_open += title.free_open_buff
-            await session.commit()
-        return
 
     for user in users_list:
         try:
@@ -97,18 +94,17 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
                 user.username = new_username
                 user.name = new_name
                 updated_count += 1
-            #await send_notification(user)
+            await send_notification(user)
             await add_free_opens_title(user, session)
         except Exception as e:
             # Проверяем, не заблокировал ли пользователь бота
             if "Forbidden" in str(e) or "blocked" in str(e).lower():
-                failed_count += 1
                 logger.warning(f"Пользователь {user.id} заблокировал бота")
-            elif "chat not found" in str(e):
-                failed_count +=1
             else:
-                failed_count += 1
                 logger.error(f"Ошибка при обновлении пользователя {user.id}: {e}")
+
+            failed_count += 1
+            await session.rollback()
     
     if updated_count > 0:
         await session.commit()

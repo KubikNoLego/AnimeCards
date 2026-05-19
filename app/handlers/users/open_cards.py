@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.filters import Private
 from app.messages import MText
-from app.services.random_card import open_card
+from app.services.GachaService import Gacha
 from app.utils.enums.open_card_enums import CardOpen
 from app.utils.card_formater import format_open_card, nottime
 from app.database import DB
@@ -35,7 +35,7 @@ async def _(message: Message, session: AsyncSession):
             await message.reply(MText.get("not_registered"))
             return
 
-        result = await open_card(session, user_id)
+        result = await Gacha(user.id,session).open_card()
 
         match result:
             case CardOpen.NOT_REGISTERED:
@@ -46,10 +46,10 @@ async def _(message: Message, session: AsyncSession):
                                     user.profile.title else None))
             case CardOpen.ERROR:
                 await message.reply("Произошла ошибка при открытии карты.")
-            case Card:
-                card = result
+            case _:
+                card, shiny = result['card'], result['shiny']
 
-                text = await format_open_card(card, user)
+                text = await format_open_card(card, shiny, user)
 
                 await message.reply_photo(
                     photo=FSInputFile(path=f"app/assets/cards/{card.verse.name}/{card.icon}"),
@@ -75,7 +75,8 @@ async def _(message: Message, session: AsyncSession):
             return
 
         # Параллельно обрабатываем открытие карты
-        result = await open_card(session,user_id)
+        result = await Gacha(user.id,session).open_card()
+
 
         match result:
 
@@ -88,9 +89,11 @@ async def _(message: Message, session: AsyncSession):
                 await message.react([ReactionTypeEmoji(emoji="😴")])
             case CardOpen.ERROR: pass
             case Card:
-                card = result
+                card, shiny = result['card'], result['shiny']
 
-                text = await format_open_card(card, user)
+
+                text = await format_open_card(card, shiny, user)
+
 
                 await message.reply_photo(
                     photo=FSInputFile(path=f"app/assets/cards/{card.verse.name}/{card.icon}"),

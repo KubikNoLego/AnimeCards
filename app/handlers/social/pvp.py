@@ -19,7 +19,7 @@ from app.keyboards.inline.callback_datas.pvp_datas import (
 from app.messages import MText
 from app.database import DB, Verse, RedisRequests, Card, UserCards, Rarity, User
 from app.services.inventory import sort_inventory
-from app.utils.consts import RARITY_VALUE_RANGES, RARITY_EMOJIES, SLOT_RARITY_MAP
+from app.utils.constants import RARITY_VALUE_RANGES, RARITY_EMOJIES, SLOT_RARITY_MAP
 from app.utils.card_formater import format_card, show_inventory_card
 import random
 
@@ -31,8 +31,7 @@ router = Router()
 @router.message(F.text == "⚔️ Дуэли", Private())
 async def _(message:Message,session:AsyncSession):
     db = DB(session)
-    daily_verse_id = await RedisRequests.daily_verse()
-    daily_verse = await session.scalar(select(Verse).filter_by(id=daily_verse_id)) if daily_verse_id else None
+    daily_verse = await DB(session).card.get_daily_verse()
     user = await db.user.get_user(message.from_user.id)
 
     if not user.clan_member:
@@ -359,9 +358,9 @@ async def selected_card_pvp_callback(callback: CallbackQuery,
         # Получаем отфильтрованные карты
         conditions = [UserCards.user_id == user.id]
         if selected_rarity_name:
-            conditions.append(Card.rarity_name == selected_rarity_name)
+            conditions.append(card.rarity.name == selected_rarity_name)
         if selected_verse_name:
-            conditions.append(Card.verse_name == selected_verse_name)
+            conditions.append(card.verse.name == selected_verse_name)
         
         stmt = select(Card).join(UserCards).where(and_(*conditions)).order_by(UserCards.id)
         filtered_cards = await session.scalars(stmt)
@@ -383,7 +382,7 @@ async def selected_card_pvp_callback(callback: CallbackQuery,
         await state.update_data(selected_card_id=card.id)
         
         # Определяем, является ли карта лимитированной
-        is_limited = card.rarity_name == "Лимитированный"
+        is_limited = card.rarity.name == "Лимитированный"
         
         # Проверяем, установлена ли карта уже в какой-либо слот
         is_in_slot = False
@@ -399,7 +398,7 @@ async def selected_card_pvp_callback(callback: CallbackQuery,
         card_info = format_card(card)
         
         # Создаем клавиатуру для выбора слота
-        keyboard = await select_slot_keyboard(card.rarity_name, is_limited, is_in_slot, current_slot)
+        keyboard = await select_slot_keyboard(card.rarity.name, is_limited, is_in_slot, current_slot)
         
         # Отправляем сообщение с картой и кнопкой выбора слота
         file_path = f"app/assets/cards/{card.verse.name}/{card.icon}"
@@ -486,7 +485,7 @@ async def select_slot_callback(callback: CallbackQuery, session: AsyncSession, s
                     )
                     return
                 # Если карта в другом слоте и это лимитированная карта - перемещаем
-                elif card.rarity_name == "Лимитированный":
+                elif card.rarity.name == "Лимитированный":
                     # Удаляем карту из старого слота
                     setattr(user.battle_inventory, current_slot, None)
                     await session.commit()
@@ -499,8 +498,8 @@ async def select_slot_callback(callback: CallbackQuery, session: AsyncSession, s
                     return
         
         # Для не-лимитированных карт проверяем, что слот соответствует редкости
-        if card.rarity_name != "Лимитированный":
-            expected_slots = [slot for rarity, slot in SLOT_RARITY_MAP.items() if rarity == card.rarity_name]
+        if card.rarity.name != "Лимитированный":
+            expected_slots = [slot for rarity, slot in SLOT_RARITY_MAP.items() if rarity == card.rarity.name]
             if not expected_slots:
                 await callback.answer("Неизвестная редкость карты", show_alert=True)
                 return
@@ -508,17 +507,17 @@ async def select_slot_callback(callback: CallbackQuery, session: AsyncSession, s
             expected_slot = expected_slots[0]
             if expected_slot != slot:
                 await callback.answer(
-                    f"Карту редкости '{card.rarity_name}' можно поставить только в слот '{expected_slot}'",
+                    f"Карту редкости '{card.rarity.name}' можно поставить только в слот '{expected_slot}'",
                     show_alert=True
                 )
                 return
         
         # Для лимитированных карт проверяем, что нет другой лимитированной карты в других слотах
-        if card.rarity_name == "Лимитированный" and user.battle_inventory:
+        if card.rarity.name == "Лимитированный" and user.battle_inventory:
             for slot_name in ["common", "uncommon", "mythic", "legend", "hrono"]:
                 if slot_name != slot:  # Пропускаем текущий слот
                     slot_card = getattr(user.battle_inventory, slot_name, None)
-                    if slot_card and slot_card.rarity_name == "Лимитированный":
+                    if slot_card and slot_card.rarity.name == "Лимитированный":
                         # Удаляем старую лимитированную карту
                         setattr(user.battle_inventory, slot_name, None)
                         await session.commit()
@@ -709,8 +708,7 @@ async def search_opponent_callback(callback: CallbackQuery, session: AsyncSessio
             await session.commit()
             
             # Получаем daily verse для бонусов
-            daily_verse_id = await RedisRequests.daily_verse()
-            daily_verse = await session.scalar(select(Verse).filter_by(id=daily_verse_id)) if daily_verse_id else None
+            daily_verse = await db.card.get_daily_verse()
             
             # Форматируем результат
             result_text = format_battle_result(
@@ -780,13 +778,13 @@ async def cancel_search_callback(callback: CallbackQuery, session: AsyncSession)
 
 async def show_battle_inventory(message, user: User, session: AsyncSession):
     """Функция для отображения battle_inventory пользователя."""
-    daily_verse_id = await RedisRequests.daily_verse()
-    daily_verse = await session.scalar(select(Verse).filter_by(id=daily_verse_id)) if daily_verse_id else None
     
     if not user.battle_inventory:
         db = DB(session)
         await db.pvp.create_battle_inventory(user)
     
+    daily_verse = db.card.get_daily_verse()
+
     # Проверяем, есть ли пользователь в очереди
     in_queue = await DB(session).pvp.get_search_queue_entry(user.id) is not None
     
@@ -809,7 +807,7 @@ async def show_battle_inventory(message, user: User, session: AsyncSession):
     
     # Функция для получения цены карты с учётом слота для лимитированных карт
     def get_card_value(card, battle_inv):
-        if card.rarity_name == "Лимитированный":
+        if card.rarity.name == "Лимитированный":
             for rarity, slot in SLOT_RARITY_MAP.items():
                 slot_card = getattr(battle_inv, slot, None)
                 if slot_card and slot_card.id == card.id:
@@ -823,7 +821,7 @@ async def show_battle_inventory(message, user: User, session: AsyncSession):
     cards_text_parts = []
     for card in cards_list:
         value = get_card_value(card, user.battle_inventory)
-        bonus_text = f" (+{int(value*0.2)}) ¥" if daily_verse and card.verse_name == daily_verse.name else ""
+        bonus_text = f" (+{int(value*0.2)}) ¥" if daily_verse and card.verse.name == daily_verse.name else ""
         shiny_text = "(Shiny ✨) " if card.shiny else ""
         
         # Определяем слот карты и её редкость
@@ -832,12 +830,12 @@ async def show_battle_inventory(message, user: User, session: AsyncSession):
             slot_card = getattr(user.battle_inventory, slot_name, None)
             if slot_card and slot_card.id == card.id:
                 # Для лимитированных карт показываем редкость слота
-                if card.rarity_name == "Лимитированный":
+                if card.rarity.name == "Лимитированный":
                     slot_text = f" [{slot_attr}]"
                 break
         
         cards_text_parts.append(
-            f"{rarity_emojis.get(card.rarity_name, '🟡')} {card.name}{slot_text} {shiny_text}- <b>{value} ¥{bonus_text}</b>"
+            f"{rarity_emojis.get(card.rarity.name, '🟡')} {card.name}{slot_text} {shiny_text}- <b>{value} ¥{bonus_text}</b>"
         )
     
     cards_text = "\n".join(cards_text_parts) if cards_text_parts else "Пусто..."
@@ -845,7 +843,7 @@ async def show_battle_inventory(message, user: User, session: AsyncSession):
     # Считаем общую стоимость с учётом изменённых цен
     total_value = sum([
         get_card_value(card, user.battle_inventory) 
-        if not daily_verse or card.verse_name != daily_verse.name 
+        if not daily_verse or card.verse.name != daily_verse.name 
         else int(get_card_value(card, user.battle_inventory)*1.2) 
         for card in cards_list
     ])

@@ -7,39 +7,38 @@ from loguru import logger
 
 from app.database.requests import RedisRequests
 from app.database import get_redis
-from app.utils.consts import COOLDOWN, MSK_TIMEZONE
-from app.utils.random_card import soft_pity
+from app.utils.constants import COOLDOWN, MSK_TIMEZONE
 
 from ..database.models import Card, User
 
 
-def format_buyed_card(card: Card) -> str:
+def format_buyed_card(card: Card, shiny: bool) -> str:
     """Форматирует информацию о полученной карте."""
     template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
 
 
     text = template.format(name=card.name,
-                        verse=card.verse_name,
-                    rarity=card.rarity_name,
+                        verse=card.verse.name,
+                    rarity=card.rarity.name,
                     value=str(int(card.value)) + f" (-{int(card.value*0.2)})",
-                    added = ("\n\n✨ Shiny" if card.shiny else ""))
+                    added = ("\n\n✨ Shiny" if shiny else ""))
 
     return text
 
-def format_card(card: Card) -> str:
+def format_card(card: Card, shiny: bool) -> str:
     """Форматирует информацию о карте."""
     template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
 
 
     text = template.format(name=card.name,
-                        verse=card.verse_name,
-                    rarity=card.rarity_name,
+                        verse=card.verse.name,
+                    rarity=card.rarity.name,
                     value=card.value,
-                    added = ("\n\n✨ Shiny" if card.shiny else ""))
+                    added = ("\n\n✨ Shiny" if shiny else ""))
 
     return text
 
-async def format_open_card(card: Card, user: User) -> str:
+async def format_open_card(card: Card, shiny: bool,user: User) -> str:
     """Форматирует информацию о открываемой карте с учетом бонусов."""
     template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
 
@@ -59,8 +58,8 @@ async def format_open_card(card: Card, user: User) -> str:
             else str(card.value)+f" (+{bonus})")
 
     text = template.format(name=card.name,
-                        verse=card.verse_name,
-                    rarity=card.rarity_name,
+                        verse=card.verse.name,
+                    rarity=card.rarity.name,
                     value=value,
                     added=(f"\n\n✨ Shiny\n\n🍀 Гарант на Хроно: {user.pity}/100"
                     if card.shiny

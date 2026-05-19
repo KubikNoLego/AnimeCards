@@ -1,0 +1,4662 @@
+[
+    {
+        "id": 1,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Адине",
+        "icon": "card_adine_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 2,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Мифический",
+        "value": 30,
+        "name": "Антиспиральщик",
+        "icon": "card_antispiral_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 3,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Бута",
+        "icon": "card_buta_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 4,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Редкий",
+        "value": 5,
+        "name": "Дарри Адай",
+        "icon": "card_darry_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 5,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Даяка Литтнер",
+        "icon": "card_dayaka_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 6,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Гимми Адай",
+        "icon": "card_gimme_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 7,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Легендарный",
+        "value": 79,
+        "name": "Камина Дзиха",
+        "icon": "card_kamina_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 8,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Мифический",
+        "value": 40,
+        "name": "Кинон Бачика",
+        "icon": "card_kinon_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 9,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Редкий",
+        "value": 8,
+        "name": "Киттан Бачика",
+        "icon": "card_kittan_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 10,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Мифический",
+        "value": 39,
+        "name": "Киял Бачика",
+        "icon": "card_kiyal_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 11,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Мифический",
+        "value": 20,
+        "name": "Киён Бачика",
+        "icon": "card_kiyon_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 12,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Мифический",
+        "value": 25,
+        "name": "Лиирон Литтнер",
+        "icon": "card_leron_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 13,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Лоргеном",
+        "icon": "card_lorgenom_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 14,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Редкий",
+        "value": 10,
+        "name": "Ния Теппелин",
+        "icon": "card_niateppelin_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 15,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Россиу Адай",
+        "icon": "card_rossiu_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 16,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Симон Дзиха",
+        "icon": "card_simon_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 17,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Хроно",
+        "value": 147,
+        "name": "Симон Дзиха",
+        "icon": "card_simon_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 18,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Симон Дзиха",
+        "icon": "card_simon_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 19,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Легендарный",
+        "value": 70,
+        "name": "Вирал",
+        "icon": "card_viral_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 20,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Легендарный",
+        "value": 77,
+        "name": "Йоко Литтнер",
+        "icon": "card_yoko_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 21,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Обычный",
+        "value": 6,
+        "name": "Бута",
+        "icon": "card_buta_common(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 22,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Легендарный",
+        "value": 114,
+        "name": "Камина Дзиха",
+        "icon": "card_kamina_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 23,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Ния Теппелин",
+        "icon": "card_niateppelin_uncommon(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 24,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Хроно",
+        "value": 192,
+        "name": "Симон Дзиха",
+        "icon": "card_simon_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 25,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Редкий",
+        "value": 30,
+        "name": "Симон Дзиха",
+        "icon": "card_simon_uncommon(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 26,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Легендарный",
+        "value": 88,
+        "name": "Вирал",
+        "icon": "card_viral_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 27,
+        "verse_name": "Гуррен-Лаганн 🌀",
+        "rarity_name": "Легендарный",
+        "value": 100,
+        "name": "Йоко Литтнер",
+        "icon": "card_yoko_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 28,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Хроно",
+        "value": 180,
+        "name": "Акаме",
+        "icon": "card_akame_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 29,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Болс",
+        "icon": "card_bols_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 30,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Редкий",
+        "value": 5,
+        "name": "Булат",
+        "icon": "card_bulat_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 31,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Редкий",
+        "value": 11,
+        "name": "Челси",
+        "icon": "card_chelsy_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 32,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Император Макото",
+        "icon": "card_emperormakoto_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 33,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Легендарный",
+        "value": 43,
+        "name": "Эсдес",
+        "icon": "card_esdeath_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 34,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Первый Император",
+        "icon": "card_firstemperor_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 35,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Мифический",
+        "value": 37,
+        "name": "Куроме",
+        "icon": "card_kurome_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 36,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Мифический",
+        "value": 42,
+        "name": "Лаббок",
+        "icon": "card_labbok_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 37,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Легендарный",
+        "value": 73,
+        "name": "Леоне",
+        "icon": "card_leone_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 38,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Легендарный",
+        "value": 52,
+        "name": "Майн",
+        "icon": "card_main_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 39,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Редкий",
+        "value": 9,
+        "name": "Надженда",
+        "icon": "card_nadzhenda_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 40,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Редкий",
+        "value": 5,
+        "name": "Натала",
+        "icon": "card_natala_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 41,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Мифический",
+        "value": 45,
+        "name": "Ран",
+        "icon": "card_ren_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 42,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Редкий",
+        "value": 11,
+        "name": "Серью",
+        "icon": "card_seriu_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 43,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Шелли",
+        "icon": "card_shelly_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 44,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Мифический",
+        "value": 43,
+        "name": "Сусаноо",
+        "icon": "card_susanoo_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 45,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Хроно",
+        "value": 142,
+        "name": "Тацуми",
+        "icon": "card_tatsumi_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 46,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Легендарный",
+        "value": 45,
+        "name": "Вейв",
+        "icon": "card_wave_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 47,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Хроно",
+        "value": 282,
+        "name": "Акаме",
+        "icon": "card_akame_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 48,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Редкий",
+        "value": 7,
+        "name": "Булат",
+        "icon": "card_bulat_uncommon(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 49,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Редкий",
+        "value": 15,
+        "name": "Челси",
+        "icon": "card_chelsy_uncommon(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 50,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Мифический",
+        "value": 30,
+        "name": "Куроме",
+        "icon": "card_kurome_mythic(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 51,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Легендарный",
+        "value": 115,
+        "name": "Леоне",
+        "icon": "card_leone_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 52,
+        "verse_name": "Убийца Акаме 🩸",
+        "rarity_name": "Мифический",
+        "value": 30,
+        "name": "Сусаноо",
+        "icon": "card_susanoo_mythic(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 53,
+        "verse_name": "Лимонные девочки 🍋",
+        "rarity_name": "Мифический",
+        "value": 69,
+        "name": "Тэнка Адати",
+        "icon": "card_tenka_mythic(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 54,
+        "verse_name": "Лимонные девочки 🍋",
+        "rarity_name": "Хроно",
+        "value": 264,
+        "name": "Комако Семенович",
+        "icon": "card_komako_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 55,
+        "verse_name": "Лимонные девочки 🍋",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Юко Саяма",
+        "icon": "card_yuko_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 56,
+        "verse_name": "Лимонные девочки 🍋",
+        "rarity_name": "Легендарный",
+        "value": 44,
+        "name": "Тиэ Саяма",
+        "icon": "card_tie_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 57,
+        "verse_name": "Лимонные девочки 🍋",
+        "rarity_name": "Мифический",
+        "value": 46,
+        "name": "Тэнка Адати",
+        "icon": "card_tenka_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 58,
+        "verse_name": "Лимонные девочки 🍋",
+        "rarity_name": "Хроно",
+        "value": 110,
+        "name": "Комако Семенович",
+        "icon": "card_komako_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 59,
+        "verse_name": "Лимонные девочки 🍋",
+        "rarity_name": "Легендарный",
+        "value": 115,
+        "name": "Тиэ Саяма",
+        "icon": "card_tie_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 60,
+        "verse_name": "Doki Doki Literature Club 🔖",
+        "rarity_name": "Мифический",
+        "value": 23,
+        "name": "Сайори",
+        "icon": "card_sayori_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 61,
+        "verse_name": "Doki Doki Literature Club 🔖",
+        "rarity_name": "Хроно",
+        "value": 173,
+        "name": "Нацуки",
+        "icon": "card_natsuki_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 62,
+        "verse_name": "Doki Doki Literature Club 🔖",
+        "rarity_name": "Легендарный",
+        "value": 46,
+        "name": "Моника",
+        "icon": "card_monika_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 63,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Коротковолосая Мита",
+        "icon": "card_shorthairedmita_common.png",
+        "shiny": false,
+        "can_drop": false
+    },
+    {
+        "id": 64,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Редкий",
+        "value": 20,
+        "name": "Мила",
+        "icon": "card_mila_uncommon.png",
+        "shiny": false,
+        "can_drop": false
+    },
+    {
+        "id": 65,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Хроно",
+        "value": 128,
+        "name": "Добрая Мита",
+        "icon": "card_kindmita_hrono.png",
+        "shiny": false,
+        "can_drop": false
+    },
+    {
+        "id": 66,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Хроно",
+        "value": 201,
+        "name": "Добрая Мита",
+        "icon": "card_kindmita_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": false
+    },
+    {
+        "id": 67,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Мифический",
+        "value": 48,
+        "name": "Кепочка",
+        "icon": "card_cappiemita_mythic.png",
+        "shiny": false,
+        "can_drop": false
+    },
+    {
+        "id": 68,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Редкий",
+        "value": 20,
+        "name": "2D Мита",
+        "icon": "card_2dmita_uncommon.png",
+        "shiny": false,
+        "can_drop": false
+    },
+    {
+        "id": 69,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Легендарный",
+        "value": 69,
+        "name": "Безумная Мита",
+        "icon": "card_crazymita_legend.png",
+        "shiny": false,
+        "can_drop": false
+    },
+    {
+        "id": 70,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Легендарный",
+        "value": 81,
+        "name": "Безумная Мита",
+        "icon": "card_crazymita_legend(shiny).png",
+        "shiny": true,
+        "can_drop": false
+    },
+    {
+        "id": 71,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Редкий",
+        "value": 14,
+        "name": "Маленькая Мита",
+        "icon": "card_tinymita_uncommon.png",
+        "shiny": false,
+        "can_drop": false
+    },
+    {
+        "id": 72,
+        "verse_name": "MiSide 💖",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Сонная Мита",
+        "icon": "card_sleepymita_common.png",
+        "shiny": false,
+        "can_drop": false
+    },
+    {
+        "id": 73,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 25,
+        "name": "Курона Ясухиса",
+        "icon": "card_kurona_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 74,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Чие Хори",
+        "icon": "card_ChieHori_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 75,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 43,
+        "name": "Хайсе",
+        "icon": "card_Haise_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 76,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Итори",
+        "icon": "card_Itori_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 77,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Кен Канеки",
+        "icon": "card_KanekiKen_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 78,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 40,
+        "name": "Хамбее Абара",
+        "icon": "card_abara_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 79,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Аки Сасадо",
+        "icon": "card_akisasado_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 80,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 39,
+        "name": "Арата Киришима",
+        "icon": "card_arata_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 81,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Хроно",
+        "value": 160,
+        "name": "Кишо Арима",
+        "icon": "card_arima_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 82,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 25,
+        "name": "Аято Киришима",
+        "icon": "card_ayato_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 83,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 48,
+        "name": "Донато Порпора",
+        "icon": "card_donato_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 84,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 77,
+        "name": "Это Йошимура",
+        "icon": "card_eto_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 85,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 20,
+        "name": "Хинами Фуегучи",
+        "icon": "card_fueguchi_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 86,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Хроно",
+        "value": 187,
+        "name": "Нимура Фурута",
+        "icon": "card_furuta_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 87,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 75,
+        "name": "Гинши Ширазу",
+        "icon": "card_ginshi_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 88,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Хидейоши Нагачика",
+        "icon": "card_hideyoshi_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 89,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Редкий",
+        "value": 6,
+        "name": "Таке Хирако",
+        "icon": "card_hirako_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 90,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 40,
+        "name": "Хаиру Ихей",
+        "icon": "card_ihei_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 91,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Курамото Ито",
+        "icon": "card_ito_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 92,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 22,
+        "name": "Кен Канеки",
+        "icon": "card_kakuja_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 93,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 45,
+        "name": "Кен Канеки",
+        "icon": "card_kaneki_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 94,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 27,
+        "name": "Кен Канеки",
+        "icon": "card_kaneki_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 95,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Хроно",
+        "value": 129,
+        "name": "Кен Канеки",
+        "icon": "card_ken_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 96,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 70,
+        "name": "Котаро Амон",
+        "icon": "card_kotaro_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 97,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 53,
+        "name": "Куки Урие",
+        "icon": "card_kuki_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 98,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 41,
+        "name": "Йошимура Кузен",
+        "icon": "card_kuzen_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 99,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Акиро Мадо",
+        "icon": "card_mado_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 100,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 49,
+        "name": "Мацумае",
+        "icon": "card_matsumae_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 101,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Миюки Микаге",
+        "icon": "card_mikage_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 102,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Редкий",
+        "value": 6,
+        "name": "Наширо Ясухисо",
+        "icon": "card_nashiro_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 103,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Редкий",
+        "value": 7,
+        "name": "Нишики Нишио",
+        "icon": "card_nishiko_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 104,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 61,
+        "name": "Норо",
+        "icon": "card_noro_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 105,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Хроно",
+        "value": 157,
+        "name": "Ризе Камиширо",
+        "icon": "card_rize_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 106,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 43,
+        "name": "Рома Хойто",
+        "icon": "card_roma_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 107,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Редкий",
+        "value": 8,
+        "name": "Сайко Йонебаяши",
+        "icon": "card_saiko_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 108,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 64,
+        "name": "Шикорае",
+        "icon": "card_shikorae_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 109,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 24,
+        "name": "Юкинори Шинохара",
+        "icon": "card_shinohara_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 110,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 72,
+        "name": "Сузуя Джузо",
+        "icon": "card_suzuya_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 111,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 77,
+        "name": "Такизава",
+        "icon": "card_takizava_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 112,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Мизуро Тамаки",
+        "icon": "card_tamaki_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 113,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 55,
+        "name": "Татара",
+        "icon": "card_tatara_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 114,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 48,
+        "name": "Тоору Муцуки",
+        "icon": "card_tooru_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 115,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 31,
+        "name": "Тоука Киришима",
+        "icon": "card_touka_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 116,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 42,
+        "name": "Коори Уи",
+        "icon": "card_ui_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 117,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 31,
+        "name": "Ута",
+        "icon": "card_uta_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 118,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Редкий",
+        "value": 20,
+        "name": "Якумо Оомори",
+        "icon": "card_yakumo_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 119,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 25,
+        "name": "Ренджи Йомо",
+        "icon": "card_yomo_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 120,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Легендарный",
+        "value": 99,
+        "name": "Это Йошимура",
+        "icon": "card_eto_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 121,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Мифический",
+        "value": 67,
+        "name": "Хинами Фуегучи",
+        "icon": "card_fueguchi_mythic(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 122,
+        "verse_name": "Токийский Гуль 🌃",
+        "rarity_name": "Хроно",
+        "value": 196,
+        "name": "Кен Канеки",
+        "icon": "card_kaneki_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 123,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Редкий",
+        "value": 13,
+        "name": "Аиша Стильза",
+        "icon": "card_aisha_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 124,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Легендарный",
+        "value": 76,
+        "name": "Амо Эмпул",
+        "icon": "card_amo_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 125,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Мифический",
+        "value": 25,
+        "name": "Арха  Корвус",
+        "icon": "card_arha_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 126,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Редкий",
+        "value": 14,
+        "name": "Август Стильза",
+        "icon": "card_august_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 127,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Бро Санта",
+        "icon": "card_bro_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 128,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Мифический",
+        "value": 41,
+        "name": "Бундус Бегалкейт",
+        "icon": "card_bundus_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 129,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Чива",
+        "icon": "card_chiva_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 130,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Диа Санта",
+        "icon": "card_dia_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 131,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Легендарный",
+        "value": 74,
+        "name": "Дзанка Нидзик",
+        "icon": "card_dzanka_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 132,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Легендарный",
+        "value": 56,
+        "name": "Энжин",
+        "icon": "card_engine_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 133,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Фолло Тунито",
+        "icon": "card_follo_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 134,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Мифический",
+        "value": 48,
+        "name": "Гита Хеви Фантазия",
+        "icon": "card_gita_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 135,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Мифический",
+        "value": 35,
+        "name": "Сэмиу Гриер",
+        "icon": "card_grier_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 136,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Мифический",
+        "value": 36,
+        "name": "Грис Рубион",
+        "icon": "card_gris_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 137,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Хё",
+        "icon": "card_he_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 138,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Мифический",
+        "value": 46,
+        "name": "Джаббер Вонгар",
+        "icon": "card_jabber_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 139,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Кондза",
+        "icon": "card_konza_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 140,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Редкий",
+        "value": 10,
+        "name": "Ктони Андор",
+        "icon": "card_ktoni_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 141,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Мифический",
+        "value": 24,
+        "name": "Ноэрде Хью Амозо",
+        "icon": "card_noerde_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 142,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Редкий",
+        "value": 7,
+        "name": "Фу Оростор",
+        "icon": "card_orostor_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 143,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Мифический",
+        "value": 26,
+        "name": "Регто",
+        "icon": "card_regto_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 144,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Мифический",
+        "value": 23,
+        "name": "Ремлин Тисарк",
+        "icon": "card_remlin_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 145,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Гномулас Ридд",
+        "icon": "card_ridd_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 146,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Легендарный",
+        "value": 43,
+        "name": "Риё Рипер",
+        "icon": "card_rie_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 147,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Хроно",
+        "value": 157,
+        "name": "Рудо Суребрек",
+        "icon": "card_rudo_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 148,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Сикагэ",
+        "icon": "card_sikage_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 149,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Хроно",
+        "value": 198,
+        "name": "Тэмзи Каин",
+        "icon": "card_temzi_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 150,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Легендарный",
+        "value": 59,
+        "name": "Зодил Тифон",
+        "icon": "card_zodil_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 151,
+        "verse_name": "Гачиакута 🗑",
+        "rarity_name": "Легендарный",
+        "value": 72,
+        "name": "Амо Эмпул",
+        "icon": "card_amo_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 152,
+        "verse_name": "Doki Doki Literature Club 🔖",
+        "rarity_name": "Редкий",
+        "value": 20,
+        "name": "Юри",
+        "icon": "card_yuri_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 232,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Редкий",
+        "value": 13,
+        "name": "Акира Когами",
+        "icon": "card_akira_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 233,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Редкий",
+        "value": 8,
+        "name": "Аяно Минэгиши",
+        "icon": "card_ayano_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 234,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Хикагэ Миякава",
+        "icon": "card_hikage_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 235,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Хикару Сакураба",
+        "icon": "card_hikaru_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 236,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Хината Миякава",
+        "icon": "card_hinata_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 237,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Мифический",
+        "value": 30,
+        "name": "Хиёри Тамура",
+        "icon": "card_hiyori_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 238,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Инори Хираги",
+        "icon": "card_inori_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 239,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Хроно",
+        "value": 105,
+        "name": "Кагами Хираги",
+        "icon": "card_kagami_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 240,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Редкий",
+        "value": 7,
+        "name": "Каната Изуми",
+        "icon": "card_kanata_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 241,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Хроно",
+        "value": 102,
+        "name": "Коната Изуми",
+        "icon": "card_konata_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 242,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Мацури Хираги",
+        "icon": "card_matsuri_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 243,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Мики Хираги",
+        "icon": "card_miki_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 244,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Мифический",
+        "value": 29,
+        "name": "Минами Ивасаки",
+        "icon": "card_minami_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 245,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Мисао Кусакабэ",
+        "icon": "card_misao_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 246,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Мифический",
+        "value": 41,
+        "name": "Миюки Такара",
+        "icon": "card_miyuki_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 247,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Легендарный",
+        "value": 55,
+        "name": "Нанако Курои",
+        "icon": "card_nanako_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 248,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Дайскэ Оно",
+        "icon": "card_ono_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 249,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Патриция Мартин",
+        "icon": "card_patritsia_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 250,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Мифический",
+        "value": 24,
+        "name": "Минору Шираиши",
+        "icon": "card_shiraishi_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 251,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Мифический",
+        "value": 29,
+        "name": "Соджиро Изуми",
+        "icon": "card_sodjiro_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 252,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Тадао Хираги",
+        "icon": "card_tadao_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 253,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Легендарный",
+        "value": 78,
+        "name": "Цукаса Хираги",
+        "icon": "card_tsukasa_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 254,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Легендарный",
+        "value": 59,
+        "name": "Юи Наруми",
+        "icon": "card_ui_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 255,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Легендарный",
+        "value": 51,
+        "name": "Ютака Кобаякава",
+        "icon": "card_utaka_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 256,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Редкий",
+        "value": 19,
+        "name": "Юкари Такара",
+        "icon": "card_yukari_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 257,
+        "verse_name": "Счастливая звезда 🌟",
+        "rarity_name": "Хроно",
+        "value": 249,
+        "name": "Коната Изуми",
+        "icon": "card_konata_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 258,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Ацуя Кусакабе",
+        "icon": "card_atsuya_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 259,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Авасака",
+        "icon": "card_avasaki_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 260,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 42,
+        "name": "Чосо",
+        "icon": "card_choso_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 261,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 46,
+        "name": "Дагон",
+        "icon": "card_dagon_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 262,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Дзюнпей Ёшино",
+        "icon": "card_dzinpei_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 263,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 52,
+        "name": "Джого",
+        "icon": "card_dzyogo_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 264,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 7,
+        "name": "Эсо",
+        "icon": "card_eso_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 265,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 45,
+        "name": "Сугуру Гето",
+        "icon": "card_geto_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 266,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Хроно",
+        "value": 166,
+        "name": "Сатору Годжо",
+        "icon": "card_gojo_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 267,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 62,
+        "name": "Киндзи Хакари",
+        "icon": "card_hakari_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 268,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 31,
+        "name": "Ханами",
+        "icon": "card_hanami_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 269,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 25,
+        "name": "Харута Сигэмо",
+        "icon": "card_haruto_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 270,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 64,
+        "name": "Хироми Хигурума",
+        "icon": "card_higuruma_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 271,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Игучи",
+        "icon": "card_iguchi_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 272,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 47,
+        "name": "Тогэ Инумаки",
+        "icon": "card_inumaki_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 273,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 50,
+        "name": "Хаджиме Кашимо",
+        "icon": "card_kashimo_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 274,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 19,
+        "name": "Кечизу",
+        "icon": "card_kechizu_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 275,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 32,
+        "name": "Кирара Хоши",
+        "icon": "card_kirara_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 276,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Ко-Гай",
+        "icon": "card_kogai_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 277,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 76,
+        "name": "Махито",
+        "icon": "card_mahito_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 278,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Май Зенин",
+        "icon": "card_mai_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 279,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 48,
+        "name": "Маки Зенин",
+        "icon": "card_maki_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 280,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 26,
+        "name": "Мегуми Фушигуро",
+        "icon": "card_megumi_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 281,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 24,
+        "name": "Мэй Мэй",
+        "icon": "card_meimei_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 282,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 14,
+        "name": "Мимико",
+        "icon": "card_mimiko_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 283,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Мисато Курой",
+        "icon": "card_misato_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 284,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 8,
+        "name": "Касуми Мива",
+        "icon": "card_miva_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 285,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 14,
+        "name": "Момо Нисимия",
+        "icon": "card_momo_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 286,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Наги Ёшино",
+        "icon": "card_nagi_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 287,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 9,
+        "name": "Нанако",
+        "icon": "card_nanako_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 288,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 33,
+        "name": "Кэнто Нанами",
+        "icon": "card_nanami_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 289,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 31,
+        "name": "Наобито Зенин",
+        "icon": "card_naobito_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 290,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 35,
+        "name": "Наоя Зенин",
+        "icon": "card_nayoa_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 291,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 6,
+        "name": "Акари Нитта",
+        "icon": "card_nitta_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 292,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 18,
+        "name": "Нобара Кугисаки",
+        "icon": "card_nobara_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 293,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 9,
+        "name": "Огами",
+        "icon": "card_ogami_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 294,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Юуко Озава",
+        "icon": "card_ozava_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 295,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 33,
+        "name": "Панда",
+        "icon": "card_panda_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 296,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 48,
+        "name": "Реджи Стар",
+        "icon": "card_reidzi_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 297,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Рика Аримото",
+        "icon": "card_rika_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 298,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Рико Аманай",
+        "icon": "card_riko_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 299,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Сасаки",
+        "icon": "card_sasaki_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 300,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Сиу Кон",
+        "icon": "card_siu_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 301,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Хроно",
+        "value": 187,
+        "name": "Рёмен Сукуна",
+        "icon": "card_sukuna_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 302,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 29,
+        "name": "Сёко Иэйри",
+        "icon": "card_syoko_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 303,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Тадаси Окадзаки",
+        "icon": "card_tadasi_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 304,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 20,
+        "name": "Аой Тодо",
+        "icon": "card_todo_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 305,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 44,
+        "name": "Тоджи Фушигуро",
+        "icon": "card_toji_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 306,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Цумики Фушигуро",
+        "icon": "card_tsumiki_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 307,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Уй Уй",
+        "icon": "card_uiui_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 308,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 57,
+        "name": "Юки Цукумо",
+        "icon": "card_uki_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 309,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 68,
+        "name": "Урауме",
+        "icon": "card_urayume_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 310,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 46,
+        "name": "Утахимэ Иори",
+        "icon": "card_utahime_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 311,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 20,
+        "name": "Ёсинобу Гакугандзи",
+        "icon": "card_yosinobu_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 312,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 42,
+        "name": "Юджи Итадори",
+        "icon": "card_yuji_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 313,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Хроно",
+        "value": 140,
+        "name": "Юта Оккоцу",
+        "icon": "card_yuta_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 314,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 99,
+        "name": "Сугуру Гето",
+        "icon": "card_geto_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 315,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Мифический",
+        "value": 57,
+        "name": "Тогэ Инумаки",
+        "icon": "card_inumaki_mythic(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 316,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 87,
+        "name": "Махито",
+        "icon": "card_mahito_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 317,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 79,
+        "name": "Маки Зенин",
+        "icon": "card_maki_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 318,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Легендарный",
+        "value": 109,
+        "name": "Юджи Итадори",
+        "icon": "card_yuji_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 319,
+        "verse_name": "Магическая битва ⚔️",
+        "rarity_name": "Хроно",
+        "value": 202,
+        "name": "Юта Оккоцу",
+        "icon": "card_yuta_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 169,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 19,
+        "name": "Эрина Пендлтон",
+        "icon": "card_erina_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 153,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Флай Грей",
+        "icon": "card_GrayFley_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 154,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 28,
+        "name": "Мохаммед Абдул",
+        "icon": "card_abdul_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 155,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 39,
+        "name": "Эйсидиси",
+        "icon": "card_asidisi_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 156,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Боинго",
+        "icon": "card_boingo_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 157,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Мэниш Бой",
+        "icon": "card_boy_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 158,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 6,
+        "name": "Смоуки Браун",
+        "icon": "card_brown_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 159,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 10,
+        "name": "Бруфорд",
+        "icon": "card_bruford_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 160,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 70,
+        "name": "Цезарь Цеппели",
+        "icon": "card_caesar_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 161,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Дайр",
+        "icon": "card_dair_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 162,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Дарио Брандо",
+        "icon": "card_dario_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 163,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 10,
+        "name": "Стили Дэн",
+        "icon": "card_den_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 164,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 7,
+        "name": "Дево",
+        "icon": "card_devo_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 165,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 150,
+        "name": "Дио Брандо",
+        "icon": "card_dio_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 166,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Эн'Доул",
+        "icon": "card_doul_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 167,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 20,
+        "name": "Эния Гайл",
+        "icon": "card_enia_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 168,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Энн",
+        "icon": "card_enn_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 170,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Форевер",
+        "icon": "card_forever_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 171,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 43,
+        "name": "Рудольф фон Штрохайм",
+        "icon": "card_hit_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 172,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 44,
+        "name": "Хол Хорс",
+        "icon": "card_holhorse_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 173,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 20,
+        "name": "Холи Куджо",
+        "icon": "card_holi_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 174,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 74,
+        "name": "Ванилла Айс",
+        "icon": "card_ice_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 175,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 46,
+        "name": "Игги",
+        "icon": "card_iggy_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 176,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 58,
+        "name": "Дэниэл Джей Д'Арби",
+        "icon": "card_j_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 177,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 126,
+        "name": "Джонатан Джостар",
+        "icon": "card_jonatan_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 178,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Джордж Джостар I",
+        "icon": "card_jorjd_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 179,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Джордж Джостар II",
+        "icon": "card_jorjdsecond_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 181,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 175,
+        "name": "Джотаро Куджо",
+        "icon": "card_jotaro_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 182,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 69,
+        "name": "Норияки Какёин",
+        "icon": "card_kakyoin_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 183,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Камео",
+        "icon": "card_kameo_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 184,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 118,
+        "name": "Карс",
+        "icon": "card_kars_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 185,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 65,
+        "name": "Лиза Лиза",
+        "icon": "card_lizaliza_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 186,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Марио Цеппели",
+        "icon": "card_mario_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 187,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Марк",
+        "icon": "card_mark_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 188,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Мессина",
+        "icon": "card_messina_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 189,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Нэна",
+        "icon": "card_nena_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 190,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Оинго",
+        "icon": "card_oingo_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 191,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 79,
+        "name": "Жан-Пьер Польнарефф",
+        "icon": "card_polnoref_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 192,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Сантана",
+        "icon": "card_santana_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 193,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 37,
+        "name": "Раббер Соул",
+        "icon": "card_soul_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 194,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 59,
+        "name": "Роберт Спидвагон",
+        "icon": "card_speedwagon_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 195,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 19,
+        "name": "Сьюзи Кью",
+        "icon": "card_suzie_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 196,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Таркус",
+        "icon": "card_tarkus_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 197,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 34,
+        "name": "Теленс Т. Д'Арби",
+        "icon": "card_telens_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 198,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 37,
+        "name": "Уильям Цеппели",
+        "icon": "card_uilyam_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 199,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 32,
+        "name": "Вамм",
+        "icon": "card_vam_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 200,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Зи Зи",
+        "icon": "card_zizi_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 201,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 225,
+        "name": "Дио Брандо",
+        "icon": "card_dio_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 180,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 150,
+        "name": "Джозеф Джостар",
+        "icon": "card_josep_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 202,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 225,
+        "name": "Джозеф Джостар",
+        "icon": "card_josep_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 203,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Мифический",
+        "value": 34,
+        "name": "Анко Коши",
+        "icon": "card_anko_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 204,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Мифический",
+        "value": 31,
+        "name": "Мэмэ Басямэ",
+        "icon": "card_basyame_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 205,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Редкий",
+        "value": 9,
+        "name": "Кину Танукикодзи",
+        "icon": "card_kinu_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 206,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Легендарный",
+        "value": 48,
+        "name": "Торако Коши",
+        "icon": "card_koshi_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 207,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Мицу Инукай",
+        "icon": "card_mitsu_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 208,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Редкий",
+        "value": 14,
+        "name": "Нэко Нэкоямада",
+        "icon": "card_neko_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 209,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Хроно",
+        "value": 138,
+        "name": "Ноко Шиканоко",
+        "icon": "card_shikonoko_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 210,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Редкий",
+        "value": 20,
+        "name": "Тихару Цубамэя",
+        "icon": "card_tiharu_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 211,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Укай",
+        "icon": "card_ukai_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 212,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Ёсихару Цубамэя",
+        "icon": "card_yosiharu_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 213,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Мифический",
+        "value": 64,
+        "name": "Анко Коши",
+        "icon": "card_anko_mythic(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 214,
+        "verse_name": "Моя подруга-олениха Нокотан 🦌",
+        "rarity_name": "Редкий",
+        "value": 15,
+        "name": "Кину Танукикодзи",
+        "icon": "card_kinu_uncommon(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 215,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Акэми Куджо",
+        "icon": "card_akemi_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 216,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Хроно",
+        "value": 132,
+        "name": "Алиса Куджо",
+        "icon": "card_alya_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 217,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Андо",
+        "icon": "card_ando_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 218,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Мифический",
+        "value": 41,
+        "name": "Аяно Кимишима",
+        "icon": "card_ayano_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 219,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Гэнсэй Суо",
+        "icon": "card_gensey_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 220,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Хикару Киёмия",
+        "icon": "card_hakaru_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 221,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Хроно",
+        "value": 139,
+        "name": "Масачика Кудзэ",
+        "icon": "card_masachika_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 222,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Легендарный",
+        "value": 71,
+        "name": "Мария Куджо",
+        "icon": "card_masha_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 223,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Мифический",
+        "value": 24,
+        "name": "Ноноа Миямаэ",
+        "icon": "card_nanao_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 224,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Саяка Тинияма",
+        "icon": "card_sayaka_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 225,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Такеси Маруяма",
+        "icon": "card_takesi_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 226,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Томохиса Кудзэ",
+        "icon": "card_tomohisa_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 227,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Тоя Кендзаки",
+        "icon": "card_toya_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 228,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Легендарный",
+        "value": 50,
+        "name": "Юки Суо",
+        "icon": "card_yuki_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 229,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Редкий",
+        "value": 13,
+        "name": "Юми Суо",
+        "icon": "card_yumi_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 230,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Хроно",
+        "value": 205,
+        "name": "Алиса Куджо",
+        "icon": "card_alya_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 231,
+        "verse_name": "Аля иногда кокетничает со мной по-русски 🇷🇺",
+        "rarity_name": "Легендарный",
+        "value": 61,
+        "name": "Юки Суо",
+        "icon": "card_yuki_legend(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 351,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Лимитированный",
+        "value": 300,
+        "name": "Сид Кагэно & Альфа",
+        "icon": "card_Cid&Alpha_limited.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 354,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Лимитированный",
+        "value": 300,
+        "name": "Ослепительная Юкиме",
+        "icon": "card_DazzlingYukime_limited.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 320,
+        "verse_name": "Девушки-пони: Славное дерби 🐎",
+        "rarity_name": "Лимитированный",
+        "value": 0,
+        "name": "Агнес Тахион",
+        "icon": "card_agnes_limited.mp4",
+        "shiny": false,
+        "can_drop": false
+    },
+    {
+        "id": 321,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Легендарный",
+        "value": 47,
+        "name": "Джибрил",
+        "icon": "card_djibril_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 322,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Мифический",
+        "value": 36,
+        "name": "Коронне Дола",
+        "icon": "card_dola_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 323,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Мифический",
+        "value": 22,
+        "name": "Филь Нирвален",
+        "icon": "card_fill_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 324,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Ино Хатсусе",
+        "icon": "card_ino_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 325,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Легендарный",
+        "value": 70,
+        "name": "Изуна Хатсусе",
+        "icon": "card_izuna_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 326,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Мифический",
+        "value": 31,
+        "name": "Курами Зелл",
+        "icon": "card_kurami_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 327,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Легендарный",
+        "value": 67,
+        "name": "Мико",
+        "icon": "card_miko_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 328,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Нонна Зелл",
+        "icon": "card_nonna_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 329,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Хроно",
+        "value": 114,
+        "name": "Широ",
+        "icon": "card_shiro_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 330,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Хроно",
+        "value": 160,
+        "name": "Сора",
+        "icon": "card_sora_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 331,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Мифический",
+        "value": 45,
+        "name": "Стефани Дола",
+        "icon": "card_stef_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 332,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Легендарный",
+        "value": 79,
+        "name": "Тет",
+        "icon": "card_tet_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 333,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Иван Зелл",
+        "icon": "card_zell_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 334,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Легендарный",
+        "value": 80,
+        "name": "Синк Нирвален",
+        "icon": "card_sink_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 335,
+        "verse_name": "Нет Игры, Нет Жизни ♟️",
+        "rarity_name": "Мифический",
+        "value": 69,
+        "name": "Стефани Дола",
+        "icon": "card_stef_mythic(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 336,
+        "verse_name": "Ангел по соседству 🪽",
+        "rarity_name": "Легендарный",
+        "value": 80,
+        "name": "Аманэ Фудзимия",
+        "icon": "card_amane_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 337,
+        "verse_name": "Ангел по соседству 🪽",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Сюто Фудзимия",
+        "icon": "card_cuto_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 338,
+        "verse_name": "Ангел по соседству 🪽",
+        "rarity_name": "Мифический",
+        "value": 41,
+        "name": "Ицуки Акадзава",
+        "icon": "card_itsuki_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 339,
+        "verse_name": "Ангел по соседству 🪽",
+        "rarity_name": "Хроно",
+        "value": 190,
+        "name": "Махиру Сина",
+        "icon": "card_mahiru_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 340,
+        "verse_name": "Ангел по соседству 🪽",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Сихоко Фудзимия",
+        "icon": "card_sihoko_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 341,
+        "verse_name": "Ангел по соседству 🪽",
+        "rarity_name": "Мифический",
+        "value": 36,
+        "name": "Титосэ Сиракава",
+        "icon": "card_titose_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 342,
+        "verse_name": "Ангел по соседству 🪽",
+        "rarity_name": "Редкий",
+        "value": 9,
+        "name": "Юта Кадоваки",
+        "icon": "card_yuta_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 343,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "№664",
+        "icon": "card_664_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 344,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Алексия Мидгар",
+        "icon": "card_AlexiaMidgar_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 345,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Легендарный",
+        "value": 40,
+        "name": "Альфа",
+        "icon": "card_Alpha_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 346,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Аннероуз",
+        "icon": "card_Annerose_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 347,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Легендарный",
+        "value": 47,
+        "name": "Аврора",
+        "icon": "card_Aurora_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 348,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Мифический",
+        "value": 44,
+        "name": "Беатрикс",
+        "icon": "card_Beatrix_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 349,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Легендарный",
+        "value": 47,
+        "name": "Бета",
+        "icon": "card_Beta_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 350,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "№665",
+        "icon": "card_665_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 352,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Хроно",
+        "value": 190,
+        "name": "Сид Кагэно",
+        "icon": "card_CidKagenou_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 353,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Редкий",
+        "value": 5,
+        "name": "Клэр Кагэно",
+        "icon": "card_ClaireKagenou_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 355,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Легендарный",
+        "value": 59,
+        "name": "Дельта",
+        "icon": "card_Delta_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 356,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Легендарный",
+        "value": 62,
+        "name": "Элизабет",
+        "icon": "card_Elisabeth_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 357,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Редкий",
+        "value": 13,
+        "name": "Эта",
+        "icon": "card_Eta_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 358,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Редкий",
+        "value": 14,
+        "name": "Гамма",
+        "icon": "card_Gamma_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 359,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Редкий",
+        "value": 9,
+        "name": "Голдо Кинмэки",
+        "icon": "card_GoldohKinmeki_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 360,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Хёро Гали",
+        "icon": "card_HyoroGali_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 361,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Дзяга Имо",
+        "icon": "card_JagaImo_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 362,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Хроно",
+        "value": 226,
+        "name": "Джон Смит",
+        "icon": "card_JohnSmith_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 363,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Мифический",
+        "value": 42,
+        "name": "Ню",
+        "icon": "card_Nu_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 364,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Мифический",
+        "value": 41,
+        "name": "Роза Ориана",
+        "icon": "card_RoseOriana_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 365,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Шерри Барнетт",
+        "icon": "card_SherryBarnett_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 366,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Мифический",
+        "value": 33,
+        "name": "Виктория",
+        "icon": "card_Victoria_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 367,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Редкий",
+        "value": 7,
+        "name": "Юкимэ",
+        "icon": "card_Yukime_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 368,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Легендарный",
+        "value": 53,
+        "name": "Эпсилон",
+        "icon": "card_Epsilon_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 369,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Айрис Мидгар",
+        "icon": "card_IrisMidgar_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 370,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Мифический",
+        "value": 41,
+        "name": "Лямбда",
+        "icon": "card_Lambda_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 371,
+        "verse_name": "Восхождение в тени! 👤",
+        "rarity_name": "Легендарный",
+        "value": 48,
+        "name": "Дзета",
+        "icon": "card_Zeta_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 374,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Аяна Хиросе",
+        "icon": "card_Аяна Хиросе_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 375,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 122,
+        "name": "Джоске Хигашиката",
+        "icon": "card_Джоске Хигашиката_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 376,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 205,
+        "name": "Йошикаге Кира",
+        "icon": "card_Йошикаге Кира_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 372,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 43,
+        "name": "Акира Отоиши",
+        "icon": "card_Акира Отоиши_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 373,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 23,
+        "name": "Анджело Катагири",
+        "icon": "card_Анджело Катагири_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 377,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 147,
+        "name": "Йошикаге Кира",
+        "icon": "card_Йошикаге Кира_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 378,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 21,
+        "name": "Кейчо Ниджимура",
+        "icon": "card_Кейчо Ниджимура_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 379,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 76,
+        "name": "Коичи Хиросе",
+        "icon": "card_Коичи Хиросе_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 380,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Мансаку Ниджимура",
+        "icon": "card_Мансаку Ниджимура_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 381,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 58,
+        "name": "Окуясу Ниджимура",
+        "icon": "card_Окуясу Ниджимура_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 382,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 18,
+        "name": "Рейми Сугимото",
+        "icon": "card_Рейми Сугимото_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 383,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 59,
+        "name": "Рохан Кишибе",
+        "icon": "card_Рохан Кишибе_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 384,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 10,
+        "name": "Тамами Кобаяши",
+        "icon": "card_Тамами Кобаяши_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 385,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Томоко Хигашиката",
+        "icon": "card_Томоко Хигашиката_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 386,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 22,
+        "name": "Тонио Труссарди",
+        "icon": "card_Тонио Труссарди_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 387,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 15,
+        "name": "Тошикадзу Хадзамада",
+        "icon": "card_Тошикадзу Хадзамада_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 388,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Хаято Каваджири",
+        "icon": "card_Хаято Каваджири_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 389,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Шигечи Янгу",
+        "icon": "card_Шигечи Янгу_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 390,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Шинобу Каваджири",
+        "icon": "card_Шинобу Каваджири_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 391,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 24,
+        "name": "Юкако Ямагиши",
+        "icon": "card_Юкако Ямагиши_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 392,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Айрис Стайлиш-Сворд Белзерг",
+        "icon": "card_Айрис Стайлиш-Сворд Белзерг_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 393,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Хроно",
+        "value": 170,
+        "name": "Аква",
+        "icon": "card_Аква_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 394,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Легендарный",
+        "value": 63,
+        "name": "Арнес",
+        "icon": "card_Арнес_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 395,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Редкий",
+        "value": 17,
+        "name": "Аруэ",
+        "icon": "card_Аруэ_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 396,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Редкий",
+        "value": 8,
+        "name": "Бузукойли",
+        "icon": "card_Бузукойли_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 397,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Легендарный",
+        "value": 55,
+        "name": "Ванир",
+        "icon": "card_Ванир_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 398,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Мифический",
+        "value": 40,
+        "name": "Вердия",
+        "icon": "card_Вердия_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 399,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Легендарный",
+        "value": 55,
+        "name": "Вольбах",
+        "icon": "card_Вольбах_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 400,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Лимитированный",
+        "value": 0,
+        "name": "Герой Кадзума",
+        "icon": "card_Герой Кадзума_limited.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 401,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Хроно",
+        "value": 141,
+        "name": "Даркнесс",
+        "icon": "card_Даркнесс_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 402,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Мифический",
+        "value": 30,
+        "name": "Даст",
+        "icon": "card_Даст_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 403,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Редкий",
+        "value": 8,
+        "name": "Додонко",
+        "icon": "card_Додонко_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 404,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Мифический",
+        "value": 23,
+        "name": "Кëя Мицуруги",
+        "icon": "card_Кëя Мицуруги_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 405,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Хроно",
+        "value": 160,
+        "name": "Кадзума",
+        "icon": "card_Кадзума_hrono(shiny).png",
+        "shiny": true,
+        "can_drop": true
+    },
+    {
+        "id": 406,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Хроно",
+        "value": 116,
+        "name": "Кадзума",
+        "icon": "card_Кадзума_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 407,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Редкий",
+        "value": 6,
+        "name": "Кит",
+        "icon": "card_Кит_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 408,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Мифический",
+        "value": 49,
+        "name": "Клэр",
+        "icon": "card_Клэр_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 409,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Комэкко",
+        "icon": "card_Комэкко_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 410,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Мифический",
+        "value": 50,
+        "name": "Крис",
+        "icon": "card_Крис_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 411,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Луна",
+        "icon": "card_Луна_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 412,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Хроно",
+        "value": 134,
+        "name": "Мегумин",
+        "icon": "card_Мегумин_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 413,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Редкий",
+        "value": 16,
+        "name": "Нэримаки",
+        "icon": "card_Нэримаки_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 414,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Рин",
+        "icon": "card_Рин_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 415,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Мифический",
+        "value": 28,
+        "name": "Сесилия",
+        "icon": "card_Сесилия_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 416,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Мифический",
+        "value": 39,
+        "name": "Сильвия",
+        "icon": "card_Сильвия_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 417,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Редкий",
+        "value": 9,
+        "name": "Сокетто",
+        "icon": "card_Сокетто_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 418,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Сэна",
+        "icon": "card_Сэна_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 419,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Редкий",
+        "value": 6,
+        "name": "Фунифура",
+        "icon": "card_Фунифура_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 420,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Редкий",
+        "value": 18,
+        "name": "Ханс",
+        "icon": "card_Ханс_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 421,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Легендарный",
+        "value": 66,
+        "name": "Чомусуке",
+        "icon": "card_Чомусуке_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 422,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Легендарный",
+        "value": 64,
+        "name": "Эрис",
+        "icon": "card_Эрис_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 423,
+        "verse_name": "KonoSuba 💫",
+        "rarity_name": "Мифический",
+        "value": 38,
+        "name": "Юн-юн",
+        "icon": "card_Юн-юн_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 424,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 62,
+        "name": "Бруно Буччеллати",
+        "icon": "card_Бруно Буччеллати_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 425,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 44,
+        "name": "Гвидо Миста",
+        "icon": "card_Гвидо Миста_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 426,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 46,
+        "name": "Гьяччо",
+        "icon": "card_Гьяччо_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 427,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 157,
+        "name": "Джорно Джованна",
+        "icon": "card_Джорно Джованна_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 428,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 176,
+        "name": "Дьяволо",
+        "icon": "card_Дьяволо_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 429,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Коко Джамбо",
+        "icon": "card_Коко Джамбо_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 430,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 64,
+        "name": "Леоне Абаккио",
+        "icon": "card_Леоне Абаккио_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 431,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 46,
+        "name": "Наранча Гирга",
+        "icon": "card_Наранча Гирга_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 432,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Нунцио Периколо",
+        "icon": "card_Нунцио Периколо_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 433,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 28,
+        "name": "Паннакотта Фуго",
+        "icon": "card_Паннакотта Фуго_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 434,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 50,
+        "name": "Пеши",
+        "icon": "card_Пеши_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 435,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Польпо",
+        "icon": "card_Польпо_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 436,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 51,
+        "name": "Ризотто Нэро",
+        "icon": "card_Ризотто Нэро_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 437,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Сале",
+        "icon": "card_Сале_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 438,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 43,
+        "name": "Секко",
+        "icon": "card_Секко_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 439,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 29,
+        "name": "Сквало",
+        "icon": "card_Сквало_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 440,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 40,
+        "name": "Тициано",
+        "icon": "card_Тициано_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 441,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 12,
+        "name": "Триш Уна",
+        "icon": "card_Триш Уна_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 442,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 44,
+        "name": "Формаджо",
+        "icon": "card_Формаджо_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 443,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 73,
+        "name": "Чокколата",
+        "icon": "card_Чокколата_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 444,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 20,
+        "name": "Гвесс",
+        "icon": "card_Гвесс_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 445,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 10,
+        "name": "Гуччио",
+        "icon": "card_Гуччио_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 446,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 188,
+        "name": "Джолин Куджо",
+        "icon": "card_Джолин Куджо_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 447,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 14,
+        "name": "Джонгалли Эй",
+        "icon": "card_Джонгалли Эй_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 448,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Ди эн Джи",
+        "icon": "card_Ди эн Джи_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 449,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Донателло Версус",
+        "icon": "card_Донателло Версус_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 450,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 2,
+        "name": "Кензо",
+        "icon": "card_Кензо_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 451,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Редкий",
+        "value": 7,
+        "name": "Ланг Ранглер",
+        "icon": "card_Ланг Ранглер_uncommon.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 452,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Локкобарокко",
+        "icon": "card_Локкобарокко_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 453,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 5,
+        "name": "Мирашон",
+        "icon": "card_Мирашон_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 454,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 47,
+        "name": "Миучча Миуллер",
+        "icon": "card_Миучча Миуллер_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 455,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 66,
+        "name": "Нарцисо Анасуй",
+        "icon": "card_Нарцисо Анасуй_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 456,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 1,
+        "name": "Перла Пуччи",
+        "icon": "card_Перла Пуччи_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 457,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Рикиэль",
+        "icon": "card_Рикиэль_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 458,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 3,
+        "name": "Ромео Джиссо",
+        "icon": "card_Ромео Джиссо_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 459,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 25,
+        "name": "Спортс Маккс",
+        "icon": "card_Спортс Маккс_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 460,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Тандер МакКвин",
+        "icon": "card_Тандер МакКвин_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 461,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Обычный",
+        "value": 4,
+        "name": "Унгало",
+        "icon": "card_Унгало_common.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 462,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 159,
+        "name": "Уэзер Репорт",
+        "icon": "card_Уэзер Репорт_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 463,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 46,
+        "name": "Фу Файтерс",
+        "icon": "card_Фу Файтерс_legend.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 464,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Мифический",
+        "value": 38,
+        "name": "Эмпорио Алниньо",
+        "icon": "card_Эмпорио Алниньо_mythic.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 465,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Хроно",
+        "value": 111,
+        "name": "Энрико Пуччи",
+        "icon": "card_Энрико Пуччи_hrono.png",
+        "shiny": false,
+        "can_drop": true
+    },
+    {
+        "id": 466,
+        "verse_name": "Невероятные приключения ДжоДжо 💪",
+        "rarity_name": "Легендарный",
+        "value": 53,
+        "name": "Эрмес Костелло",
+        "icon": "card_Эрмес Костелло_legend.png",
+        "shiny": false,
+        "can_drop": true
+    }
+]

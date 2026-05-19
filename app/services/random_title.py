@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Title, Rarity, User
 from app.database import DB
-from app.utils.consts import MSK_TIMEZONE
+from app.utils.constants import MSK_TIMEZONE
 from app.utils.enums.title_enums import TitleOpen
 
 async def random_title(session: AsyncSession, user: User) -> Title | TitleOpen:

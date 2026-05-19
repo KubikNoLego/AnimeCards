@@ -11,7 +11,6 @@ from sqlalchemy import Enum as SQLEnum
 class CardType(Enum):
     STANDARD = "standard"
     SEASONAL = "seasonal"
-    LIMITED = "limited"
 
 
 class Base(DeclarativeBase):
@@ -62,7 +61,6 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     balance: Mapped[int] = mapped_column(default=0)
-    pity: Mapped[int] = mapped_column(default=0)
     free_open: Mapped[int] = mapped_column(default=0)
     pvp_wins: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
@@ -161,6 +159,7 @@ class Rarity(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     drop_rate: Mapped[int] = mapped_column(nullable=False, default=100)
+    luck_multiplier: Mapped[float] = mapped_column(default=1.0)
 
     cards: Mapped[list["Card"]] = relationship("Card", back_populates="rarity", lazy="selectin")
     titles: Mapped[list["Title"]] = relationship("Title", back_populates="rarity", lazy="selectin")
@@ -365,3 +364,13 @@ class Banner(Base):
     ended_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     cards: Mapped[list['BannerCard']] = relationship("BannerCard", back_populates='banner',lazy="select")
+
+class BannerPity(Base):
+    __tablename__ = "bannerpities"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True,autoincrement=True)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    banner_id: Mapped[int] = mapped_column(ForeignKey("banners.id"), nullable=False)
+
+    pity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

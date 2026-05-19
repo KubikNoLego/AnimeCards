@@ -8,9 +8,9 @@ async def sort_inventory(user_id: int,
                         session: AsyncSession) -> Card:
     conditions = [UserCards.user_id == user_id]
     if selected_rarity_name:
-        conditions.append(Card.rarity_name == selected_rarity_name)
+        conditions.append(card.rarity.name == selected_rarity_name)
     if selected_verse_name:
-        conditions.append(Card.verse_name == selected_verse_name)
+        conditions.append(card.verse.name == selected_verse_name)
     
     stmt = (
     select(Card)

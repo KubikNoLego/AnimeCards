@@ -107,7 +107,7 @@ class PVPRepo:
         for slot_name, max_value in slot_max_values.items():
             card = getattr(battle_inv, slot_name, None)
             if card:
-                if card.rarity_name == "Лимитированный":
+                if card.rarity.name == "Лимитированный":
                     total += max_value
                 else:
                     total += card.value

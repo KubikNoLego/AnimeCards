@@ -18,13 +18,13 @@ async def back_to_sort(trade: bool = False):
 
     return builder.as_markup()
 
-async def sort_inventory_kb(selected_rarity_name,selected_verse_name,
+async def sort_inventory_kb(rarity_name, verse_name,
                             trade: bool = False):
 
     builder = InlineKeyboardBuilder()
 
-    if selected_rarity_name:
-        builder.button(text=f"📊 По редкости ({selected_rarity_name})",
+    if rarity_name:
+        builder.button(text=f"📊 По редкости ({rarity_name})",
                     callback_data=("sort_by_rarity"
                                 if not trade
                                 else "sort_by_rarity_trade"),style = "success")
@@ -33,8 +33,8 @@ async def sort_inventory_kb(selected_rarity_name,selected_verse_name,
                                 if not trade
                                 else "sort_by_rarity_trade"))
 
-    if selected_verse_name:
-        builder.button(text=f"🌌 По вселенной ({selected_verse_name})",
+    if verse_name:
+        builder.button(text=f"🌌 По вселенной ({verse_name})",
             callback_data=(VerseFilterPagination(p=1)
                         if not trade
                         else TradeVerseFilterPagination(p=1)).pack(), style = "success")

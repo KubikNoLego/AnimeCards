@@ -93,8 +93,8 @@ async def selected_card_callback(callback: CallbackQuery,
         await callback.message.delete()
 
         card_info = MText.get("card").format(name=card.name,
-                                                    verse=card.verse_name,
-                                                    rarity=card.rarity_name,
+                                                    verse=card.verse.name,
+                                                    rarity=card.rarity.name,
                                                     value=card.value)
         card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 
@@ -397,9 +397,9 @@ async def inventory_pagination_callback(callback: CallbackQuery,
 
             conditions = [UserCards.user_id == user.id]
             if selected_rarity_name:
-                conditions.append(Card.rarity_name == selected_rarity_name)
+                conditions.append(card.rarity.name == selected_rarity_name)
             if selected_verse_name:
-                conditions.append(Card.verse_name == selected_verse_name)
+                conditions.append(card.verse.name == selected_verse_name)
 
             stmt = select(Card).join(UserCards).where(and_(*conditions)).order_by(UserCards.id)
             filtered_cards = await session.scalars(stmt)
@@ -463,8 +463,8 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
 
     # Форматирование информации о карте
     card_info = MText.get("card").format(name=card.name,
-                                            verse=card.verse_name,
-                                            rarity=card.rarity_name,
+                                            verse=card.verse.name,
+                                            rarity=card.rarity.name,
                                             value=card.value)
     card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 

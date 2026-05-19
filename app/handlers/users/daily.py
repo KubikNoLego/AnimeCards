@@ -19,5 +19,5 @@ router = Router()
 
 @router.message(Command("daily"))
 async def _(message: Message, session: AsyncSession):
-    verse = await DB(session).card.get_verse(await RedisRequests(get_redis()).daily_verse())
+    verse = await DB(session).card.get_daily_verse()
     await message.reply(MText.get("daily_verse").format(verse=verse.name))

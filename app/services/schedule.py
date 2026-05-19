@@ -12,7 +12,7 @@ from app.services.updates import (
     update_info_users, update_verse, add_free_opens,
     clan_rebalance, create_backup, edit_stats
 )
-from app.utils.consts import MSK_TIMEZONE
+from app.utils.constants import MSK_TIMEZONE
 
 
 class SchedulerManager:

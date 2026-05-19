@@ -92,7 +92,7 @@ async def callback_inventory(callback: CallbackQuery, session: AsyncSession, sta
     if user:
         inventory_text = "<b>📋 Инвентарь пользователя:</b>\n\n"
         for card in user.inventory[:20]:
-            inventory_text += f"• {escape(card.name)} [{card.verse_name}] - {card.rarity_name}\n"
+            inventory_text += f"• {escape(card.name)} [{card.verse.name}] - {card.rarity.name}\n"
         
         if len(user.inventory) > 20:
             inventory_text += f"\n... и ещё {len(user.inventory) - 20} карточек"

@@ -47,10 +47,13 @@ async def sort_inventory_callback(callback: CallbackQuery,
 
         # Получаем текущие выбранные значения из FSM
         data = await state.get_data()
-        selected_verse_name = data.get('selected_verse_name', None)
-        selected_rarity_name = data.get('selected_rarity_name', None)
+        selected_verse_id = data.get('selected_verse_id', None)
+        selected_rarity_id = data.get('selected_rarity_id', None)
 
-        kb = await sort_inventory_kb(selected_rarity_name,selected_verse_name)
+        rarity = session.scalar(select(Rarity).where(Rarity.id == selected_rarity_id))
+        verse = session.scalar(select(Verse).where(Verse.id == selected_verse_id))
+
+        kb = await sort_inventory_kb(rarity.name,verse.name)
 
         # Проверяем, есть ли фото в текущем сообщении
         if callback.message.photo or callback.message.media_group_id:
@@ -138,8 +141,8 @@ async def verse_filter_callback(callback: CallbackQuery,
             await callback.answer(MText.get("verse_not_found"), show_alert=True)
             return
 
-        # Сохраняем выбранное название вселенной в FSM
-        await state.update_data(selected_verse_name=verse.name)
+        # Сохраняем выбранный ID вселенной в FSM
+        await state.update_data(selected_verse_id=verse.id)
 
         verse_selected_message = MText.get("verse_selected").format(
             verse_name=verse.name)
@@ -227,10 +230,12 @@ async def rarity_filter_callback(callback: CallbackQuery,
     try:
 
         # Сохраняем выбранное название редкости в FSM
-        await state.update_data(selected_rarity_name=callback_data.rarity_name)
+        await state.update_data(selected_rarity_id=callback_data.rarity_id)
+
+        rarity = session.scalar(select(Rarity).where(Rarity.id == callback_data.rarity_id))
 
         rarity_selected_message = MText.get("rarity_selected").format(
-            rarity_name=callback_data.rarity_name)
+            rarity_name=rarity.name)
 
         # Создаем клавиатуру для подтверждения выбора
         builder = await back_to_sort()
@@ -241,7 +246,7 @@ async def rarity_filter_callback(callback: CallbackQuery,
             reply_markup=builder
         )
         await callback.answer(MText.get("rarity_selected_success").format(
-            rarity_name=callback_data.rarity_name))
+            rarity_name=rarity.name))
     except Exception as e:
             logger.error(f"Ошибка при обработке callback выбора редкости: {e}")
             await callback.answer(MText.get("processing_error"),
@@ -259,14 +264,14 @@ async def inventory_pagination_callback(callback: CallbackQuery,
         if user and user.inventory and len(user.inventory) > 0:
             # Получаем текущие фильтры из FSM
             data = await state.get_data()
-            selected_verse_name = data.get('selected_verse_name', None)
-            selected_rarity_name = data.get('selected_rarity_name', None)
-            
+            selected_verse_id = data.get('selected_verse_id', None)
+            selected_rarity_id = data.get('selected_rarity_id', None)
+
             conditions = [UserCards.user_id == user.id]
-            if selected_rarity_name:
-                conditions.append(Card.rarity_name == selected_rarity_name)
-            if selected_verse_name:
-                conditions.append(Card.verse_name == selected_verse_name)
+            if selected_rarity_id:
+                conditions.append(Card.rarity_id == selected_rarity_id)
+            if selected_verse_id:
+                conditions.append(Card.verse_id == selected_verse_id)
             
             stmt = select(Card).join(UserCards).where(and_(*conditions)).order_by(UserCards.id)
             filtered_cards = await session.scalars(stmt)
@@ -316,8 +321,8 @@ async def show_inventory_card(callback: CallbackQuery, user: User,
 
     # Форматирование информации о карте
     card_info = MText.get("card").format(name=card.name,
-                                            verse=card.verse_name,
-                                            rarity=card.rarity_name,
+                                            verse=card.verse.name,
+                                            rarity=card.rarity.name,
                                             value=card.value)
     card_info = card_info + ("\n\n✨ Shiny" if card.shiny else "")
 

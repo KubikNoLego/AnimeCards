@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import DB
 from app.database.models import Card, UserCards
-from ..utils.consts import MSK_TIMEZONE, RARITY_EMOJIES
+from ..utils.constants import MSK_TIMEZONE, RARITY_EMOJIES
 
 
 class Messages:

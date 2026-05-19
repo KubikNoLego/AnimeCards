@@ -3,7 +3,6 @@
 """
 
 from .profile import user_photo_link, create_qr
-from .random_card import random_card, open_card
 from .schedule import SchedulerManager
 
 __all__ = [

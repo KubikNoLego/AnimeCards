@@ -3,7 +3,7 @@ from random import random
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.requests import DB
-from app.utils.consts import CLAN_CREATION_COST
+from app.utils.constants import CLAN_CREATION_COST
 from app.utils.enums.clan_enums import ClanActions, ClanInviteResult, ClanKick, CreateClanResult
 
 

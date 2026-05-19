@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
 from app.database.models import Clan, ClanMember, ClanInvitation, User
-from app.utils.consts import MSK_TIMEZONE
+from app.utils.constants import MSK_TIMEZONE
 
 
 class ClanRepo:

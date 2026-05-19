@@ -11,7 +11,7 @@ from app.database.repositories.trade_repo import TradeRepo
 from app.database.repositories.referral_repo import ReferralRepo
 from app.database.repositories.clan_repo import ClanRepo
 from app.database.repositories.pvp_repo import PVPRepo
-from app.utils.consts import SHOP_ITEMS, DAILY_VERSE_TTL, BOOST_TTL
+from app.utils.constants import SHOP_ITEMS, DAILY_VERSE_TTL, BOOST_TTL
 from app.utils.enums.shop import ShopEnum
 
 
@@ -77,64 +77,6 @@ class RedisRequests:
         """Возвращает подключение к Redis."""
         return self._redis
 
-    @staticmethod
-    async def daily_verse() -> Optional[int]:
-        """
-        Получает ежедневную вселенную из Redis.
-        Создает временное подключение для обратной совместимости.
-        
-        Returns:
-            ID ежедневной вселенной или None
-        """
-        redis = None
-        try:
-            redis = Redis()
-            verse = await redis.get('daily_verse')
-            if verse:
-                return int(verse.decode('utf-8'))
-            return None
-        except Exception as exc:
-            logger.error(f"Ошибка при получении ежедневной вселенной из Redis: {exc}")
-            return None
-        finally:
-            if redis:
-                await redis.aclose()
-
-    @staticmethod
-    async def set_verse(verse: int) -> None:
-        """
-        Устанавливает ежедневную вселенную в Redis с TTL 24 часа.
-        
-        Args:
-            verse: ID вселенной
-        """
-        redis = None
-        try:
-            redis = Redis()
-            await redis.set("daily_verse", verse, ex=DAILY_VERSE_TTL)
-            logger.debug(f"Установлена ежедневная вселенная: {verse}")
-        except Exception as e:
-            logger.error(f"Ошибка при установке ежедневной вселенной: {e}")
-        finally:
-            if redis:
-                await redis.aclose()
-
-    async def clear_all_shop(self) -> None:
-        """
-        Очищает все ключи магазина пользователей из Redis.
-        Удаляет все ключи с префиксом "shop:*".
-        """
-        try:
-            redis = await self._get_redis()
-            keys = await redis.keys("shop:*")
-            if keys:
-                await redis.delete(*keys)
-                logger.info(f"Удалено {len(keys)} ключей shop:* из Redis.")
-            else:
-                logger.debug("Ключи shop:* в Redis не найдены.")
-        except Exception as e:
-            logger.error(f"Ошибка при удалении ключей shop:* из Redis: {e}")
-
     async def create_user_items(self, user: User) -> None:
         """
         Создает начальные items пользователя в Redis.
@@ -145,7 +87,7 @@ class RedisRequests:
         """
         try:
             redis = await self._get_redis()
-            initial_value = "fbayr" if user.vip else "fbay"
+            initial_value = "fbay"
             await redis.set(f'shop:{user.id}', initial_value, ex=DAILY_VERSE_TTL)
             logger.debug(f"Созданы начальные items для пользователя {user.id}: {initial_value}")
         except Exception as e:

@@ -5,7 +5,7 @@ from html import escape as html_escape
 from app.messages.MessageControl import MText
 
 from ..database.models import Card, BattleInventory, Verse, User
-from .consts import RARITY_EMOJIES, SLOT_RARITY_MAP, RARITY_VALUE_RANGES
+from .constants import RARITY_EMOJIES, SLOT_RARITY_MAP, RARITY_VALUE_RANGES
 
 # Слоты для сравнения
 SLOTS = ["common", "uncommon", "mythic", "legend", "hrono"]
@@ -45,7 +45,7 @@ class BattleResult:
         return "Игрок 2"
 
 async def get_card_value(card: Card, battle_inv: BattleInventory):
-    if card.rarity_name != "Лимитированный":
+    if card.rarity.name != "Лимитированный":
         return card.value
     
     for rarity, slot in SLOT_RARITY_MAP.items():
@@ -58,7 +58,7 @@ def get_card_value_for_battle(card: Card, battle_inv: BattleInventory) -> int:
     Получить стоимость карты для боя.
     Для лимитированных карт используется максимальное значение редкости слота.
     """
-    if card.rarity_name != "Лимитированный":
+    if card.rarity.name != "Лимитированный":
         return card.value
     
     # Для лимитированной карты определяем слот и возвращаем максимальное значение
@@ -220,8 +220,8 @@ def format_battle_result(result: BattleResult, user1: User, user2: User,
             arrow = "="
         
         # Бонусы за daily verse
-        bonus1 = f" (+{int(value1 * 0.2)})" if (daily_name and slot_result.user1_card and slot_result.user1_card.verse_name == daily_name) else ""
-        bonus2 = f" (+{int(value2 * 0.2)})" if (daily_name and slot_result.user2_card and slot_result.user2_card.verse_name == daily_name) else ""
+        bonus1 = f" (+{int(value1 * 0.2)})" if (daily_name and slot_result.user1_card and slot_result.user1_card.verse.name == daily_name) else ""
+        bonus2 = f" (+{int(value2 * 0.2)})" if (daily_name and slot_result.user2_card and slot_result.user2_card.verse.name == daily_name) else ""
         
         # Форматируем строку слота
         text += f"{status} <b>{slot_name.upper()}:</b>\n"
@@ -255,7 +255,7 @@ async def format_inv(battle_inv: BattleInventory, daily_verse: Verse):
     for card in cards_list:
         value = await get_card_value(card, battle_inv)
 
-        bonus = int(value * 0.2) if daily_name and card.verse_name == daily_name else 0
+        bonus = int(value * 0.2) if daily_name and card.verse.name == daily_name else 0
         total_value += value + bonus
 
         shiny_text = "(Shiny ✨) " if card.shiny else ""
@@ -264,11 +264,11 @@ async def format_inv(battle_inv: BattleInventory, daily_verse: Verse):
         for slot_attr, slot_name in SLOT_RARITY_MAP.items():
             slot_card = getattr(battle_inv, slot_name, None)
             if slot_card and slot_card.id == card.id:
-                if card.rarity_name == "Лимитированный":
+                if card.rarity.name == "Лимитированный":
                     slot_text = f" [{slot_attr}]"
                 break
 
-        emoji = RARITY_EMOJIES.get(card.rarity_name, "🟡")
+        emoji = RARITY_EMOJIES.get(card.rarity.name, "🟡")
 
         cards_text_parts.append(
             f"{emoji} {card.name}{slot_text} {shiny_text}- <b>{value} ¥{f' (+{bonus})' if bonus else ''}</b>"

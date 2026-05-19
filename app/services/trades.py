@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 
 from app.database.requests import DB
-from app.utils.consts import MSK_TIMEZONE
+from app.utils.constants import MSK_TIMEZONE
 from app.utils.enums.trades_enums import TradeEnum
 
 

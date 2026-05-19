@@ -24,7 +24,7 @@ from app.messages import MText
 from app.utils import MSK_TIMEZONE
 from app.database import DB, Clan
 from app.utils.clan_pagination_message import edit_message
-from app.utils.consts import CLAN_CREATION_COST
+from app.utils.constants import CLAN_CREATION_COST
 from app.utils.enums.clan_enums import ClanActions, ClanInviteResult, ClanKick, CreateClanResult
 
 

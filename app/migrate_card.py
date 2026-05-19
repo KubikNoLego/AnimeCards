@@ -27,7 +27,7 @@ def model_to_dict(obj):
 def drop_tables(engine):
     """Удаление таблиц"""
 
-    tables = ["usercards", "cards", "verses", "rarities"]
+    tables = ["usercards", "cards", "verses", "rarities", "trades", "battle_inventories"]
 
     with engine.begin() as connection:
         for table in tables:
@@ -141,8 +141,8 @@ def recreate_cards(session):
         base_card = session.scalar(
             select(Card).where(
                 Card.name == card["name"],
-                Card.verse_id == verse.id),
-                Card.rarity_id == rarity.id)
+                Card.verse_id == verse.id,
+                Card.rarity_id == rarity.id))
 
         if not base_card:
             print(f"Missing base for {card['id']}")
@@ -202,10 +202,10 @@ def main(step: int):
         case 2:
             recreate_tables(engine)
             recreate_verses(session)
-            recreate_rarities(session)
+            #recreate_rarities(session)
             recreate_cards(session)
-            recreate_usercards(session)
+            #recreate_usercards(session)
 
 
 if __name__ == "__main__":
-    main(1)
+    main(2)

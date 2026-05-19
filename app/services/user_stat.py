@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from app.database.models import Card, UserCards
 from app.database.requests import DB
-from app.utils.consts import MSK_TIMEZONE, RARITY_EMOJIES
+from app.utils.constants import MSK_TIMEZONE, RARITY_EMOJIES
 from ..messages.MessageControl import MText
 
 
@@ -14,7 +14,7 @@ async def user_top_cards(session: AsyncSession, user_id):
                                 .filter_by(user_id = user_id)
                                 .order_by(Card.value.desc()).limit(3))
 
-        return "\n".join([f"{RARITY_EMOJIES.get(card.rarity_name, '🟡')} {card.name} {"(Shiny ✨) " if card.shiny else ""}- <b>{card.value} ¥</b>" for card in top])
+        return "\n".join([f"{RARITY_EMOJIES.get(card.rarity.name, '🟡')} {card.name} {"(Shiny ✨) " if card.shiny else ""}- <b>{card.value} ¥</b>" for card in top])
 
 
 async def user_profile(session,user_id):

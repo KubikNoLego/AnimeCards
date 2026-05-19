@@ -30,7 +30,7 @@ class RarityFilterPagination(CallbackData, prefix="rfpg"):
 
 class RarityFilter(CallbackData, prefix="rf"):
     """Данные обратного вызова для кнопок фильтра по редкости."""
-    rarity_name: str
+    rarity_id: int
 
 class TradePagination(CallbackData, prefix="tp"):
     """Данные обратного вызова для кнопок пагинации."""

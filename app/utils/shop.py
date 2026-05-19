@@ -1,4 +1,4 @@
-from app.utils.consts import SHOP_ITEMS
+from app.utils.constants import SHOP_ITEMS
 from app.utils.enums.shop import ShopEnum
 
 
