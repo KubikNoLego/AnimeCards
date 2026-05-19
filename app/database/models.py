@@ -351,6 +351,7 @@ class BannerCard(Base):
     card: Mapped["Card"] = relationship("Card", lazy="selectin")
 
 class Banner(Base):
+    __tablename__ = "banners"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
