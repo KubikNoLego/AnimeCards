@@ -1,9 +1,18 @@
 ﻿# Стандартные библиотеки
 from datetime import datetime
+from enum import Enum
 
 # Сторонние библиотеки
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import ARRAY, CHAR, BigInteger, DateTime, ForeignKey, Integer, String, Boolean
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Boolean, func
+from sqlalchemy import Enum as SQLEnum
+
+
+class CardType(Enum):
+    STANDARD = "standard"
+    SEASONAL = "seasonal"
+    LIMITED = "limited"
+
 
 class Base(DeclarativeBase):
     def __repr__(self) -> str:
@@ -32,27 +41,39 @@ class UserCards(Base):
     __tablename__ = 'usercards'
 
     id: Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
-    # Ассоциативная таблица для связи многие-ко-многим между User и Card
+
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
     card_id: Mapped[int] = mapped_column(Integer, ForeignKey("cards.id", ondelete="CASCADE"))
+
+    shiny: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    level: Mapped[int] = mapped_column(Integer,nullable=False,default=1)
+
+
+    obtained_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now(), nullable=False)
+
+    user: Mapped["User"] = relationship("User", back_populates="inventory")
+
+    card: Mapped["Card"] = relationship("Card", back_populates="owners")
+
 
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     balance: Mapped[int] = mapped_column(default=0)
-    pity: Mapped[int] = mapped_column(default=100)
+    pity: Mapped[int] = mapped_column(default=0)
     free_open: Mapped[int] = mapped_column(default=0)
     pvp_wins: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     username: Mapped[str | None] = mapped_column(String(32), default=None)
-    name: Mapped[str] = mapped_column(String(100))
+    name: Mapped[str]
 
     # Храним MSK-времена с timezone=True
     last_open: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     # Инвентарь — карточки пользователя (many-to-many)
-    inventory: Mapped[list["Card"]] = relationship("Card", back_populates="owners", secondary="usercards", lazy="selectin")
+    inventory: Mapped[list["UserCards"]] = relationship("UserCards", back_populates="user", lazy="selectin")
     battle_inventory: Mapped["BattleInventory"] = relationship("BattleInventory", back_populates="user", uselist=False)
     # Профиль — 1 к 1 связь
     profile: Mapped["Profile"] = relationship("Profile", back_populates="owner", lazy="selectin")
@@ -69,7 +90,7 @@ class User(Base):
 
 class BattleInventory(Base):
     __tablename__ = "battle_inventories"
-    
+
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
 
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
@@ -107,36 +128,39 @@ class BattleInventory(Base):
     @property
     def total_cards_count(self) -> int:
         return len(self.cards)
-    
+
     @property
     def is_full(self) -> bool:
-        return self.total_cards_count == 5 
-    
+        return self.total_cards_count == 5
+
 class Card(Base):
     __tablename__ = "cards"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    verse_name: Mapped[str] = mapped_column(String(150), ForeignKey("verses.name"))
-    rarity_name: Mapped[str] = mapped_column(String(50), ForeignKey("rarities.name"))
+
+    name: Mapped[str] = mapped_column(nullable=False)
     value: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    card_type: Mapped[CardType] = mapped_column(SQLEnum(CardType, name="card_type_enum"), default=CardType.STANDARD, nullable=False)
 
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    icon: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    verse_id: Mapped[int] = mapped_column(ForeignKey("verses.id"))
+    rarity_id: Mapped[int] = mapped_column(ForeignKey("rarities.id"))
+    verse: Mapped["Verse"] = relationship("Verse", back_populates='cards', lazy="selectin")
+    rarity: Mapped["Rarity"] = relationship("Rarity", back_populates='cards', lazy="selectin")
 
-    # Связи к объектам Rarity и Verse
-    rarity: Mapped["Rarity"] = relationship("Rarity", back_populates="cards", lazy="selectin")
-    verse: Mapped["Verse"] = relationship("Verse", back_populates="cards", lazy="selectin")
+    icon: Mapped[str]
+    shiny_icon: Mapped[str | None]
 
-    shiny: Mapped[bool] = mapped_column(Boolean, default=False)
-    can_drop: Mapped[bool] = mapped_column(Boolean, default=True)
+    has_shiny: Mapped[bool]
+    droppable: Mapped[bool]
 
-    owners: Mapped[list["User"]] = relationship("User", back_populates="inventory", secondary="usercards", lazy="selectin")
+    owners: Mapped[list["UserCards"]] = relationship("UserCards", back_populates="card", lazy="selectin")
 
 class Rarity(Base):
     __tablename__ = "rarities"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    drop_rate: Mapped[int] = mapped_column(nullable=False, default=100)
 
     cards: Mapped[list["Card"]] = relationship("Card", back_populates="rarity", lazy="selectin")
     titles: Mapped[list["Title"]] = relationship("Title", back_populates="rarity", lazy="selectin")
@@ -146,6 +170,7 @@ class Verse(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    daily: Mapped[bool] = mapped_column(Boolean, default=False)
 
     cards: Mapped[list["Card"]] = relationship("Card", back_populates="verse", lazy="selectin")
 
@@ -253,12 +278,12 @@ class Trade(Base):
 class PvPSearchQueue(Base):
     """Очередь поиска соперников для PvP."""
     __tablename__ = "pvp_search_queue"
-    
+
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
     deck_value: Mapped[int] = mapped_column(Integer, nullable=False)
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.now)
-    
+
     user: Mapped["User"] = relationship("User", lazy="selectin")
 
 
@@ -267,14 +292,14 @@ class Title(Base):
     __tablename__ = "titles"
 
     id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
-    
+
     title: Mapped[str] = mapped_column(String, nullable=False)
-    
+
     buff1: Mapped[int] = mapped_column(Integer,nullable=False)
     target1: Mapped[str] = mapped_column(String(1), nullable=False)
     buff2: Mapped[int | None] = mapped_column(Integer,nullable=True)
     target2: Mapped[str | None] = mapped_column(String(1), nullable=True)
-    
+
     rarity_id: Mapped[int] = mapped_column(Integer, ForeignKey("rarities.id"))
     rarity: Mapped["Rarity"] = relationship("Rarity", back_populates="titles", lazy="selectin")
     owners: Mapped[list["Profile"]] = relationship("Profile", back_populates="title", lazy="selectin")
@@ -287,27 +312,55 @@ class Title(Base):
         if self.buff2:
             result.append((self.buff2, self.target2))
         return result
-    
+
     @property
     def free_open_buff(self) -> int:
         if not any(target == 'f' for _,target in self.buffs):
             return 0
         return [value for value,target in self.buffs if target == 'f'][0]
-    
+
     @property
     def time_skip(self) -> int:
         if not any(target == 't' for _,target in self.buffs):
             return 0
         return [value for value,target in self.buffs if target == 't'][0]
-    
+
     @property
     def yen_boost(self) -> int:
         if not any(target=='y' for _, target in self.buffs):
             return 0
         return [value for value,target in self.buffs if target == 'y'][0]
-    
+
     @property
     def luck_boost(self) -> int:
         if not any(target=='b' for _, target in self.buffs):
             return 0
         return [value for value,target in self.buffs if target == 'b'][0]
+
+
+class BannerCard(Base):
+    __tablename__ = "banner_cards"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    banner_id: Mapped[int] = mapped_column(ForeignKey("banners.id", ondelete="CASCADE"))
+
+    card_id: Mapped[int] = mapped_column(ForeignKey("cards.id"))
+
+    banner: Mapped["Banner"] = relationship("Banner", back_populates="cards", lazy="selectin")
+    card: Mapped["Card"] = relationship("Card", lazy="selectin")
+
+class Banner(Base):
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    active: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    verse_id: Mapped[int | None] = mapped_column(ForeignKey("verses.id"), nullable=True)
+    
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    ended_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    cards: Mapped[list['BannerCard']] = relationship("BannerCard", back_populates='banner',lazy="select")
