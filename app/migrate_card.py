@@ -3,7 +3,7 @@
 from datetime import datetime
 import json
 
-from sqlalchemy import create_engine, select, text
+from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import sessionmaker, Session
 
 from .database.models import Card, UserCards, Verse, Rarity, Base, CardType
@@ -106,6 +106,42 @@ def recreate_rarities(session):
 old_to_new = {}
 shiny_to_base = {}
 
+def get_rarity_mapping():
+    """Возвращает маппинг старых названий редкостей на новые"""
+    return {
+        "common": "C",
+        "uncommon": "B",
+        "mythic": "S",
+        "legend": "SR",
+        "hrono": "SSR",
+    }
+
+def update_icon_path(old_icon_name):
+    """Обновляет путь иконки с новым форматом редкости"""
+    import re
+
+    # Извлекаем редкость из старого имени иконки
+    # Поддерживаем любые расширения файлов, а не только PNG
+    match = re.search(r'card_.*?_(.+?)(?:\(shiny\))?\.[^.]+$', old_icon_name)
+    if not match:
+        return old_icon_name
+
+    old_rarity = match.group(1)
+    rarity_mapping = get_rarity_mapping()
+    new_rarity = rarity_mapping.get(old_rarity, old_rarity)
+
+    # Формируем новое имя иконки
+    if "shiny" in old_icon_name.lower():
+        new_icon_name = old_icon_name.replace(f"_{old_rarity}(shiny)", f"_{new_rarity}(shiny)")
+    else:
+        # Заменяем только суффикс редкости, сохраняя расширение
+        import os
+        name_without_ext = os.path.splitext(old_icon_name)[0]
+        ext = os.path.splitext(old_icon_name)[1]
+        new_icon_name = name_without_ext.replace(f"_{old_rarity}", f"_{new_rarity}") + ext
+
+    return new_icon_name
+
 def recreate_cards(session):
     with open("cards.json", encoding="utf-8") as f:
         cards = json.load(f)
@@ -119,9 +155,12 @@ def recreate_cards(session):
         verse = session.scalar(select(Verse).where(Verse.name == card['verse_name']))
         rarity = session.scalar(select(Rarity).where(Rarity.name == card['rarity_name']))
 
+        # Обновляем путь к иконке
+        updated_icon = update_icon_path(card['icon'])
+
         new_card = Card(name=card['name'], value=card['value'],
             card_type=CardType.STANDARD,verse_id=verse.id,rarity_id=rarity.id,
-            icon=card['icon'],has_shiny=False,droppable=card['can_drop'])
+            icon=updated_icon,has_shiny=False,droppable=card['can_drop'])
         session.add(new_card)
         session.flush()
         old_to_new[card['id']] = new_card.id
@@ -149,12 +188,60 @@ def recreate_cards(session):
             continue
 
         base_card.has_shiny = True
-        base_card.shiny_icon = card["icon"]
+        # Обновляем путь к shiny иконке
+        base_card.shiny_icon = update_icon_path(card["icon"])
 
         shiny_to_base[card['id']] = base_card.id
 
 
     session.commit()
+
+def reset_all_sequences(engine):
+    inspector = inspect(engine)
+
+    with engine.begin() as conn:
+
+        for table_name in inspector.get_table_names():
+
+            pk = inspector.get_pk_constraint(table_name)
+            if not pk or not pk["constrained_columns"]:
+                continue
+
+            pk_column = pk["constrained_columns"][0]
+
+            try:
+                seq_name = conn.execute(
+                    text("""
+                        SELECT pg_get_serial_sequence(:table, :column)
+                    """),
+                    {"table": table_name, "column": pk_column}
+                ).scalar()
+
+                if not seq_name:
+                    continue
+
+                max_id = conn.execute(
+                    text(f"""
+                        SELECT COALESCE(MAX({pk_column}), 0)
+                        FROM {table_name}
+                    """)
+                ).scalar()
+
+                if max_id == 0:
+                    conn.execute(
+                        text("SELECT setval(:seq, 1, false)"),
+                        {"seq": seq_name}
+                    )
+                    print(f"[SEQ FIX] {table_name}.{pk_column} -> 1 (empty table)")
+                else:
+                    conn.execute(
+                        text("SELECT setval(:seq, :val, true)"),
+                        {"seq": seq_name, "val": max_id}
+                    )
+                    print(f"[SEQ FIX] {table_name}.{pk_column} -> {max_id}")
+
+            except Exception as e:
+                print(f"[SKIP] {table_name}: {e}")
 
 def recreate_usercards(session):
     with open("cards.json", encoding="utf-8") as f:
@@ -163,18 +250,53 @@ def recreate_usercards(session):
     with open("usercards.json", encoding="utf-8") as f:
         usercards = json.load(f)
 
+    old_cards = {c["id"]: c for c in cards}
+
+    seen = set()
+
     for usercard in usercards:
-        old_cards = {c["id"]: c for c in cards}
-        old_card = old_cards[usercard['card_id']]
-        if not old_card['shiny']:
-            new_card_id = old_to_new[usercard['card_id']]
+        old_card = old_cards.get(usercard["card_id"])
+
+        if not old_card:
+            continue
+        
+        if not old_card["shiny"]:
+            new_card_id = old_to_new.get(usercard["card_id"])
         else:
-            new_card_id = shiny_to_base[usercard['card_id']]
+            new_card_id = shiny_to_base.get(usercard["card_id"])
 
+        if new_card_id is None:
+            continue
 
-        session.add(UserCards(id=usercard['id'],user_id=usercard["user_id"],card_id=new_card_id, shiny=old_card.get('shiny',False),level=1))
+        key = (usercard["user_id"], new_card_id)
+
+        if key in seen:
+            continue
+        seen.add(key)
+
+        existing = session.scalar(
+            select(UserCards).where(
+                UserCards.user_id == usercard["user_id"],
+                UserCards.card_id == new_card_id
+            )
+        )
+
+        if existing:
+            if old_card.get("shiny", False):
+                existing.shiny = True
+            continue
+
+        session.add(
+            UserCards(
+                id=usercard["id"],
+                user_id=usercard["user_id"],
+                card_id=new_card_id,
+                shiny=old_card.get("shiny", False),
+                level=1
+            )
+        )
+
     session.commit()
-
 
 def main(step: int):
 
@@ -200,11 +322,12 @@ def main(step: int):
             print("\n[DONE] Таблицы удалены")
 
         case 2:
-            recreate_tables(engine)
-            recreate_verses(session)
+            #recreate_tables(engine)
+            #recreate_verses(session)
             #recreate_rarities(session)
-            recreate_cards(session)
+            #recreate_cards(session)
             #recreate_usercards(session)
+            reset_all_sequences(engine)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from loguru import logger
 from sqlalchemy import create_engine, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
+from aiogram.types import Message, CallbackQuery
 
 from app.database.models import Banner, BannerPity, Card, CardType, Rarity, User, UserCards
 from app.database.requests import DB, RedisRequests, get_redis
@@ -23,7 +24,7 @@ class LuckService:
         cooldown: float = 1.0
 
     @classmethod
-    def calculate_buffs(cls, user: User):
+    async def calculate_buffs(cls, user: User):
         
         buffs = cls.UserBuffs()
 
@@ -41,10 +42,10 @@ class LuckService:
 
         redis = RedisRequests(get_redis())
 
-        if redis.yens_boosts(user.id) > 0:
+        if (await redis.yens_boosts(user.id)) > 0:
             buffs.yen += .20
 
-        if redis.luck_boosts(user.id) > 0:
+        if (await redis.luck_boosts(user.id)) > 0:
             buffs.luck += .1
 
 
@@ -53,12 +54,50 @@ class LuckService:
 class GachaService:
 
     @classmethod
-    async def open_card(banner: Banner):
+    async def add_card_to_user(cls, session: AsyncSession, user: User,
+                            card: Card, shiny: bool) -> UserCards:
         
-        match Banner.id:
+        usercard = await session.scalar(select(UserCards).where(
+            UserCards.user_id == user.id,
+            UserCards.card_id == card.id
+        ))
+
+        if usercard is None:
+
+            usercard = UserCards(user_id = user.id, card_id = card.id,
+                                shiny=shiny)
+            
+            session.add(usercard)
+
+            await session.flush()
+
+            return usercard
+        
+        if shiny and not usercard.shiny:
+            usercard.shiny = True
+
+        return usercard
+
+
+    @classmethod
+    async def open_card(cls, message: Message, session: AsyncSession, banner_id: int):
+        
+        user = await DB(session).user.get_user(message.from_user.id)
+
+        match banner_id:
             
             case 1:
-                pass
+                buffs = await LuckService.calculate_buffs(user)
+                card, shiny = await cls._roll_standart_banner(session, user, buffs)
+
+                await cls.add_card_to_user(session, user, card, shiny)
+
+                await session.commit()
+
+                logger.info(f"Пользователь {user.id} получил карту {card.id}{' (Shiny)' if shiny else ''}")
+
+                return card,shiny
+
 
     @classmethod
     async def _force_rarity(cls, session: AsyncSession,
@@ -89,15 +128,17 @@ class GachaService:
 
         banner_pity = await cls._get_pity(session, banner.id, user.id)
 
-        if banner_pity.pity >= 100:
+        if banner_pity.ssr_pity >= 100:
+            banner_pity.ssr_pity = 0
             return await cls._force_rarity(session, 5)
-        elif banner_pity.pity == 50:
+        if banner_pity.sr_pity >= 50:
+            banner_pity.sr_pity = 0
             return await cls._force_rarity(session, 4)
-        elif banner_pity.pity % 20 == 0:
+        if banner_pity.s_pity >= 20:
+            banner_pity.s_pity = 0
             return await cls._force_rarity(session, 3)
 
-        rarities = await session.scalars(select(Rarity))
-        rarities = rarities.all()
+        rarities = (await session.scalars(select(Rarity))).all()
 
         weights = []
 
@@ -106,8 +147,8 @@ class GachaService:
 
             weight = rarity.drop_rate * (1 + bonus)
 
-            if rarity.id == 5 and banner_pity.pity >= 70:
-                soft_bonus = 1 + ((banner_pity.pity - 70) * 0.15)
+            if rarity.id == 5 and banner_pity.ssr_pity >= 70:
+                soft_bonus = 1 + ((banner_pity.ssr_pity - 70) * 0.15)
                 weight *= soft_bonus
 
             weights.append(weight)
@@ -116,24 +157,34 @@ class GachaService:
                                 weights=weights,
                                 k=1)[0]
         
+        banner_pity.ssr_pity += 1
+        banner_pity.sr_pity += 1
+        banner_pity.s_pity += 1
+
+        if rarity.id == 5:
+            banner_pity.ssr_pity = 0
+        elif rarity.id == 4:
+            banner_pity.sr_pity = 0
+        elif rarity.id == 3:
+            banner_pity.s_pity = 0
+            
         return rarity
     
     @classmethod
-    async def _roll_standart_banner(cls, session: AsyncSession, user: User, buffs: LuckService.UserBuffs) -> Card:
+    async def _roll_standart_banner(cls, session: AsyncSession, user: User, buffs: LuckService.UserBuffs) -> tuple[Card, bool]:
         
         banner = await session.scalar(select(Banner).where(Banner.id == 1))
 
         rarity = await cls._roll_rarity(session, user, banner,buffs)
 
-        shiny = random.random() <= SHINY_CHANCE
 
-        cards = await session.scalars(select(Card)
+        cards = (await session.scalars(select(Card)
                         .where(Card.rarity_id == rarity.id,
                                 Card.card_type == CardType.STANDARD,
-                                Card.droppable == True,
-                                Card.has_shiny == True))
-        
-        cards = cards.all()
+                                Card.droppable == True))).all()
+
+        if not cards:
+            raise ValueError(f"Нет карт для редкости {rarity.name}")
 
         boosted_daily_verse = await DB(session).card.get_daily_verse()
 
@@ -150,5 +201,12 @@ class GachaService:
             weights.append(weight)
 
         card = random.choices(cards, weights, k=1)[0]
+
+        shiny = False
+
+        if card.has_shiny:
+            
+            if random.random() <= SHINY_CHANCE:
+                shiny = True
 
         return card, shiny

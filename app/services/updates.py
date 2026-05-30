@@ -106,9 +106,8 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
             failed_count += 1
             await session.rollback()
     
-    if updated_count > 0:
-        await session.commit()
-        logger.info(f"Обновлено {updated_count} пользователей, {failed_count} ошибок")
+    await session.commit()
+    logger.info(f"Обновлено {updated_count} пользователей, {failed_count} ошибок")
     
     return updated_count > 0
 

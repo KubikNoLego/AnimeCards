@@ -4,7 +4,7 @@ from enum import Enum
 
 # Сторонние библиотеки
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Boolean, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Boolean, UniqueConstraint, func
 from sqlalchemy import Enum as SQLEnum
 
 
@@ -38,6 +38,8 @@ class Referrals(Base):
 
 class UserCards(Base):
     __tablename__ = 'usercards'
+
+    __table_args__ = (UniqueConstraint("user_id","card_id",name="uq_user_card"),)
 
     id: Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
 
@@ -373,4 +375,6 @@ class BannerPity(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     banner_id: Mapped[int] = mapped_column(ForeignKey("banners.id"), nullable=False)
 
-    pity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    ssr_pity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    sr_pity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    s_pity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

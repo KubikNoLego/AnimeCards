@@ -82,10 +82,10 @@
     {
         "id": 9,
         "verse_name": "Гуррен-Лаганн 🌀",
-        "rarity_name": "Редкий",
+        "rarity_name": "Легендарный",
         "value": 8,
         "name": "Киттан Бачика",
-        "icon": "card_kittan_uncommon.png",
+        "icon": "card_kittan_legend.png",
         "shiny": false,
         "can_drop": true
     },
@@ -697,16 +697,6 @@
         "name": "Безумная Мита",
         "icon": "card_crazymita_legend(shiny).png",
         "shiny": true,
-        "can_drop": false
-    },
-    {
-        "id": 71,
-        "verse_name": "MiSide 💖",
-        "rarity_name": "Редкий",
-        "value": 14,
-        "name": "Маленькая Мита",
-        "icon": "card_tinymita_uncommon.png",
-        "shiny": false,
         "can_drop": false
     },
     {
