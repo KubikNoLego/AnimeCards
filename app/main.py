@@ -30,16 +30,17 @@ def main() -> None:
     @dp.startup()
     async def on_startup():
         await bot.delete_webhook(drop_pending_updates=True)
-        
+
         async with engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
-        
+
         scheduler.set_stats_target(chat_id=config.CHAT_ID,
                                 message_id=config.MESSAGE_ID)
-        if not await DB(sessionmaker).card.get_daily_verse():
-            await scheduler._run_update_verse()
+        async with sessionmaker() as session:
+            if not await DB(session).card.get_daily_verse():
+                await scheduler._run_update_verse()
         scheduler.start()
-        
+
         logger.success("Бот успешно запущен")
     
     @dp.shutdown()

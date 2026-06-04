@@ -8,7 +8,6 @@ from app.filters import Private
 from app.keyboards import shop_keyboard, ShopItemCallback
 from app.messages import MText
 from app.database import DB, RedisRequests, Card, get_redis
-from app.services.random_card import random_hrono
 from app.services.shop import delete_item
 from app.utils.card_formater import format_buyed_card
 from app.utils.enums.shop import ShopEnum

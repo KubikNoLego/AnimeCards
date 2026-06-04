@@ -241,7 +241,7 @@ class RedisRequests:
         """
         Удаляет один boost йен для пользователя.
         Если счетчик становится 0, ключ удаляется.
-        
+
         Args:
             user_id: ID пользователя
         """
@@ -256,3 +256,20 @@ class RedisRequests:
                 logger.debug(f"Удален последний boost йен для пользователя {user_id}")
         except Exception as e:
             logger.error(f"Ошибка при удалении boost'а йен для пользователя {user_id}: {e}")
+
+    async def clear_all_shop(self) -> None:
+        """
+        Очищает все магазинные items для всех пользователей.
+        """
+        try:
+            redis = await self._get_redis()
+            # Получаем все ключи, соответствующие шаблону shop:*
+            keys = []
+            async for key in redis.scan_iter("shop:*"):
+                keys.append(key)
+
+            if keys:
+                await redis.delete(*keys)
+                logger.info(f"Очищено {len(keys)} магазинных items")
+        except Exception as e:
+            logger.error(f"Ошибка при очистке магазинных items: {e}")

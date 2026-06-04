@@ -10,7 +10,6 @@ __all__ = [
     "user_photo_link",
     "create_qr",
     # Cards
-    "random_card",
     "open_card",
     # Schedule
     "SchedulerManager",

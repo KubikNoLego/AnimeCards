@@ -15,7 +15,8 @@ DAILY_VERSE_TTL = 24 * 60 * 60
 BOOST_TTL = 3 * 24 * 60 * 60
 
 SHINY_CHANCE = 0.05
-DAILY_VERSE_BOOST = 2
+DAILY_VERSE_BOOST = 4
+DAILY_VERSE_YEN_BOOST = 1.2
 MSK_TIMEZONE = timezone(timedelta(hours=3))
 COOLDOWN = 3
 RARITY_VALUE_RANGES = {
@@ -27,11 +28,11 @@ RARITY_VALUE_RANGES = {
     "Лимитированный": (0, 0)
 }
 RARITY_EMOJIES = {
-            "Обычный": "🔵",
-            "Редкий": "🟢",
-            "Легендарный": "🟡",
-            "Мифический": "🟠",
-            "Хроно": "🔴",
+            "C": "<tg-emoji emoji-id='5253937676771435025'>🔵</tg-emoji>",
+            "B": "<tg-emoji emoji-id='5255760684230155919'>🟢</tg-emoji>",
+            "SR": "<tg-emoji emoji-id='5251321096795363331'>🟡</tg-emoji>",
+            "S": "<tg-emoji emoji-id='5251605354910883000'>🟠</tg-emoji>",
+            "SSR": "<tg-emoji emoji-id='5251610727914972054'>🔴</tg-emoji>",
             "Лимитированный": "🟣"
 }
 SLOT_RARITY_MAP = {

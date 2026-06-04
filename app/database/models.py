@@ -9,8 +9,8 @@ from sqlalchemy import Enum as SQLEnum
 
 
 class CardType(Enum):
-    STANDARD = "standard"
-    SEASONAL = "seasonal"
+    STANDARD = "Стандартная"
+    SEASONAL = "Сезонная"
 
 
 class Base(DeclarativeBase):
@@ -53,9 +53,9 @@ class UserCards(Base):
 
     obtained_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now(), nullable=False)
 
-    user: Mapped["User"] = relationship("User", back_populates="inventory")
+    user: Mapped["User"] = relationship("User", back_populates="inventory", lazy="selectin")
 
-    card: Mapped["Card"] = relationship("Card", back_populates="owners")
+    card: Mapped["Card"] = relationship("Card", back_populates="owners", lazy="selectin")
 
 
 class User(Base):
@@ -154,6 +154,34 @@ class Card(Base):
     droppable: Mapped[bool]
 
     owners: Mapped[list["UserCards"]] = relationship("UserCards", back_populates="card", lazy="selectin")
+
+    def icon_path(self, shiny: bool = False) -> ValueError | str:
+        if not self.has_shiny and shiny:
+            return ValueError(f"Карта {self.id} не имеет шайни версии")
+        
+        return f"app/assets/cards/{self.verse.name}/{self.icon if not shiny else self.shiny_icon}"
+
+    def format(self, shiny: bool = False) -> ValueError | str:
+        if not self.has_shiny and shiny:
+            return ValueError(f"Карта {self.id} не имеет шайни версии")
+        
+        price = self.price(shiny)
+
+        text = """<b>{name}</b>
+        
+🌐 Вселенная: <i>{verse}</i>
+🎨 Редкость: <b>{rarity}</b>
+💰 Ценность: <b>{value}</b> ¥
+🗂️ Тип: <i>{type}</i>
+"""
+        return (text.format(name=self.name, verse = self.verse.name,
+                    rarity = self.rarity.name, value = price, 
+                type = self.card_type.value) + 
+                    ("" if not shiny else "✨ Shiny"))
+
+
+    def price(self, shiny: bool) -> int:
+        return self.value if not shiny else int(self.value * 1.5)
 
 class Rarity(Base):
     __tablename__ = "rarities"
@@ -365,7 +393,7 @@ class Banner(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     ended_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    cards: Mapped[list['BannerCard']] = relationship("BannerCard", back_populates='banner',lazy="select")
+    cards: Mapped[list['BannerCard']] = relationship("BannerCard", back_populates='banner',lazy="selectin")
 
 class BannerPity(Base):
     __tablename__ = "bannerpities"

@@ -2,6 +2,7 @@ from html import escape
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.database.models import Card, UserCards
 from app.database.requests import DB
@@ -10,11 +11,11 @@ from ..messages.MessageControl import MText
 
 
 async def user_top_cards(session: AsyncSession, user_id):
-        top = await session.scalars(select(Card).join(UserCards)
-                                .filter_by(user_id = user_id)
-                                .order_by(Card.value.desc()).limit(3))
+        top = await session.scalars(select(UserCards).join(Card)
+                                .where(UserCards.user_id == user_id)
+                                .order_by(Card.value.desc()).limit(5))
 
-        return "\n".join([f"{RARITY_EMOJIES.get(card.rarity.name, '🟡')} {card.name} {"(Shiny ✨) " if card.shiny else ""}- <b>{card.value} ¥</b>" for card in top])
+        return "\n".join([f"{RARITY_EMOJIES.get(usercard.card.rarity.name, '🟡')} {usercard.card.name} {"(Shiny ✨) " if usercard.shiny else ""}- <b>{usercard.card.price(usercard.shiny)} ¥</b>" for usercard in top])
 
 
 async def user_profile(session,user_id):
@@ -29,7 +30,6 @@ async def user_profile(session,user_id):
                 name =  escape(user.name) + " 👑" if user.vip else escape(user.name),
                 title = user.profile.title.title or "Отсутствует",
                 balance = user.balance,
-                pity = user.pity,
                 referrals = len(user.referrals),
                 top_cards = await user_top_cards(session,user_id),
                 place = (place_on_top if place_on_top != "?" and 

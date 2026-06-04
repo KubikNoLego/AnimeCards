@@ -5,7 +5,6 @@ from sqlalchemy import exists, func, select
 from loguru import logger
 
 from app.database.models import Banner, Card, Verse
-# Импортируем random_card внутри метода, чтобы избежать циклической зависимости
 
 class CardRepo:
 

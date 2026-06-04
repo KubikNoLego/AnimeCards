@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 from sqlalchemy import create_engine, inspect, select, text
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import mapped_column, relationship, sessionmaker, Session
 
-from .database.models import Card, UserCards, Verse, Rarity, Base, CardType
+from .database.models import Banner, Card, UserCards, Verse, Rarity, Base, CardType
 
 DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:5432/animecards"
 
@@ -21,8 +21,6 @@ def model_to_dict(obj):
         column.name: getattr(obj, column.name)
         for column in obj.__table__.columns
     }
-
-
 
 def drop_tables(engine):
     """Удаление таблиц"""
@@ -58,20 +56,21 @@ def reset_sequences(engine):
                 pass
 
 
-def export_table(session, model, output_file):
+def export_table(session, table_name, output_file):
 
-    print(f"[EXPORT] {model.__tablename__}")
+    print(f"[EXPORT] {table_name}")
 
-    data = session.query(model).all()
-
-    result = [model_to_dict(item) for item in data]
+    rows = session.execute(
+        text(f"SELECT * FROM {table_name}")
+    ).mappings().all()
 
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(
-            result,
+            [dict(row) for row in rows],
             f,
             ensure_ascii=False,
-            indent=4
+            indent=4,
+            default=str
         )
 
     print(f"[OK] {output_file}")
@@ -100,7 +99,7 @@ def recreate_rarities(session):
         rarities = json.load(f)
 
     for rarity in rarities:
-        session.add(Rarity(name=rarity['name']))
+        session.add(Rarity(name=get_rarity_mapping().get(rarity['name'])))
     session.commit()
 
 old_to_new = {}
@@ -298,20 +297,39 @@ def recreate_usercards(session):
 
     session.commit()
 
+def drop_card_type_enum(engine):
+    """Удаляет ENUM card_type_enum"""
+
+    with engine.begin() as conn:
+        try:
+            conn.execute(
+                text("DROP TYPE IF EXISTS card_type_enum CASCADE")
+            )
+            print("[DROP] card_type_enum")
+        except Exception as e:
+            print(f"[ERROR] DROP card_type_enum: {e}")
+
+
+def create_banners(session):
+    now = datetime.now()
+    standard = Banner(name="Стандартный", active=True, started_at=now, ended_at=now+timedelta(weeks=30000))
+    umazing = Banner(name="UMAZING БАННЕР", active=True, started_at=now, ended_at=now+timedelta(days=30))
+    
+    session.add(standard)
+    session.add(umazing)
+    session.commit()
+
 def main(step: int):
 
     session = Session()
     match step:
         case 1:
-            exports = [
-                (Card, "cards.json"),
-                (UserCards, "usercards.json"),
-                (Verse, "verses.json"),
-                (Rarity, "rarities.json"),
-            ]
+            
 
-            for model, filename in exports:
-                export_table(session, model, filename)
+            export_table(session, "cards", "cards.json")
+            export_table(session, "usercards", "usercards.json")
+            export_table(session, "rarities", "rarities.json")
+            export_table(session, "verses", "verses.json")
 
             session.close()
 
@@ -320,15 +338,16 @@ def main(step: int):
             drop_tables(engine)
 
             print("\n[DONE] Таблицы удалены")
+            drop_card_type_enum(engine)
 
         case 2:
-            #recreate_tables(engine)
-            #recreate_verses(session)
-            #recreate_rarities(session)
-            #recreate_cards(session)
-            #recreate_usercards(session)
+            recreate_tables(engine)
+            recreate_verses(session)
+            recreate_rarities(session)
+            recreate_cards(session)
+            recreate_usercards(session)
             reset_all_sequences(engine)
-
+            create_banners(session)
 
 if __name__ == "__main__":
     main(2)

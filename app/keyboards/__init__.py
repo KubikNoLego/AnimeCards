@@ -12,5 +12,5 @@ from .inline import (
                     VerseFilter, VerseFilterPagination, RarityFilter,
                     RarityFilterPagination, TradePagination, TradeRarityFilter,
                     TradeRarityFilterPagination, TradeVerseFilter,
-                    TradeVerseFilterPagination, SelectedCard
+                    TradeVerseFilterPagination, SelectedCard, banners_select
                     )

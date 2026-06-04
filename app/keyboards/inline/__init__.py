@@ -30,3 +30,5 @@ from .trade_kbs import (
 )
 
 from .pvp import (selects_card_pvp)
+
+from .cards import banners_select
