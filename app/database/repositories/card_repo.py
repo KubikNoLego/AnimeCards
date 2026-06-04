@@ -71,3 +71,20 @@ class CardRepo:
         except Exception as exc:
             logger.exception(f"Ошибка получения карты: {exc}")
             return None
+        
+    async def get_banner(self, banner_id: int):
+        try:
+            return await self.session.scalar(select(Banner).where(
+                                                    Banner.id == banner_id))
+        except Exception as _ex:
+            logger.exception(f"Ошибка при получении баннера: {_ex}")
+            return None
+    
+    async def get_season_banner(self):
+        try:
+            return await self.session.scalar(select(Banner)
+                                        .where(Banner.active == True, 
+                                                Banner.id != 1))
+        except Exception as _ex:
+            logger.exception(f"Ошибка при получении баннера: {_ex}")
+            return None

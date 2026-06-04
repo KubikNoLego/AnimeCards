@@ -57,3 +57,6 @@ class SelectedCard(CallbackData, prefix="ts"):
 
 class ClanKickData(CallbackData, prefix="kick"):
     user_id: int    
+
+class RollSeasonBanner(CallbackData, prefix="roll"):
+    card_id: int

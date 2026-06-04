@@ -10,7 +10,7 @@ from aiogram.types import Message, CallbackQuery
 
 from app.database.models import Banner, BannerCard, BannerPity, Card, CardType, Rarity, User, UserCards
 from app.database.requests import DB, RedisRequests, get_redis
-from app.utils.constants import COOLDOWN, DAILY_VERSE_BOOST, DAILY_VERSE_YEN_BOOST, MSK_TIMEZONE, SHINY_CHANCE
+from app.utils.constants import COOLDOWN, DAILY_VERSE_BOOST, DAILY_VERSE_YEN_BOOST, MSK_TIMEZONE, SEASON_ROLL_COST, SHINY_CHANCE
 from app.utils.enums.banner import BannerType
 from app.utils.enums.open_card_enums import CardOpen
 
@@ -24,9 +24,9 @@ class LuckService:
         cooldown: float = 0.0
 
         def __repr__(self):
-            return f"""<blockquote>🍀 Бонус на удачу: {'-' if (self.luck-1)*100 < 0 else '+'}{round(self.luck-1,3)*100} %
-👝 Бонус на ¥: {'-' if (self.yen-1)*100 < 0 else '+'}{round(self.yen-1,3)*100} %
-⌛ Бонус на время открытия: {'-' if self.cooldown > 0 else '+'}{abs(round(self.cooldown))} м</blockquote>
+            return f"""<blockquote>🍀 Бонус на удачу: <b>{'-' if (self.luck-1)*100 < 0 else '+'}{abs(round(self.luck-1,3)*100)} %</b>
+👝 Бонус на ¥: <b>{'-' if (self.yen-1)*100 < 0 else '+'}{abs(round(self.yen-1,3)*100)} %</b>
+⌛ Бонус на время открытия: <b>{'-' if self.cooldown > 0 else '+'}{abs(round(self.cooldown))} мин.</b></blockquote>
 """
 
     @classmethod
@@ -64,11 +64,10 @@ class GachaService:
         price = card.price(shiny)
         buffs = await LuckService.calculate_buffs(user)
         daily = await DB(session).card.get_daily_verse()
+        
+        buffs.yen += DAILY_VERSE_YEN_BOOST if daily.id == card.verse_id else 0
 
-        added = int(price * buffs.yen)
-        added = int(added * (DAILY_VERSE_YEN_BOOST if 
-                                            card.verse_id == daily.id else 1))
-
+        added = max(int(price * buffs.yen),0)
 
         user.balance += added
         await session.commit()
@@ -103,6 +102,10 @@ class GachaService:
         except Exception as e:
             logger.exception(f"Ошибка форматирования времени: {e}")
             return "<i>⏳ До следующего открытия осталось немного времени</i>"
+
+    @classmethod
+    def check_able_season(cls, user: User):
+        return user.balance >= SEASON_ROLL_COST or user.free_open > 0
 
     @classmethod
     def check_able_standard(cls, user: User, buffs: LuckService.UserBuffs):
@@ -238,7 +241,7 @@ class GachaService:
         if banner_pity.sr_pity >= 50:
             banner_pity.sr_pity = 0
             return await cls._force_rarity(session, 4)
-        if banner_pity.s_pity >= 20:
+        if banner_pity.s_pity >= 30:
             banner_pity.s_pity = 0
             return await cls._force_rarity(session, 3)
 
