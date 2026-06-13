@@ -1,0 +1,16 @@
+shiny_chance |= 5%
+daily_verse_boost |= 4
+daily_verse_yen_boost |= 20%
+season_roll_cost |= 30
+cooldown |= 3
+offset |= 3
+clan_creation_cost |= 500
+
+rarity_value_ranges |= {
+    C |= [1, 5]
+    B |= [5, 20]
+    S |= [20, 50]
+    SR |= [40, 80]
+    SSR |= [100, 200]
+    Лимитированный |= [0, 0]
+}

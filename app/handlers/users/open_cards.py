@@ -182,8 +182,6 @@ async def _(callback_query: CallbackQuery, callback_data: RollSeasonBanner,
     free_opens_available = min(10, user.free_open)
     paid_cost_per_roll = SEASON_ROLL_COST
 
-    can_afford = GachaService.check_able_season(user, 1)
-
     rarity_emoji = RARITY_EMOJIES.get(card.rarity.name, card.rarity.name)
 
     message_text = f"🎯 <b>Вы выбрали карту:</b>\n"
