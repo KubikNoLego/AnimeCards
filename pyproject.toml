@@ -22,4 +22,5 @@ dependencies = [
     "pyyaml>=6.0.3",
     "aiogram>=3.27.0",
     "apscheduler>=3.11.2",
+    "kubiks>=0.1.2",
 ]

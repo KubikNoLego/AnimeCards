@@ -67,7 +67,7 @@ class GachaService:
         
         buffs.yen += DAILY_VERSE_YEN_BOOST if daily.id == card.verse_id else 0
 
-        added = max(int(price * buffs.yen),0)
+        added = max(round(price * buffs.yen), price)
 
         user.balance += added
         await session.commit()
@@ -104,8 +104,9 @@ class GachaService:
             return "<i>⏳ До следующего открытия осталось немного времени</i>"
 
     @classmethod
-    def check_able_season(cls, user: User):
-        return user.balance >= SEASON_ROLL_COST or user.free_open > 0
+    def check_able_season(cls, user: User, amount: int = 1):
+        paid_rolls = max(0, amount - user.free_open)
+        return user.balance >= paid_rolls * SEASON_ROLL_COST
 
     @classmethod
     def check_able_standard(cls, user: User, buffs: LuckService.UserBuffs):
@@ -194,9 +195,15 @@ class GachaService:
 
             case _:
                 buffs = await LuckService.calculate_buffs(user)
+                
+                if user.free_open > 0:
+                    user.free_open -= 1
+                else:
+                    user.balance -= SEASON_ROLL_COST
+
                 card, shiny = await cls._roll_season_banner(session, user,
                                                         buffs, featured_card)
-
+                
                 await cls.add_card_to_user(session, user, card, shiny)
 
                 await session.commit()
@@ -204,6 +211,33 @@ class GachaService:
                 logger.info(f"Пользователь {user.id} получил карту {card.id}{' (Shiny)' if shiny else ''} из баннера {banner_id}")
 
                 return card, shiny
+
+    @classmethod
+    async def open_cards(cls, user_id: int, session: AsyncSession, 
+                        featured_card: int,
+                        amount: int = 10) -> list[tuple[Card,bool]]:
+        user = await DB(session).user.get_user(user_id)
+
+        results = []
+
+        buffs = await LuckService.calculate_buffs(user)
+
+        for _ in range(amount):
+            card, shiny = await cls._roll_season_banner(session, user,
+                buffs, featured_card)
+            
+            if user.free_open > 0:
+                    user.free_open -= 1
+            else:
+                user.balance -= SEASON_ROLL_COST
+            
+            await cls.add_card_to_user(session, user, card, shiny)
+
+            results.append((card, shiny))
+
+        await session.commit()
+
+        return results
 
 
     @classmethod
@@ -359,7 +393,7 @@ class GachaService:
                 weight *= 5
             
             if card.card_type == CardType.SEASONAL:
-                weight *= 20
+                weight *= 40
 
             weights.append(weight)
 

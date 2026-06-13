@@ -1,7 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.database.models import Banner
-from app.keyboards.inline.datas import RollSeasonBanner
+from app.keyboards.inline.datas import RollSeasonBanner, RollSeasonBannerA
 
 def banners_select():
 
@@ -25,7 +25,16 @@ def roll_season_banner_kb(banner: Banner):
     builder = InlineKeyboardBuilder()
     cards = banner.cards
     [builder.button(text=f"{bannercard.card.name}",
-                callback_data=RollSeasonBanner(card_id=bannercard.card.id)) 
+                callback_data=RollSeasonBanner(card_id=bannercard.card.id).pack()) 
                 for bannercard in cards]
 
+    return builder.as_markup()
+
+def roll_season_banner_amount_kb(card: int):
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Крутить 1x", callback_data=RollSeasonBannerA(
+                                                    card_id=card, amount= 1))
+    builder.button(text="Крутить 10x", callback_data=RollSeasonBannerA(
+                                                    card_id=card, amount=10))
+    
     return builder.as_markup()
