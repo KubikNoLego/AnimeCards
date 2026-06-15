@@ -4,7 +4,7 @@ from html import escape
 
 from aiogram.fsm.context import FSMContext
 from aiogram import Router
-from aiogram.types import Message
+from aiogram.types import InputRichMessage, Message
 from aiogram.filters import CommandStart,CommandObject
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +26,6 @@ router = Router()
 @router.message(CommandStart(),Private())
 async def _(message: Message, command: CommandObject,session: AsyncSession,
             state: FSMContext):
-    logger.success("Старт команда")
     user = await message.bot.get_chat(message.from_user.id)
 
     db = DB(session)
@@ -85,7 +84,6 @@ async def _(message: Message, command: CommandObject,session: AsyncSession,
                 inviter = await db.user.get_user(inviter_id)
                 await send_message_to_users(message,inviter,user)
 
-    message_text = MText.get("start")
     keyboard = await main_kb()
     await state.clear()
-    await message.reply(message_text, reply_markup=keyboard, disable_web_page_preview=True)
+    await message.answer_rich(InputRichMessage(html=MText.get("start")), reply_markup=keyboard, disable_web_page_preview=True)

@@ -3,6 +3,7 @@ from datetime import datetime,timedelta
 import os
 
 from aiogram import Bot
+from aiogram.exceptions import TelegramForbiddenError
 from loguru import logger
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -72,7 +73,7 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
     failed_count = 0
     
     async def send_notification(user: User):
-        if datetime.now(MSK_TIMEZONE) - user.last_open >= timedelta(hours=5):
+        if datetime.now(MSK_TIMEZONE) - user.last_open >= timedelta(hours=8):
             await bot.send_message(user.id, "💤 Вы давно не открывали карту!\n\n<b>Может сейчас вам повезёт?</b>")
         return
 
@@ -234,7 +235,7 @@ async def get_stats(session: AsyncSession) -> str:
         )
         
         return stats_text
-        
+
     except Exception as e:
         logger.exception(f"Ошибка при получении статистики: {e}")
         return "<i>📊 Статистика бота</i>\n\n<i>Ошибка при загрузке данных...</i>"
@@ -251,6 +252,10 @@ async def edit_stats(session: AsyncSession, bot: Bot, chat_id: int | str,
             message_id=message_id,
             parse_mode="HTML"
         )
+    
+    except TelegramForbiddenError:
+        logger.error("Бот не находится в телеграмм")
+
     except Exception as e:
         # Игнорируем ошибки, если сообщение не изменилось
         if "message is not modified" not in str(e).lower():

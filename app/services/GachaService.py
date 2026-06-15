@@ -3,16 +3,12 @@ from datetime import datetime, timedelta
 import random
 
 from loguru import logger
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import sessionmaker
-from aiogram.types import Message, CallbackQuery
 
 from app.database.models import Banner, BannerCard, BannerPity, Card, CardType, Rarity, User, UserCards
 from app.database.requests import DB, RedisRequests, get_redis
 from app.utils.constants import COOLDOWN, DAILY_VERSE_BOOST, DAILY_VERSE_YEN_BOOST, MSK_TIMEZONE, SEASON_ROLL_COST, SHINY_CHANCE
-from app.utils.enums.banner import BannerType
-from app.utils.enums.open_card_enums import CardOpen
 
 
 class LuckService:
@@ -54,6 +50,8 @@ class LuckService:
         if (await redis.luck_boosts(user.id)) > 0:
             buffs.luck += .3
 
+        logger.debug(f"Баффы пользователя ({user.id}): Удача {buffs.luck}\tБуст йен {buffs.yen}\tКД {buffs.cooldown}")
+
         return buffs
 
 class GachaService:
@@ -71,6 +69,8 @@ class GachaService:
 
         user.balance += added
         await session.commit()
+
+        logger.debug(f"Пользователь ({user.id}) получил {added} йен")
 
         if added > price and added-price > 0:
             return f"➕ Вы дополнительно получили <b>{added-price} ¥</b>"
@@ -148,22 +148,26 @@ class GachaService:
             
             session.add(usercard)
             await session.flush()
+            logger.debug(f"Добавлена карта ({card.id}) пользователю ({user.id})")
 
             return usercard
 
         if card.card_type == CardType.SEASONAL:
             
             usercard.level += 1
+            logger.debug(f"Добавлена карта ({card.id}) пользователю ({user.id} уровень {usercard.level})")
             
             if (usercard.level >= 3 and 
             card.has_shiny and 
             usercard.shiny == False):
 
                 usercard.shiny = True
+                logger.debug(f"Карта ({card.id}) пользователя ({user.id}) стала shiny")
 
         else:
             if shiny and not usercard.shiny:
                 usercard.shiny = True
+                logger.debug(f"Карта ({card.id}) пользователя ({user.id}) стала shiny")
 
         return usercard
 
@@ -308,7 +312,9 @@ class GachaService:
             banner_pity.sr_pity = 0
         elif rarity.id == 3:
             banner_pity.s_pity = 0
-            
+        
+        logger.debug(f"Получена редкость {rarity.name} ({rarity.id}) для пользователя ({user.id})")
+
         return rarity
     
     @classmethod

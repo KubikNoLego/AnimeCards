@@ -1,8 +1,9 @@
 from collections import Counter
+import time
 
 from aiogram import Router,F
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, Message
+from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, Message, InputRichMessage
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,7 +43,7 @@ def format_cards_to_lines(cards: list[tuple[Card, bool]]):
 @router.message(F.text == "🎴 Баннеры", Private())
 async def _(message: Message, session: AsyncSession):
     
-    await message.answer(MText.get("banners_menu"), reply_markup=
+    await message.answer_rich(InputRichMessage(html=MText.get("banners_menu")), reply_markup=
                                         banners_select())
 
 @router.callback_query(F.data == "standard_banner")
@@ -233,22 +234,39 @@ async def _(callback_query: CallbackQuery, callback_data: RollSeasonBannerA,
                 await callback_query.message.answer(card.format(shiny))
 
             finally:
-                await callback_query.message.delete()
+                try:
+                    await callback_query.message.delete()
+                except Exception:
+                    pass
         
         elif amount > 1 and can_open:
-            wait_message = await callback_query.message.answer_animation(
-                                                        FSInputFile(
-                                                        "app/assets/open.mp4"))
-        
+            draft_id = int(time.time())
+            await callback_query.bot.send_rich_message_draft(
+                callback_query.from_user.id,draft_id, InputRichMessage(
+                    html=MText.get("card_open_draft1")
+                )
+            )
             cards = await GachaService.open_cards(callback_query.from_user.id,
                                                 session, card_id,
                                                 amount)
 
             cards_names_list = format_cards_to_lines(cards)
+            await callback_query.bot.send_rich_message_draft(
+                callback_query.from_user.id,draft_id, InputRichMessage(
+                    html=MText.get("card_open_draft2").format(
+                        cards=cards_names_list.replace("\n","<br>"))
+                )
+            )
+            image = generate_cards_image(cards)
             await callback_query.message.answer_photo(
-                FSInputFile(generate_cards_image(cards)),
-                caption=f"Вы получили:\n<blockquote>{cards_names_list}</blockquote>")
-            await wait_message.delete()
+                FSInputFile(image),
+                caption=f"<b>Вы получили:</b>\n\n<blockquote>{cards_names_list}</blockquote>")
+            
+            await callback_query.bot.send_rich_message_draft(
+                callback_query.from_user.id,draft_id, InputRichMessage(
+                    html="<h1>✅ Открытие завершено</h1>"
+                    )
+                )
             
         else:
             await callback_query.answer("У вас нехватает ¥", show_alert=True)

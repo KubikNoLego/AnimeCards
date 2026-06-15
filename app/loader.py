@@ -1,17 +1,43 @@
 import sys
 import os
-from loguru import logger
+import logging
 
+from loguru import logger
 from aiogram import Dispatcher
 
 from app.handlers import setup_routers as setup_handlers_routers
 from app.middlewares import DBSessionMiddleware
 from app.middlewares.throttling import ThrottlingMiddleware
 
+class InterceptHandler(logging.Handler):
+    """
+    Перенаправляет стандартный logging в Loguru.
+    """
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+
+        frame = logging.currentframe()
+        depth = 2
+
+        while frame and frame.f_code.co_filename == logging.__file__:
+            frame = frame.f_back
+            depth += 1
+
+        logger.opt(
+            depth=depth,
+            exception=record.exc_info
+        ).log(level, record.getMessage())
+
+
 def setup_logger() -> None:
     """
-    Настройка логирования с использованием loguru.
+    Настройка Loguru и перехват логов стандартного logging.
     """
+
     os.makedirs("logs", exist_ok=True)
 
     logger.remove()
@@ -19,20 +45,43 @@ def setup_logger() -> None:
     logger.add(
         sys.stderr,
         level="INFO",
-        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}:{function}:{line}</cyan> - <level>{message}</level>",
-        colorize=True
+        colorize=True,
+        backtrace=True,
+        diagnose=True,
+        format=(
+            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+            "<level>{level: <8}</level> | "
+            "<cyan>{name}:{function}:{line}</cyan> - "
+            "<level>{message}</level>"
+        ),
     )
 
     logger.add(
         "logs/bot.log",
-        level="INFO",
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
+        level="TRACE",
         encoding="utf-8",
         rotation="10 MB",
-        retention="7 days"
+        retention="7 days",
+        compression="zip",
+        backtrace=True,
+        diagnose=True,
+        format=(
+            "{time:YYYY-MM-DD HH:mm:ss} | "
+            "{level: <8} | "
+            "{process.name}:{thread.name} | "
+            "{name}:{function}:{line} - "
+            "{message}"
+        ),
     )
 
-    logger.info("Логирование настроено успешно!")
+    logging.root.handlers = [InterceptHandler()]
+    logging.root.setLevel(logging.NOTSET)
+
+    for name in logging.root.manager.loggerDict:
+        logging.getLogger(name).handlers = []
+        logging.getLogger(name).propagate = True
+
+    logger.info("Логирование настроено")
 
 def setup_routers(dp: Dispatcher):
     """Подключает все роутеры к диспетчеру."""
