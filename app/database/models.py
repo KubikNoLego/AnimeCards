@@ -63,6 +63,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     balance: Mapped[int] = mapped_column(default=0)
+    season_balance: Mapped[int] = mapped_column(default=0)
     free_open: Mapped[int] = mapped_column(default=0)
     pvp_wins: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 

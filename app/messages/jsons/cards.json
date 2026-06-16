@@ -23,6 +23,6 @@
     "standart_banner": "<b>📦 СТАНДАРТНЫЙ БАННЕР</b>\n\nПрогресс гаранта:\n<blockquote>{pities}</blockquote>\n\n🎁 Бесплатных открытий: <b>{free_opens}</b>\n\nСтатус открытия: <i>{can_open}</i>\n\n☝️ <b>Бесплатные открытия используются в первую очередь, лучше потратить их на открытие сезонного баннера!</b>",
     "season_banner": "<b>🌸 {banner_name}</b>\nСезонные карточки: <blockquote>{cards}</blockquote>\n\nПрогресс гаранта:\n<blockquote>{pities}</blockquote>\n\n🎁 Бесплатных открытий: <b>{free_opens}</b>\n👛Стоимость открытия: {cost} ¥\n\n<i>Выберете персонажа, которого хотите получить</i>",
     "card_open_draft1": "<tg-thinking>Получаем карты</tg-thinking>",
-    "card_open_draft2": "<p>{cards}</p><br><tg-thinking>Создаём изображение</tg-thinking>"
+    "card_open_draft2": "<p><blackquote>{cards}</blackquote></p><br><tg-thinking>Создаём изображение</tg-thinking>"
 
 }
