@@ -38,7 +38,7 @@ async def add_free_opens(session: AsyncSession) -> bool:
 
     updated_count = 0
     for user in vip_users:
-        user.free_open += 1
+        user.free_standard_open += 1
         updated_count += 1
 
     if updated_count > 0:

@@ -22,6 +22,8 @@ SEASON_ROLL_COST = CONFIG["season_roll_cost"]
 COOLDOWN = CONFIG["cooldown"]
 CLAN_CREATION_COST = CONFIG["clan_creation_cost"]
 
+PLAYERS_IN_TOP = CONFIG['players_in_top']
+
 DAILY_VERSE_TTL = 24 * 60 * 60
 BOOST_TTL = 3 * 24 * 60 * 60
 

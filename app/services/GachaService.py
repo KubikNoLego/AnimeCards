@@ -24,9 +24,11 @@ class GachaService:
         added = max(round(price * buffs.yen), price)
 
         user.balance += added
+        user.season_balance += price
         await session.commit()
 
-        logger.debug(f"Пользователь ({user.id}) получил {added} йен")
+        logger.debug(f"Пользователь ({user.id}) получил {added} йен на баланс")
+        logger.debug(f"Пользователь ({user.id}) получил {price} йен в сезонный баланс")
 
         if added > price and added-price > 0:
             return f"➕ Вы дополнительно получили <b>{added-price} ¥</b>"
@@ -45,7 +47,7 @@ class GachaService:
             time_left = target_time - datetime.now(MSK_TIMEZONE)
             total_seconds = int(time_left.total_seconds())
 
-            logger.debug(f"Секунд до следущего открытия: {total_seconds}")
+            logger.debug(f"Секунд до следующего открытия: {total_seconds}")
 
             if total_seconds < 0:
                 formatted_time = "00:00"
@@ -61,7 +63,7 @@ class GachaService:
 
     @classmethod
     def check_able_season(cls, user: User, amount: int = 1):
-        paid_rolls = max(0, amount - user.free_open)
+        paid_rolls = max(0, amount - user.free_season_opens)
         return user.balance >= paid_rolls * SEASON_ROLL_COST
 
     @classmethod
@@ -69,7 +71,7 @@ class GachaService:
 
         can_roll = False
 
-        if user.free_open > 0:
+        if user.free_standard_opens > 0:
             can_roll = True
         else:
             now = datetime.now(MSK_TIMEZONE)
@@ -142,8 +144,8 @@ class GachaService:
 
                 await cls.add_card_to_user(session, user, card, shiny)
 
-                if user.free_open > 0:
-                    user.free_open -= 1
+                if user.free_standard_opens > 0:
+                    user.free_standard_opens -= 1
                 else:
                     user.last_open = datetime.now(MSK_TIMEZONE)
 
@@ -156,8 +158,8 @@ class GachaService:
             case _:
                 buffs = await BuffService.calculate_buffs(user)
                 
-                if user.free_open > 0:
-                    user.free_open -= 1
+                if user.free_season_opens > 0:
+                    user.free_season_opens -= 1
                 else:
                     user.balance -= SEASON_ROLL_COST
 
@@ -186,8 +188,8 @@ class GachaService:
             card, shiny = await cls._roll_season_banner(session, user,
                 buffs, featured_card)
             
-            if user.free_open > 0:
-                    user.free_open -= 1
+            if user.free_season_opens > 0:
+                    user.free_season_opens -= 1
             else:
                 user.balance -= SEASON_ROLL_COST
             

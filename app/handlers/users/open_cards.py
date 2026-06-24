@@ -16,7 +16,7 @@ from app.services.GachaService import GachaService
 from app.services.BuffsService import BuffService
 from app.keyboards import banners_select
 from app.database import DB
-from app.utils.constants import RARITY_EMOJIES, SEASON_ROLL_COST
+from app.utils.constants import RARITY_EMOJIES, SEASON_ROLL_COST, SHINY_CHANCE
 from app.utils.multiopen_utils import generate_cards_image
 
 router = Router()
@@ -44,7 +44,7 @@ def format_cards_to_lines(cards: list[tuple[Card, bool]]):
 @router.message(F.text == "🎴 Баннеры", Private())
 async def _(message: Message, session: AsyncSession):
     
-    await message.answer_rich(InputRichMessage(html=MText.get("banners_menu")), reply_markup=
+    await message.answer_rich(InputRichMessage(html=MText.get("banners_menu").format(chance=SHINY_CHANCE*100)), reply_markup=
                                         banners_select())
 
 @router.callback_query(F.data == "standard_banner")
@@ -66,7 +66,7 @@ async def _(callback_query: CallbackQuery, session: AsyncSession):
 
     await callback_query.message.answer(MText.get("standart_banner").format(
                                                 pities=pities_text, 
-                                                free_opens=user.free_open,
+                                                free_opens=user.free_standard_opens,
                                                 can_open=can_open), 
                                                 reply_markup=
                                         roll_standard_banner_kb())
@@ -168,7 +168,7 @@ async def _(callback_query: CallbackQuery, session: AsyncSession):
                                                 banner_name = banner.name,
                                                 cards = cards,
                                                 pities = pities_text, 
-                                                free_opens = user.free_open,
+                                                free_opens = user.free_season_opens,
                                                 cost=SEASON_ROLL_COST), 
                                                 reply_markup=
                                         roll_season_banner_kb(banner))
@@ -181,7 +181,7 @@ async def _(callback_query: CallbackQuery, callback_data: RollSeasonBanner,
     user = await db.user.get_user(callback_query.from_user.id)
     card = await db.card.get_card(callback_data.card_id)
 
-    free_opens_available = min(10, user.free_open)
+    free_opens_available = min(10, user.free_season_opens)
     paid_cost_per_roll = SEASON_ROLL_COST
 
     rarity_emoji = RARITY_EMOJIES.get(card.rarity.name, card.rarity.name)
@@ -194,7 +194,7 @@ async def _(callback_query: CallbackQuery, callback_data: RollSeasonBanner,
     message_text += f"• 10 открытий: {paid_cost_per_roll * 10 - free_opens_available * paid_cost_per_roll} ¥ (с учетом бесплатных)\n\n"
 
     message_text += f"💎 <b>Ваш баланс:</b> {user.balance} ¥\n"
-    message_text += f"🎁 <b>Бесплатных открытий:</b> {user.free_open}\n"
+    message_text += f"🎁 <b>Бесплатных открытий:</b> {user.free_season_opens}\n"
 
     await callback_query.message.answer(message_text,
             reply_markup=roll_season_banner_amount_kb(callback_data.card_id))

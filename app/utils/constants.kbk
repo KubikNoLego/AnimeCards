@@ -22,3 +22,5 @@ rarity_to_points |= {
     SR |= 25
     SSR |= 50
 }
+
+players_in_top |= 15

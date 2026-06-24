@@ -83,11 +83,23 @@ class UserRepo:
         place = (count_higher or 0) + 1
         return place
     
-    async def get_top_players_by_balance(self,
+    async def get_top_players_by_season_balance(self,
                                         limit: int = 10) -> list[User]:
         """Возвращает топ юзеров по балансу"""
         try:
             stmt = select(User).order_by(User.season_balance.desc()).limit(limit)
+            result = await self.session.execute(stmt)
+            top_players = result.scalars().all()
+            return top_players
+        except Exception as exc:
+            logger.exception(f"Ошибка при получении топ игроков по балансу: {exc}")
+            return []
+        
+    async def get_top_players_by_balance(self,
+                                        limit: int = 10) -> list[User]:
+        """Возвращает топ юзеров по балансу"""
+        try:
+            stmt = select(User).order_by(User.balance.desc()).limit(limit)
             result = await self.session.execute(stmt)
             top_players = result.scalars().all()
             return top_players
