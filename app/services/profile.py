@@ -9,19 +9,6 @@ from loguru import logger
 
 from app.database.requests import DB
 
-async def change_visible_for_profile(session: AsyncSession, user_id) -> str:
-    """Меняет видимость игрока в профиле"""
-    db = DB(session)
-    user = await db.user.get_user(user_id)
-
-    if user.profile.visible:
-        user.profile.visible = False
-    else:
-        user.profile.visible = True
-    
-    await session.commit()
-    return f"👉 Теперь вы <b>{"видимы" if user.profile.visible else "невидимы"}</b> в топе!"
-
 async def create_qr(link:str) -> FSInputFile:
     """Создаёт QR для реферальной ссылки"""
     qr = qrcode.QRCode(

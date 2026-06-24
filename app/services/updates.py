@@ -77,11 +77,6 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
             await bot.send_message(user.id, "💤 Вы давно не открывали карту!\n\n<b>Может сейчас вам повезёт?</b>")
         return
 
-    async def add_free_opens_title(user: User, session: AsyncSession):
-        title = user.profile.title
-        if title and title.free_open_buff:
-            user.free_open += title.free_open_buff
-
     for user in users_list:
         try:
             # Получаем актуальную информацию о пользователе из Telegram
@@ -96,7 +91,6 @@ async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
                 user.name = new_name
                 updated_count += 1
             await send_notification(user)
-            await add_free_opens_title(user, session)
         except Exception as e:
             # Проверяем, не заблокировал ли пользователь бота
             if "Forbidden" in str(e) or "blocked" in str(e).lower():

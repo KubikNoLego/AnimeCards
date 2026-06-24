@@ -13,7 +13,7 @@ async def user_panel(user_id: int):
 
     return builder.as_markup()
 
-async def profile_keyboard(has_describe: bool, vip: bool, visible: bool):
+async def profile_keyboard(has_describe: bool, vip: bool):
     builder = InlineKeyboardBuilder()
 
     builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1).pack())
@@ -25,8 +25,6 @@ async def profile_keyboard(has_describe: bool, vip: bool, visible: bool):
     if has_describe:
         builder.button(text="❌ Удалить подпись",
                     callback_data="delete_describe",style = "danger")
-        
-    builder.button(text=f"{'❌' if not visible else '✅'} Отображение в топе", callback_data="change_visible")
 
     builder.adjust(1)
 

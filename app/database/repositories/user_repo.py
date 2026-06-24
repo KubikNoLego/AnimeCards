@@ -76,8 +76,7 @@ class UserRepo:
     
     async def get_user_place_on_top(self,user: User):
         """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
-        stmt = select(func.count(User.id)).join(Profile).where(User.balance > user.balance, 
-                                                Profile.visible == True)
+        stmt = select(func.count(User.id)).where(User.season_balance > user.season_balance)
         result = await self.session.execute(stmt)
         count_higher = result.scalar()
 
@@ -88,8 +87,7 @@ class UserRepo:
                                         limit: int = 10) -> list[User]:
         """Возвращает топ юзеров по балансу"""
         try:
-            stmt = select(User).join(Profile).filter(
-                Profile.visible == True).order_by(User.balance.desc()).limit(limit)
+            stmt = select(User).order_by(User.season_balance.desc()).limit(limit)
             result = await self.session.execute(stmt)
             top_players = result.scalars().all()
             return top_players
@@ -101,8 +99,7 @@ class UserRepo:
                                         limit: int = 10) -> list[User]:
         """Возвращает топ юзеров по количеству побед в PvP"""
         try:
-            stmt = select(User).filter(
-                Profile.visible == True).order_by(User.pvp_wins.desc()).limit(limit)
+            stmt = select(User).order_by(User.pvp_wins.desc()).limit(limit)
             result = await self.session.execute(stmt)
             top_players = result.scalars().all()
             return top_players

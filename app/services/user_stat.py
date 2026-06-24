@@ -22,8 +22,7 @@ async def user_profile(session,user_id):
         db = DB(session)
         user = await db.user.get_user(user_id)
 
-        place_on_top = (await db.user.get_user_place_on_top(user) 
-                if user.profile.visible else "?")
+        place_on_top = await db.user.get_user_place_on_top(user)
 
         text = MText.get("profile").format(
                 tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",

@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from app.database.models import Banner, CardType, User, Card
 from app.utils.multiopen_utils import generate_cards_image
-from app.services.GachaService import GachaService, LuckService
+from app.services.GachaService import GachaService
 
 class Message:
     class from_user:

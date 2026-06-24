@@ -30,7 +30,8 @@ class CardRepo:
                 Verse.daily == True
             ))
 
-            last_daily_verse.daily = False
+            if last_daily_verse is not None:
+                last_daily_verse.daily = False
         
             stmt = (
                 select(Verse).where(exists().where((Card.verse_id == Verse.id)

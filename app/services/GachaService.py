@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 import random
 
@@ -7,52 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Banner, BannerCard, BannerPity, Card, CardType, Rarity, User, UserCards
-from app.database.requests import DB, RedisRequests, get_redis
+from app.database.requests import DB
+from app.services.BuffsService import BuffService
 from app.utils.constants import COOLDOWN, DAILY_VERSE_BOOST, DAILY_VERSE_YEN_BOOST, MSK_TIMEZONE, SEASON_ROLL_COST, SHINY_CHANCE
-
-
-class LuckService:
-
-    @dataclass
-    class UserBuffs:
-        luck: float = 1.0
-        yen: float = 1.0
-        cooldown: float = 0.0
-
-        def __repr__(self):
-            return f"""<blockquote>🍀 Бонус на удачу: <b>{'-' if (self.luck-1)*100 < 0 else '+'}{abs(round(self.luck-1,3)*100)} %</b>
-👝 Бонус на ¥: <b>{'-' if (self.yen-1)*100 < 0 else '+'}{abs(round(self.yen-1,3)*100)} %</b>
-⌛ Бонус на время открытия: <b>{'-' if self.cooldown > 0 else '+'}{abs(round(self.cooldown))} мин.</b></blockquote>
-"""
-
-    @classmethod
-    async def calculate_buffs(cls, user: User):
-        
-        buffs = cls.UserBuffs()
-
-        if user.profile.title:
-
-            title = user.profile.title
-
-            if title.yen_boost: buffs.yen += title.yen_boost / 100
-            if title.luck_boost: buffs.luck += title.luck_boost / 100
-            if title.time_skip: buffs.cooldown += title.time_skip
-            
-        if user.vip:
-            buffs.yen += .25
-            buffs.luck += .1
-
-        redis = RedisRequests(get_redis())
-
-        if (await redis.yens_boosts(user.id)) > 0:
-            buffs.yen += .20
-
-        if (await redis.luck_boosts(user.id)) > 0:
-            buffs.luck += .3
-
-        logger.debug(f"Баффы пользователя ({user.id}): Удача {buffs.luck}\tБуст йен {buffs.yen}\tКД {buffs.cooldown}")
-
-        return buffs
 
 class GachaService:
 
@@ -60,7 +16,7 @@ class GachaService:
     async def add_yens(cls, user: User, card: Card, shiny: bool, 
                         session: AsyncSession):
         price = card.price(shiny)
-        buffs = await LuckService.calculate_buffs(user)
+        buffs = await BuffService.calculate_buffs(user)
         daily = await DB(session).card.get_daily_verse()
         
         buffs.yen += DAILY_VERSE_YEN_BOOST if daily.id == card.verse_id else 0
@@ -78,7 +34,7 @@ class GachaService:
             return None
 
     @classmethod
-    def nottime(cls, last_open: datetime, buff: LuckService.UserBuffs):
+    def nottime(cls, last_open: datetime, buff: BuffService.UserBuffs):
         try:
 
             hour = COOLDOWN - (1 if datetime.now(MSK_TIMEZONE).weekday() >= 5 else 0)
@@ -109,7 +65,7 @@ class GachaService:
         return user.balance >= paid_rolls * SEASON_ROLL_COST
 
     @classmethod
-    def check_able_standard(cls, user: User, buffs: LuckService.UserBuffs):
+    def check_able_standard(cls, user: User, buffs: BuffService.UserBuffs):
 
         can_roll = False
 
@@ -181,7 +137,7 @@ class GachaService:
         match banner_id:
 
             case 1:
-                buffs = await LuckService.calculate_buffs(user)
+                buffs = await BuffService.calculate_buffs(user)
                 card, shiny = await cls._roll_standard_banner(session, user, buffs)
 
                 await cls.add_card_to_user(session, user, card, shiny)
@@ -198,7 +154,7 @@ class GachaService:
                 return card,shiny
 
             case _:
-                buffs = await LuckService.calculate_buffs(user)
+                buffs = await BuffService.calculate_buffs(user)
                 
                 if user.free_open > 0:
                     user.free_open -= 1
@@ -224,7 +180,7 @@ class GachaService:
 
         results = []
 
-        buffs = await LuckService.calculate_buffs(user)
+        buffs = await BuffService.calculate_buffs(user)
 
         for _ in range(amount):
             card, shiny = await cls._roll_season_banner(session, user,
@@ -269,7 +225,7 @@ class GachaService:
     @classmethod
     async def _roll_rarity(cls, session: AsyncSession, 
                         user: User, banner: Banner,
-                        buffs: LuckService.UserBuffs) -> Rarity:
+                        buffs: BuffService.UserBuffs) -> Rarity:
 
         banner_pity = await cls._get_pity(session, banner.id, user.id)
 
@@ -319,7 +275,7 @@ class GachaService:
     
     @classmethod
     async def _roll_standard_banner(cls, session: AsyncSession, user: User,
-                            buffs: LuckService.UserBuffs) -> tuple[Card, bool]:
+                            buffs: BuffService.UserBuffs) -> tuple[Card, bool]:
         
         banner = await session.scalar(select(Banner).where(Banner.id == 1))
 
@@ -361,7 +317,7 @@ class GachaService:
 
     @classmethod
     async def _roll_season_banner(cls, session: AsyncSession, user: User,
-                    buffs: LuckService.UserBuffs, featured_card: int) -> tuple[Card, bool]:
+                    buffs: BuffService.UserBuffs, featured_card: int) -> tuple[Card, bool]:
         banner = await session.scalar(select(Banner).where(
                                     Banner.active == True, Banner.id != 1))
         

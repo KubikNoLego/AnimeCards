@@ -12,7 +12,8 @@ from app.filters import Private
 from app.keyboards.inline.cards import roll_season_banner_amount_kb, roll_season_banner_kb, roll_standard_banner_kb
 from app.keyboards.inline.datas import RollSeasonBanner, RollSeasonBannerA
 from app.messages import MText
-from app.services.GachaService import GachaService, LuckService
+from app.services.GachaService import GachaService
+from app.services.BuffsService import BuffService
 from app.keyboards import banners_select
 from app.database import DB
 from app.utils.constants import RARITY_EMOJIES, SEASON_ROLL_COST
@@ -52,7 +53,7 @@ async def _(callback_query: CallbackQuery, session: AsyncSession):
     db = DB(session)
 
     user = await db.user.get_user(callback_query.from_user.id)
-    buffs = await LuckService.calculate_buffs(user)
+    buffs = await BuffService.calculate_buffs(user)
 
     pities = await GachaService._get_pity(session,1,user.id)
 
@@ -76,7 +77,7 @@ async def _(callback_query: CallbackQuery, session: AsyncSession):
     
     user = await DB(session).user.get_user(callback_query.from_user.id)
 
-    buffs = await LuckService.calculate_buffs(user)
+    buffs = await BuffService.calculate_buffs(user)
 
     await callback_query.message.answer(f"Ваши бонусы:\n{buffs}\n<i>Повышайте эти характеристики для большей выгоды!</i>")
     await callback_query.message.delete()
@@ -88,7 +89,7 @@ async def _(callback_query: CallbackQuery, session: AsyncSession):
 
     user = await db.user.get_user(callback_query.from_user.id)
 
-    buffs = await LuckService.calculate_buffs(user)
+    buffs = await BuffService.calculate_buffs(user)
 
     if GachaService.check_able_standard(user, buffs):
 
@@ -120,7 +121,7 @@ async def _(message: Message, session: AsyncSession):
 
     user = await db.user.get_user(message.from_user.id)
 
-    buffs = await LuckService.calculate_buffs(user)
+    buffs = await BuffService.calculate_buffs(user)
 
     if GachaService.check_able_standard(user, buffs):
 
