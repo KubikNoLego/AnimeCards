@@ -5,8 +5,6 @@ from typing import Callable
 from aiogram.types import CallbackQuery, FSInputFile, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
 from loguru import logger
 
-from app.database.requests import RedisRequests
-from app.database import get_redis
 from app.utils.constants import COOLDOWN, MSK_TIMEZONE
 
 from ..database.models import Card, User
@@ -35,35 +33,6 @@ def format_card(card: Card, shiny: bool) -> str:
                     rarity=card.rarity.name,
                     value=card.value,
                     added = ("\n\n✨ Shiny" if shiny else ""))
-
-    return text
-
-async def format_open_card(card: Card, shiny: bool,user: User) -> str:
-    """Форматирует информацию о открываемой карте с учетом бонусов."""
-    template = "<b>{name}</b>\n\n🌐 Вселенная: <i>{verse}</i>\n🎨 Редкость: <b>{rarity}</b>\n💰 Ценность: <b>{value}</b> ¥{added}"
-
-    redis = get_redis()
-    redis_requests = RedisRequests(redis)
-    
-    vip_bonus = int(card.value * 0.1) if user.vip else 0
-    daily_bonus = (int(card.value * 0.2) if (card.verse.id ==
-                        await RedisRequests.daily_verse())
-                        else 0)
-    yens_boost = int(card.value * 0.3) if await redis_requests.yens_boosts(user.id) > 0 else 0
-    yens_title = int(card.value * (user.profile.title.yen_boost/100)) if user.profile.title else 0
-
-    bonus = vip_bonus + daily_bonus + yens_boost + yens_title
-
-    value = (str(card.value) if not bonus
-            else str(card.value)+f" (+{bonus})")
-
-    text = template.format(name=card.name,
-                        verse=card.verse.name,
-                    rarity=card.rarity.name,
-                    value=value,
-                    added=(f"\n\n✨ Shiny\n\n🍀 Гарант на Хроно: {user.pity}/100"
-                    if card.shiny
-                    else f"\n\n🍀 Гарант на Хроно: {user.pity}/100"))
 
     return text
 

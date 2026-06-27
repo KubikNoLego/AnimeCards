@@ -1,17 +1,24 @@
 ﻿# Стандартные библиотеки
-from datetime import datetime
+from datetime import datetime, date
 from enum import Enum
 
 # Сторонние библиотеки
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Boolean, UniqueConstraint, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Boolean, UniqueConstraint, func, Date
 from sqlalchemy import Enum as SQLEnum
 
 
 class CardType(Enum):
     STANDARD = "Стандартная"
     SEASONAL = "Сезонная"
+
+class ShopItems(Enum):
+    STANDARD_SPIN = "standard_spin"
+    LUCK_BOOST = "luck_boost"
+    YEN_BOOST = "yen_boost"
+    MYSTERY_BOX = "mystery_box"
+    DUPLICATOR = "duplicator"
 
 class Base(DeclarativeBase):
     def __repr__(self) -> str:
@@ -64,9 +71,13 @@ class User(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     balance: Mapped[int] = mapped_column(default=0)
     season_balance: Mapped[int] = mapped_column(default=0)
+    pvp_wins: Mapped[int] = mapped_column(Integer, default=0)
+
     free_standard_opens: Mapped[int] = mapped_column(default=0)
     free_season_opens: Mapped[int] = mapped_column(default=0)
-    pvp_wins: Mapped[int] = mapped_column(Integer, default=0)
+    luck_boosts: Mapped[int] = mapped_column(default=0)
+    yen_boosts: Mapped[int] = mapped_column(default=0)
+    duplicators: Mapped[int] = mapped_column(default=0)
 
     username: Mapped[str | None] = mapped_column(String(32), default=None)
     name: Mapped[str]
@@ -81,6 +92,14 @@ class User(Base):
     referrals: Mapped[list["Referrals"]] = relationship("Referrals", back_populates="referrer", foreign_keys=[Referrals.user_id], lazy="selectin")
     clan_member: Mapped["ClanMember"] = relationship("ClanMember", back_populates="user", lazy="selectin", uselist=False)
     used_promos: Mapped[list["Promo"]] = relationship("Promo", back_populates="used_by", secondary="promo_users", lazy="selectin")
+    daily_shop_purchases: Mapped[list["DailyShopPurchase"]] = relationship("DailyShopPurchase", back_populates="user", lazy="selectin")
+
+    @property
+    def today_shop_purchases(self):
+        today = datetime.today().date()
+
+        return {purchase.item for purchase in self.daily_shop_purchases
+                if purchase.shop_date == today}
 
 class BattleInventory(Base):
     __tablename__ = "battle_inventories"
@@ -339,7 +358,7 @@ class Title(Base):
     droppable: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     def get_buff(self, buff: str) -> int:
-        return self.buffs.get(buff, 0)
+        return self.buffs.get(buff, None)
 
     @property
     def free_open_buff(self) -> int:
@@ -397,3 +416,21 @@ class BannerPity(Base):
     ssr_pity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     sr_pity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     s_pity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+class DailyShopPurchase(Base):
+    __tablename__ = "daily_shop_purchases"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False)
+
+    shop_date: Mapped[date] = mapped_column(
+        Date, nullable=False)
+
+    item: Mapped[ShopItems] = mapped_column(
+        SQLEnum(ShopItems), nullable=False)
+
+    user: Mapped["User"] = relationship("User", back_populates="daily_shop_purchases", lazy="selectin")

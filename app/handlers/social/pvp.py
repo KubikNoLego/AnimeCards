@@ -17,7 +17,7 @@ from app.keyboards.inline.callback_datas.pvp_datas import (
     PvPRarityFilter, PvPRarityFilterPagination,
 )
 from app.messages import MText
-from app.database import DB, Verse, RedisRequests, Card, UserCards, Rarity, User
+from app.database import DB, Verse, Card, UserCards, Rarity, User
 from app.services.inventory import sort_inventory
 from app.utils.constants import RARITY_VALUE_RANGES, RARITY_EMOJIES, SLOT_RARITY_MAP
 from app.utils.card_formater import format_card, show_inventory_card

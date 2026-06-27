@@ -1,16 +1,12 @@
 # schedule.py (полностью исправленная версия)
-
-from datetime import datetime, time
-import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.requests import RedisRequests, get_redis
 from app.services.updates import (
     update_info_users, update_verse, add_free_opens,
-    clan_rebalance, create_backup, edit_stats
+    clan_rebalance, create_backup, edit_stats, remove_expired_vip_subscriptions
 )
 from app.utils.constants import MSK_TIMEZONE
 
@@ -38,7 +34,6 @@ class SchedulerManager:
         """Выполняет обновление ежедневной вселенной (обёртка)."""
         async with self.sessionmaker() as session:
             await update_verse(session)
-            await RedisRequests(get_redis()).clear_all_shop()
 
     async def _update_stats(self):
         """Периодическое обновление сообщения со статистикой."""
@@ -79,6 +74,16 @@ class SchedulerManager:
 
         logger.info("Комплексное ежедневное обновление завершено.")
 
+    async def _check_expired_vip(self):
+        """Проверяет и удаляет просроченные VIP подписки каждые 15 минут."""
+        async with self.sessionmaker() as session:
+            try:
+                removed_count = await remove_expired_vip_subscriptions(session, self.bot)
+                if removed_count > 0:
+                    logger.info(f"Удалено {removed_count} просроченных VIP подписок при плановой проверке")
+            except Exception as e:
+                logger.exception(f"Ошибка при проверке просроченных VIP подписок: {e}")
+
     def setup_jobs(self) -> None:
         """Настраивает все периодические задачи планировщика."""
         sdl = self.scheduler
@@ -98,6 +103,16 @@ class SchedulerManager:
             "interval",
             minutes=5,
             id="stats_update",
+            replace_existing=True,
+            max_instances=1
+        )
+
+        # 3. Проверка просроченных VIP подписок каждые 15 минут
+        sdl.add_job(
+            self._check_expired_vip,
+            "interval",
+            minutes=15,
+            id="vip_expiration_check",
             replace_existing=True,
             max_instances=1
         )

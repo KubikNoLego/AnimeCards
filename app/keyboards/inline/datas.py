@@ -1,5 +1,8 @@
 from aiogram.filters.callback_data import CallbackData
 
+class VipPurchase(CallbackData, prefix="vip"):
+    months: int
+
 class ClanInvite(CallbackData,prefix = "clan"):
     clan_id: int
     act: int

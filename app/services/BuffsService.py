@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from loguru import logger
 
 from app.database.models import User
-from app.database.requests import RedisRequests, get_redis
+from app.utils.constants import LUCK_BOOST, YEN_BOOST
 
 
 class BuffService:
@@ -15,8 +15,8 @@ class BuffService:
         cooldown: float = 0.0
 
         def __repr__(self):
-            return f"""<blockquote>🍀 Бонус на удачу: <b>{'-' if (self.luck-1)*100 < 0 else '+'}{abs(round(self.luck-1,3)*100)} %</b>
-👝 Бонус на ¥: <b>{'-' if (self.yen-1)*100 < 0 else '+'}{abs(round(self.yen-1,3)*100)} %</b>
+            return f"""<blockquote>🍀 Бонус на удачу: <b>{'-' if (self.luck-1)*100 < 0 else '+'}{abs(round((self.luck-1)*100, 2))} %</b>
+👝 Бонус на ¥: <b>{'-' if (self.yen-1)*100 < 0 else '+'}{abs(round((self.yen-1)*100, 2))} %</b>
 ⌛ Бонус на время открытия: <b>{'-' if self.cooldown > 0 else '+'}{abs(round(self.cooldown))} мин.</b></blockquote>
 """
 
@@ -35,15 +35,12 @@ class BuffService:
             
         if user.vip:
             buffs.yen += .25
-            buffs.luck += .1
 
-        redis = RedisRequests(get_redis())
+        if user.yen_boosts > 0:
+            buffs.yen += YEN_BOOST
 
-        if (await redis.yens_boosts(user.id)) > 0:
-            buffs.yen += .20
-
-        if (await redis.luck_boosts(user.id)) > 0:
-            buffs.luck += .3
+        if user.luck_boosts > 0:
+            buffs.luck += LUCK_BOOST
 
         logger.debug(f"Баффы пользователя ({user.id}): Удача {buffs.luck}\tБуст йен {buffs.yen}\tКД {buffs.cooldown}")
 

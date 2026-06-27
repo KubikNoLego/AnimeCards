@@ -111,8 +111,8 @@ class GachaService:
             return usercard
 
         if card.card_type == CardType.SEASONAL:
-            
-            usercard.level += 1
+
+            usercard.level += 1 if user.duplicators <= 0 else 2
             logger.debug(f"Добавлена карта ({card.id}) пользователю ({user.id} уровень {usercard.level})")
             
             if (usercard.level >= 3 and 
@@ -149,6 +149,11 @@ class GachaService:
                 else:
                     user.last_open = datetime.now(MSK_TIMEZONE)
 
+                if user.luck_boosts > 0:
+                    user.luck_boosts -= 1
+                if user.yen_boosts > 0:
+                    user.yen_boosts -= 1
+
                 await session.commit()
 
                 logger.info(f"Пользователь {user.id} получил карту {card.id}{' (Shiny)' if shiny else ''}")
@@ -168,6 +173,11 @@ class GachaService:
                 
                 await cls.add_card_to_user(session, user, card, shiny)
 
+                if user.luck_boosts > 0:
+                    user.luck_boosts -= 1
+                if user.yen_boosts > 0:
+                    user.yen_boosts -= 1
+
                 await session.commit()
 
                 logger.info(f"Пользователь {user.id} получил карту {card.id}{' (Shiny)' if shiny else ''} из баннера {banner_id}")
@@ -182,9 +192,13 @@ class GachaService:
 
         results = []
 
-        buffs = await BuffService.calculate_buffs(user)
-
         for _ in range(amount):
+
+            buffs = await BuffService.calculate_buffs(user)
+            if user.luck_boosts > 0:
+                user.luck_boosts -= 1
+            if user.yen_boosts > 0:
+                user.yen_boosts -= 1
             card, shiny = await cls._roll_season_banner(session, user,
                 buffs, featured_card)
             

@@ -1,15 +1,17 @@
 from aiogram import Router,F
-from aiogram.types import Message,CallbackQuery, FSInputFile
+from aiogram.types import Message,CallbackQuery, FSInputFile, InputRichMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
+from datetime import datetime, timedelta
 
 from app.filters import Private
 from app.keyboards import shop_keyboard, ShopItemCallback
+from app.keyboards.inline.shop_kb import premium_keyboard
 from app.messages import MText
-from app.database import DB, RedisRequests, Card, get_redis
-from app.services.shop import delete_item
+from app.database import DB
+from app.services.shop import ShopService
 from app.utils.card_formater import format_buyed_card
-from app.utils.enums.shop import ShopEnum
+from app.utils.constants import SHOP_ITEMS_PRICES
 
 
 router = Router()
@@ -21,55 +23,33 @@ async def _(message:Message,session:AsyncSession):
     user = await db.user.get_user(message.from_user.id)
     if not user:
         return
-    redis = get_redis()
-    redis_requests = RedisRequests(redis)
-    items = await redis_requests.get_user_items(user)
-    keyboard = await shop_keyboard(items)
-    await message.answer(MText.get("daily_shop"), reply_markup=keyboard)
+
+    items = user.today_shop_purchases
+    keyboard = shop_keyboard(items, user.vip)
+
+    await message.answer_rich(InputRichMessage(
+                            html=ShopService.shop_message(user)),
+                            reply_markup=keyboard)
 
 
 @router.callback_query(ShopItemCallback.filter())
 async def shop_item_callback(callback: CallbackQuery,
                     callback_data: ShopItemCallback, session: AsyncSession):
     """Обработчик callback для покупки карточки из магазина."""
-    redis = get_redis()
-    redis_requests = RedisRequests(redis)
-    
-    item = callback_data.item
-    db = DB(session)
-    user = await db.user.get_user(callback.from_user.id)
 
-    match item:
-        case "free_open":
-            if user.balance < 18:
-                await callback.answer(MText.get("not_enough_yens"))
-                return
-            user.free_open += 1
-            user.balance -= 18
-            await session.commit()
-            await callback.message.answer(MText.get("free_open_message").format(
-                                                    free_opens = user.free_open))
-            await delete_item(user, ShopEnum.FREE_OPEN)
-            await callback.message.delete()
-        case "boost":
-            if user.balance < 35:
-                await callback.answer(MText.get("not_enough_yens"))
-                return
-            user.balance -= 35
-            await redis_requests.add_luck_boost(user.id)
-            boosts = await redis_requests.luck_boosts(user.id)
-            await callback.message.answer(MText.get("boost_message").format(
-                                                    boosts = boosts))
-            await delete_item(user, ShopEnum.BOOST)
-            await callback.message.delete()
-        case "yens_boost":
-            if user.balance < 35:
-                await callback.answer(MText.get("not_enough_yens"))
-                return
-            user.balance -= 35
-            await redis_requests.add_yens_boost(user.id)
-            boosts = await redis_requests.yens_boosts(user.id)
-            await callback.message.answer(MText.get("boost_message").format(
-                                                    boosts = boosts))
-            await delete_item(user, ShopEnum.YENS_BOOST)
-            await callback.message.delete()
+    item = callback_data.item
+
+    try:
+        text = await ShopService.add_item(item, callback.from_user.id, session)
+        await callback.message.answer(text)
+        await callback.message.delete()
+    
+    except ValueError as _e:
+        await callback.answer(str(_e), show_alert=True)
+
+@router.callback_query(F.data == "premium_shop")
+async def _(callback: CallbackQuery, session: AsyncSession):
+    await callback.message.answer_rich(InputRichMessage(
+        html=MText.get("premium_shop")
+    ), reply_markup=premium_keyboard())
+    await callback.message.delete()

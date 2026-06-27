@@ -18,13 +18,12 @@ from .repositories.clan_repo import ClanRepo
 
 # Requests (DB и RedisRequests) - импортируются в конце, чтобы избежать циклических зависимостей
 # DB использует репозитории, поэтому должен импортироваться после них
-from .requests import DB, RedisRequests
-from .requests import DB, RedisRequests, get_redis, close_redis
+from .requests import DB
 
 __all__ = [
     # Models
     # Repositories
     "UserRepo", "CardRepo", "PromoRepo", "TradeRepo", "ReferralRepo", "ClanRepo",
     # Requests
-    "DB", "RedisRequests", "get_redis", "close_redis",
+    "DB"
 ]

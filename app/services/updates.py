@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Card, Clan, PromoUsers, User, UserCards, VipSubscription
-from app.database.requests import DB, RedisRequests
+from app.database.requests import DB
 from app.utils.constants import MSK_TIMEZONE
 
 
@@ -38,7 +38,7 @@ async def add_free_opens(session: AsyncSession) -> bool:
 
     updated_count = 0
     for user in vip_users:
-        user.free_standard_open += 1
+        user.free_standard_opens += 1
         updated_count += 1
 
     if updated_count > 0:
@@ -46,6 +46,54 @@ async def add_free_opens(session: AsyncSession) -> bool:
         logger.info(
             f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
     return updated_count > 0
+
+async def remove_expired_vip_subscriptions(session: AsyncSession, bot: Bot = None) -> int:
+    """
+    Удаляет просроченные VIP подписки и сбрасывает VIP статус пользователей.
+    Отправляет уведомления пользователям о завершении подписки.
+
+    Args:
+        session: Асинхронная сессия базы данных
+        bot: Экземпляр бота для отправки уведомлений (опционально)
+
+    Returns:
+        Количество удаленных подписок
+    """
+    now = datetime.now(MSK_TIMEZONE)
+
+    result = await session.execute(
+        select(VipSubscription)
+        .where(VipSubscription.end_date <= now)
+    )
+    expired_subscriptions = result.scalars().all()
+
+    removed_count = 0
+    notified_count = 0
+
+    for subscription in expired_subscriptions:
+        user = await session.get(User, subscription.user_id)
+
+        if user:
+            await session.delete(subscription)
+            removed_count += 1
+
+            if bot:
+                try:
+                    await bot.send_message(
+                        chat_id=user.id,
+                        text="💔 Ваша VIP подписка истекла\n\n"
+                            "Вы больше не получаете ежедневные бесплатные открытия и другие VIP привилегии. "
+                            "Чтобы снова стать VIP пользователем, приобретите новую подписку в магазине."
+                    )
+                    notified_count += 1
+                except Exception as e:
+                    logger.warning(f"Не удалось отправить уведомление пользователю {user.id} об истечении VIP: {e}")
+
+    if removed_count > 0:
+        await session.commit()
+        logger.info(f"Удалено {removed_count} просроченных VIP подписок, отправлено {notified_count} уведомлений")
+
+    return removed_count
 
 
 async def clan_rebalance(session: AsyncSession) -> None:
@@ -149,7 +197,6 @@ async def create_backup() -> bool:
         if process.returncode == 0:
             logger.info(f"Бэкап базы данных создан: {backup_file}")
 
-            # Удаляем старые бэкапы (оставляем последние 7)
             backups = sorted([f for f in os.listdir(backup_dir) if f.endswith(".sql")])
             while len(backups) > 7:
                 old_backup = backups.pop(0)

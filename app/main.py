@@ -4,7 +4,7 @@ from loguru import logger
 
 from app.config import config
 
-from app.database.requests import DB, RedisRequests, get_redis
+from app.database.requests import DB
 from app.loader import setup_logger, setup_dispatcher
 from app.bot import create_bot, create_dispatcher
 from app.database import Base, create_sessionmaker, create_engine

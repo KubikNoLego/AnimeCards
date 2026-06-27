@@ -24,3 +24,14 @@ rarity_to_points |= {
 }
 
 players_in_top |= 15
+vip_price |= 60
+shop_items_prices |= {
+    standard_spin |= 20
+    luck_boost |= 35
+    yen_boost |= 30
+    mystery_box |= 80
+    duplicator |= 70
+}
+
+luck_boost |= 30%
+yen_boost |= 40%

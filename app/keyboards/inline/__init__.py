@@ -22,7 +22,7 @@ from .profile_kb import (
                     )
 
 from .shop_kb import (
-    shop_keyboard, shop_keyboard_choice
+    shop_keyboard
 )
 
 from .trade_kbs import (

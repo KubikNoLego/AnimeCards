@@ -1,18 +1,10 @@
 from datetime import timezone, timedelta
 
 from kubiks import load
-from app.utils.enums.shop import ShopEnum
+from app.database.models import ShopItems
 
 
 CONFIG = load("app/utils/constants.kbk")
-
-SHOP_ITEMS = {
-    "f": ShopEnum.FREE_OPEN,
-    "b": ShopEnum.BOOST,
-    "a": ShopEnum.ADD_PITY,
-    "y": ShopEnum.YENS_BOOST,
-    "r": ShopEnum.RANDOM_HRONO,
-}
 
 SHINY_CHANCE = CONFIG["shiny_chance"]
 DAILY_VERSE_BOOST = CONFIG["daily_verse_boost"]
@@ -23,6 +15,10 @@ COOLDOWN = CONFIG["cooldown"]
 CLAN_CREATION_COST = CONFIG["clan_creation_cost"]
 
 PLAYERS_IN_TOP = CONFIG['players_in_top']
+VIP_PRICE = CONFIG['vip_price']
+SHOP_ITEMS_PRICES = CONFIG['shop_items_prices']
+LUCK_BOOST = CONFIG['luck_boost']
+YEN_BOOST = CONFIG['yen_boost']
 
 DAILY_VERSE_TTL = 24 * 60 * 60
 BOOST_TTL = 3 * 24 * 60 * 60
@@ -51,4 +47,12 @@ SLOT_RARITY_MAP = {
     "Мифический": "mythic",
     "Легендарный": "legend",
     "Хроно": "hrono",
+}
+
+SHOP_ITEMS = {
+    ShopItems.STANDARD_SPIN: ("🎟️ Стандартная крутка", 20),
+    ShopItems.LUCK_BOOST: ("🍀 Буст удачи", 35),
+    ShopItems.YEN_BOOST: ("💰 Буст йен", 30),
+    ShopItems.MYSTERY_BOX: ("📦 Таинственный ящик", 40),
+    ShopItems.DUPLICATOR: ("🔥 Дубликатор", 70),
 }
