@@ -378,6 +378,10 @@ class Title(Base):
     @property
     def luck_boost(self) -> int:
         return self.get_buff("luck_boost")
+    
+    @property
+    def name(self) -> str:
+        return f"「 {self.title} 」"
 
 class UserTitle(Base):
     __tablename__ = "usertitles"

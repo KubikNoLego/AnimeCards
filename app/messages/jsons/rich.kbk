@@ -71,7 +71,7 @@ premium_shop |= "<p>⭐ Здесь вы можете приобрести <b>VIP
 titles_message |= "<b>⚜️ Титулы</b><br><br>
 
 🎴 <b>Ваш текущий титул</b><br>
-<b>«{title}»</b> <i>({rarity})</i><br>
+<b>{title}</b> <i>({rarity})</i><br>
 <blockquote>
 <b>📊 Активные бонусы</b><br><br>
 

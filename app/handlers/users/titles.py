@@ -26,7 +26,7 @@ async def _(message: Message, session: AsyncSession):
     keyboard = get_title_keyboard()
     await message.answer_rich(InputRichMessage(
         html= MText.get("titles_message").format(
-        title=user.profile.title.title, rarity=user.profile.title.rarity.name, 
+        title=user.profile.title.name, rarity=user.profile.title.rarity.name, 
         buffs=bonuses,
         price=TITLE_SPIN_PRICE)),
         reply_markup=keyboard)
@@ -41,7 +41,7 @@ async def open_title_callback(callback: CallbackQuery, session: AsyncSession):
         bonuses = TitleService.format_buffs(title)
         await callback.message.answer(MText.get("title_opened").format(
             bonuses = bonuses,
-            title = title.title
+            title = title.name
         ),
         reply_markup=spin_again())
 
@@ -71,7 +71,7 @@ async def _(callback: CallbackQuery, callback_data: TP, session: AsyncSession):
     pg = TitlePagination(page, user.unlocked_titles)
     kb = await pg.keyboard()
 
-    await callback.message.edit_text(f"🏆 <b>{title.title}</b> ({title.rarity.name})\n\n<b>Бонусы:</b>\n<blockquote>{TitleService.format_buffs(title)}</blockquote>", reply_markup=kb)
+    await callback.message.edit_text(f"🏆 <b>{title.name}</b> ({title.rarity.name})\n\n<b>Бонусы:</b>\n<blockquote>{TitleService.format_buffs(title)}</blockquote>", reply_markup=kb)
 
 @router.callback_query(F.data.contains("select_title:"))
 async def _(callback: CallbackQuery, session: AsyncSession):

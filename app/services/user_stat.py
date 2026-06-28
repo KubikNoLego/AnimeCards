@@ -27,7 +27,7 @@ async def user_profile(session,user_id):
         text = MText.get("profile").format(
                 tag = "" if not user.clan_member else f"[{escape(user.clan_member.clan.tag)}]",
                 name =  escape(user.name) + " 👑" if user.vip else escape(user.name),
-                title = user.profile.title.title or "Отсутствует",
+                title = user.profile.title.name or "Отсутствует",
                 balance = user.balance,
                 referrals = len(user.referrals),
                 top_cards = await user_top_cards(session,user_id),
