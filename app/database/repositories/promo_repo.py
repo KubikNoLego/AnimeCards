@@ -17,11 +17,7 @@ class PromoRepo:
 
         promo = await self.session.scalar(select(Promo).filter_by(promocode=promocode))
 
-        # Проверяем, что промокод не истёк
-        if promo and promo.expire_at < datetime.now(MSK_TIMEZONE):
-            return None  # Промокод истёк
-
-        return promo  # Промокод действующий
+        return promo
 
     async def create_promo(self, promocode: str, reward: int, days_until_expire: int) -> Promo | None:
         """Создаёт новый промокод"""
