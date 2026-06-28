@@ -9,7 +9,7 @@ from app.keyboards import shop_keyboard, ShopItemCallback
 from app.keyboards.inline.shop_kb import premium_keyboard
 from app.messages import MText
 from app.database import DB
-from app.services.shop import ShopService
+from app.services.ShopService import ShopService
 from app.utils.card_formater import format_buyed_card
 from app.utils.constants import SHOP_ITEMS_PRICES
 

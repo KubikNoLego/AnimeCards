@@ -5,11 +5,10 @@ from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import Banner, BannerCard, BannerPity, Card, CardType, DailyShopPurchase, Rarity, ShopItems, User, UserCards
+from app.database.models import DailyShopPurchase, ShopItems, User, UserCards
 from app.database.requests import DB
 from app.messages.MessageControl import MText
-from app.services.BuffsService import BuffService
-from app.utils.constants import COOLDOWN, DAILY_VERSE_BOOST, DAILY_VERSE_YEN_BOOST, LUCK_BOOST, MSK_TIMEZONE, SEASON_ROLL_COST, SHINY_CHANCE, SHOP_ITEMS, SHOP_ITEMS_PRICES, YEN_BOOST
+from app.utils.constants import LUCK_BOOST, SHOP_ITEMS, SHOP_ITEMS_PRICES, YEN_BOOST
 
 class ShopService:
 
@@ -94,6 +93,8 @@ class ShopService:
                 item = item
             )
         )
+        
+        logger.info(f"Пользователь ({user.id}) купил {item}")
 
         await session.commit()
         return result
@@ -148,5 +149,6 @@ class ShopService:
             free_season_spins = random.randint(1, 2)
             user.free_season_opens += free_season_spins
             rewards.append(f"🎟️ <b>{free_season_spins}</b> бесплатных <b>сезонных</b> круток")
-
+        
+        logger.info(f"Пользователь ({user.id}) получил награды с таинственного ящика\n{rewards}")
         return "📦 Таинственный ящик открыт!\n\n" + "\n".join(rewards)

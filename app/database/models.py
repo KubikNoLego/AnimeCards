@@ -93,6 +93,8 @@ class User(Base):
     clan_member: Mapped["ClanMember"] = relationship("ClanMember", back_populates="user", lazy="selectin", uselist=False)
     used_promos: Mapped[list["Promo"]] = relationship("Promo", back_populates="used_by", secondary="promo_users", lazy="selectin")
     daily_shop_purchases: Mapped[list["DailyShopPurchase"]] = relationship("DailyShopPurchase", back_populates="user", lazy="selectin")
+    titles: Mapped[list["UserTitle"]] = relationship("UserTitle", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
+
 
     @property
     def today_shop_purchases(self):
@@ -100,6 +102,10 @@ class User(Base):
 
         return {purchase.item for purchase in self.daily_shop_purchases
                 if purchase.shop_date == today}
+    
+    @property
+    def unlocked_titles(self):
+        return [ut.title for ut in self.titles]
 
 class BattleInventory(Base):
     __tablename__ = "battle_inventories"
@@ -354,15 +360,12 @@ class Title(Base):
     rarity_id: Mapped[int] = mapped_column(Integer, ForeignKey("rarities.id"))
     rarity: Mapped["Rarity"] = relationship("Rarity", back_populates="titles", lazy="selectin")
     owners: Mapped[list["Profile"]] = relationship("Profile", back_populates="title", lazy="selectin")
+    users: Mapped[list["UserTitle"]] = relationship("UserTitle", back_populates="title", lazy="selectin")
 
     droppable: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     def get_buff(self, buff: str) -> int:
         return self.buffs.get(buff, None)
-
-    @property
-    def free_open_buff(self) -> int:
-        return self.get_buff("free_open")
 
     @property
     def time_skip(self) -> int:
@@ -375,6 +378,17 @@ class Title(Base):
     @property
     def luck_boost(self) -> int:
         return self.get_buff("luck_boost")
+
+class UserTitle(Base):
+    __tablename__ = "usertitles"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
+    title_id: Mapped[int] = mapped_column(ForeignKey("titles.id", ondelete="CASCADE"))
+    obtained_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user: Mapped["User"] = relationship("User", back_populates="titles")
+    title: Mapped["Title"] = relationship("Title", back_populates="users")
 
 
 class BannerCard(Base):

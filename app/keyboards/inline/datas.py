@@ -67,3 +67,7 @@ class RollSeasonBanner(CallbackData, prefix="roll"):
 class RollSeasonBannerA(CallbackData, prefix="rollA"):
     card_id: int
     amount: int
+
+class TitlePagination(CallbackData, prefix="tip"):
+    """Данные обратного вызова для кнопок пагинации."""
+    p: int

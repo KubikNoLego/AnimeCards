@@ -25,6 +25,7 @@ rarity_to_points |= {
 
 players_in_top |= 15
 vip_price |= 60
+title_spin_price |= 80
 shop_items_prices |= {
     standard_spin |= 20
     luck_boost |= 35

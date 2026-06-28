@@ -15,8 +15,11 @@ COOLDOWN = CONFIG["cooldown"]
 CLAN_CREATION_COST = CONFIG["clan_creation_cost"]
 
 PLAYERS_IN_TOP = CONFIG['players_in_top']
+
 VIP_PRICE = CONFIG['vip_price']
 SHOP_ITEMS_PRICES = CONFIG['shop_items_prices']
+TITLE_SPIN_PRICE = CONFIG['title_spin_price']
+
 LUCK_BOOST = CONFIG['luck_boost']
 YEN_BOOST = CONFIG['yen_boost']
 
