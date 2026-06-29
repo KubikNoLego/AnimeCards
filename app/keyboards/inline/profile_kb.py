@@ -13,26 +13,14 @@ async def user_panel(user_id: int):
 
     return builder.as_markup()
 
-async def profile_keyboard(has_describe: bool, vip: bool):
+async def profile_keyboard(vip: bool):
     builder = InlineKeyboardBuilder()
 
     builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1).pack())
     
     if not vip:
-        builder.button(text="💰 Купить VIP", callback_data="buy_vip")
+        builder.button(text="💰 Купить VIP", callback_data="premium_shop")
 
-    builder.button(text="🖋️ Сменить подпись",callback_data="change_describe")
-    if has_describe:
-        builder.button(text="❌ Удалить подпись",
-                    callback_data="delete_describe",style = "danger")
-
-    builder.adjust(1)
-
-    return builder.as_markup()
-
-async def vip_kb():
-    builder = InlineKeyboardBuilder()
-    builder.button(text="💰 Купить VIP за 150 ⭐", callback_data="buy_vip")
     builder.adjust(1)
 
     return builder.as_markup()

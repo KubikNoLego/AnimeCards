@@ -79,7 +79,8 @@ async def _(message: Message, command: CommandObject,session: AsyncSession):
                 user.free_season_opens += value
                 rewards.append(f"🎫 <b>{value}</b> cезонных круток")
 
-    new_usage = PromoUsers(user_id=user.id, promo_id=promo.id)
+    new_usage = PromoUsers(user_id=user.id, promo_id=promo.id, 
+                        used_at=datetime.now(MSK_TIMEZONE))
     session.add(new_usage)
 
     await session.commit()

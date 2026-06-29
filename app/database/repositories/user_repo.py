@@ -78,9 +78,9 @@ class UserRepo:
         """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
         stmt = select(func.count(User.id)).where(User.season_balance > user.season_balance)
         result = await self.session.execute(stmt)
-        count_higher = result.scalar()
+        count_higher = int(result.scalar() or 0)
 
-        place = (count_higher or 0) + 1
+        place = count_higher + 1
         return place
     
     async def get_top_players_by_season_balance(self,

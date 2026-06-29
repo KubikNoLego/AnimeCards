@@ -241,7 +241,6 @@ class Profile(Base):
     title_id: Mapped[int | None] = mapped_column(ForeignKey("titles.id"), default=16)
     title: Mapped["Title"] = relationship("Title", back_populates="owners", lazy="selectin")
     joined: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    describe: Mapped[str] = mapped_column(String(255), default="", nullable=False)
 
     owner: Mapped["User"] = relationship("User", back_populates="profile", lazy="selectin")
 

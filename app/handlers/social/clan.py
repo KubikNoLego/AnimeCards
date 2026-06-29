@@ -10,8 +10,8 @@ from sqlalchemy import select
 from loguru import logger
 
 from app.keyboards.inline.datas import ClanKickData
+from app.services.ProfileService import ProfileService
 from app.services.clan_service import create_clan_service, get_member_page, handle_invite, invite_member, kick_member, leave_clan_user
-from app.services.profile import user_photo_link
 from app.states.states import ChangeDescribe, ClanLeader,CreateClan
 from app.filters import Private
 from app.keyboards import (
@@ -116,7 +116,7 @@ async def _(callback:CallbackQuery,callback_data: MemberPagination,
     keyboard = await member_pagination_keyboard(page,
         data['total'], member.user.id, data['is_leader'])
 
-    photo = await user_photo_link(callback.bot, member.user.id)
+    photo = await ProfileService.user_photo_link(callback.bot, member.user.id)
 
     await edit_message(callback.message, text, keyboard, photo)
 

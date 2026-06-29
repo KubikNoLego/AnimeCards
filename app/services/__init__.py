@@ -2,7 +2,7 @@
 Сервисы - бизнес-логика приложения.
 """
 
-from .profile import user_photo_link, create_qr
+from .profile import create_qr
 from .schedule import SchedulerManager
 
 __all__ = [

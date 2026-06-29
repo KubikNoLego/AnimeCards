@@ -18,7 +18,7 @@ from .clan_kb import (
                     )
 
 from .profile_kb import (
-                    profile_keyboard, user_panel, vip_kb
+                    profile_keyboard, user_panel
                     )
 
 from .shop_kb import (

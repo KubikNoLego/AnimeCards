@@ -397,7 +397,6 @@ def recreate_users(session):
                     id=profile["id"],
                     title_id=profile.get("title_id"),
                     joined=profile["joined"],
-                    describe=profile["describe"],
                 ),
             )
         )
