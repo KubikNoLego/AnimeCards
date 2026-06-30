@@ -9,11 +9,10 @@ async def main_kb():
         ReplyKeyboardMarkup с основными кнопками
     """
     buttons = ["🎴 Баннеры", "🛒 Магазин", "👤 Профиль",
-            "🏆 Топ игроков", "⚜️ Титулы", "🔗 Реферальная ссылка",
-            "🛡️ Клан", "🔁 Трейды"]
+            "🏆 Топ игроков","🛡️ Клан", "🔁 Трейды"]
     builder = ReplyKeyboardBuilder()
     [builder.button(text=item) for item in buttons]
-    builder.adjust(3, 3, 2)
+    builder.adjust(3, 3 )
 
     return builder.as_markup(resize_keyboard=True, input_field_placeholder=("🌟 <- это ты" if randint(1, 1000) == 777 else "Меню 🌟"))
 

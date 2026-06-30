@@ -49,31 +49,25 @@ async def pre_checkout(pre_checkout: PreCheckoutQuery):
 
 @router.message(F.successful_payment)
 async def successful_payment(message: Message, session: AsyncSession):
-
     payload = message.successful_payment.invoice_payload
+
+    _, months = payload.split(":")
+    months = int(months)
 
     user = await DB(session).user.get_user(message.from_user.id)
 
-    if payload == "vip:1":
-        new_vip = VipSubscription(
-            user_id = user.id,
-            start_date = datetime.now(MSK_TIMEZONE),
-            end_date = datetime.now(MSK_TIMEZONE) + timedelta(days=30)
-        )
-    elif payload == "vip:6":
-        new_vip = VipSubscription(
-            user_id = user.id,
-            start_date = datetime.now(MSK_TIMEZONE),
-            end_date = datetime.now(MSK_TIMEZONE) + timedelta(days=30 * 6)
-        )
-    elif payload == "vip:1200":
-        new_vip = VipSubscription(
-            user_id = user.id,
-            start_date = datetime.now(MSK_TIMEZONE),
-            end_date = datetime.now(MSK_TIMEZONE) + timedelta(days=30 * 1200)
+    days = 30 * months
+
+    if user.vip:
+        user.vip.end_date += timedelta(days=days)
+    else:
+        now = datetime.now(MSK_TIMEZONE)
+        user.vip = VipSubscription(
+            user_id=user.id,
+            start_date=now,
+            end_date=now + timedelta(days=days),
         )
 
-    user.vip = new_vip
     await session.commit()
-    
+
     await message.answer("🎉 Спасибо за покупку!")

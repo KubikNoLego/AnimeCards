@@ -1,145 +1,155 @@
-# schedule.py (полностью исправленная версия)
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.updates import (
-    update_info_users, update_verse, add_free_opens,
-    clan_rebalance, create_backup, edit_stats, remove_expired_vip_subscriptions
+    update_verse,
+    add_free_opens,
+    clan_rebalance,
+    create_backup,
+    edit_stats,
+    remove_expired_vip_subscriptions,
 )
 from app.utils.constants import MSK_TIMEZONE
 
 
 class SchedulerManager:
-    """Менеджер планировщика для выполнения фоновых задач."""
-
     def __init__(self, bot, sessionmaker):
         self.bot = bot
         self.sessionmaker = sessionmaker
         self.scheduler = AsyncIOScheduler(timezone=MSK_TIMEZONE)
-        self.stats_chat_id = None
-        self.stats_message_id = None
 
-    def set_stats_target(self, chat_id: int | str, message_id: int) -> None:
-        """Устанавливает целевой чат и сообщение для обновления статистики."""
+        self.stats_chat_id: int | None = None
+        self.stats_message_id: int | None = None
+
+    def set_stats_target(self, chat_id: int, message_id: int) -> None:
         self.stats_chat_id = chat_id
         self.stats_message_id = message_id
+    
+    async def full_update(self) -> None:
+        """Ежедневное обновление."""
 
-    async def _update_info_users(self):
-        async with self.sessionmaker() as session:
-            await update_info_users(self.bot, session)
-
-    async def _run_update_verse(self):
-        """Выполняет обновление ежедневной вселенной (обёртка)."""
-        async with self.sessionmaker() as session:
-            await update_verse(session)
-
-    async def _update_stats(self):
-        """Периодическое обновление сообщения со статистикой."""
-        if self.stats_chat_id is None or self.stats_message_id is None:
-            logger.warning("Целевое сообщение для статистики не задано, пропуск обновления.")
-            return
-        async with self.sessionmaker() as session:
-            await edit_stats(session, self.bot, self.stats_chat_id, self.stats_message_id)
-
-    async def full_update(self):
-        """Комплексное ежедневное обновление: вселенная, бэкап, VIP-открытия, кланы, пользователи."""
-        logger.info("Запуск комплексного ежедневного обновления...")
-        try:
-            await self._run_update_verse()
-            logger.info("Ежедневная вселенная обновлена.")
-        except Exception as e:
-            logger.exception(f"Ошибка при обновлении вселенной: {e}")
+        logger.info("Запуск ежедневного обновления...")
 
         async with self.sessionmaker() as session:
+
+            try:
+                await update_verse(session)
+            except Exception:
+                logger.exception("Ошибка обновления ежедневной вселенной.")
 
             try:
                 await add_free_opens(session)
-                logger.info("Бесплатные открытия добавлены VIP-пользователям.")
-            except Exception as e:
-                logger.exception(f"Ошибка при добавлении бесплатных открытий: {e}")
+            except Exception:
+                logger.exception("Ошибка выдачи бесплатных открытий.")
 
             try:
                 await clan_rebalance(session)
-                logger.info("Ребаланс кланов выполнен.")
-            except Exception as e:
-                logger.exception(f"Ошибка при ребалансе кланов: {e}")
+            except Exception:
+                logger.exception("Ошибка ребаланса кланов.")
 
-            try:
-                await update_info_users(self.bot, session)
-                logger.info("Информация о пользователях обновлена.")
-            except Exception as e:
-                logger.exception(f"Ошибка при обновлении информации пользователей: {e}")
+        logger.info("Ежедневное обновление завершено.")
 
-        logger.info("Комплексное ежедневное обновление завершено.")
+    async def update_stats(self) -> None:
+        """Обновление сообщения со статистикой."""
 
-    async def _check_expired_vip(self):
-        """Проверяет и удаляет просроченные VIP подписки каждые 15 минут."""
+        if self.stats_chat_id is None or self.stats_message_id is None:
+            return
+
+        async with self.sessionmaker() as session:
+            success = await edit_stats(
+                bot=self.bot,
+                chat_id=self.stats_chat_id,
+                message_id=self.stats_message_id,
+                session=session,
+            )
+
+        if not success:
+            logger.warning("Обновление статистики отключено.")
+            self.stats_chat_id = None
+            self.stats_message_id = None
+
+    async def check_expired_vip(self) -> None:
+        """Удаление просроченных VIP."""
+
         async with self.sessionmaker() as session:
             try:
-                removed_count = await remove_expired_vip_subscriptions(session, self.bot)
-                if removed_count > 0:
-                    logger.info(f"Удалено {removed_count} просроченных VIP подписок при плановой проверке")
-            except Exception as e:
-                logger.exception(f"Ошибка при проверке просроченных VIP подписок: {e}")
+                removed = await remove_expired_vip_subscriptions(
+                    session=session,
+                    bot=self.bot,
+                )
+
+                if removed:
+                    logger.info(f"Удалено {removed} просроченных VIP.")
+
+            except Exception:
+                logger.exception("Ошибка проверки VIP.")
 
     def setup_jobs(self) -> None:
-        """Настраивает все периодические задачи планировщика."""
         sdl = self.scheduler
 
-        # 1. Комплексное обновление каждый день в 00:00 (полночь)
+        # Ежедневное обновление
         sdl.add_job(
             self.full_update,
             CronTrigger(hour=0, minute=0, timezone=MSK_TIMEZONE),
-            id="daily_full_update",
+            id="daily_update",
             replace_existing=True,
-            max_instances=1
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=300,
         )
 
-        # 2. Обновление статистики каждые 5 минут
+        # Проверка VIP
         sdl.add_job(
-            self._update_stats,
+            self.check_expired_vip,
+            "interval",
+            minutes=15,
+            id="vip_check",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=300,
+        )
+
+        # Обновление статистики
+        sdl.add_job(
+            self.update_stats,
             "interval",
             minutes=5,
             id="stats_update",
             replace_existing=True,
-            max_instances=1
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=300,
         )
 
-        # 3. Проверка просроченных VIP подписок каждые 15 минут
-        sdl.add_job(
-            self._check_expired_vip,
-            "interval",
-            minutes=15,
-            id="vip_expiration_check",
-            replace_existing=True,
-            max_instances=1
-        )
-
+        # Бэкап
         sdl.add_job(
             create_backup,
             CronTrigger(hour=4, minute=0, timezone=MSK_TIMEZONE),
-            id="backup_only",
+            id="backup",
             replace_existing=True,
-            max_instances=1
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=300,
         )
 
-        logger.info("Все задачи планировщика настроены.")
+        logger.info("Планировщик настроен.")
 
     def start(self) -> None:
-        """Запускает планировщик."""
-        if not self.scheduler.running:
-            # Убедимся, что задачи настроены перед запуском
-            if not self.scheduler.get_jobs():
-                self.setup_jobs()
-            self.scheduler.start()
-            logger.info("Планировщик запущен.")
-        else:
+        if self.scheduler.running:
             logger.warning("Планировщик уже запущен.")
+            return
+
+        if not self.scheduler.get_jobs():
+            self.setup_jobs()
+
+        self.scheduler.start()
+        logger.info("Планировщик запущен.")
 
     def shutdown(self) -> None:
-        """Останавливает планировщик (корректное завершение)."""
-        if self.scheduler.running:
-            self.scheduler.shutdown(wait=True)
-            logger.info("Планировщик остановлен.")
+        if not self.scheduler.running:
+            return
+
+        self.scheduler.shutdown(wait=True)
+        logger.info("Планировщик остановлен.")

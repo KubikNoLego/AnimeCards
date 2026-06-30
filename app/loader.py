@@ -8,6 +8,7 @@ from aiogram import Dispatcher
 from app.handlers import setup_routers as setup_handlers_routers
 from app.middlewares import DBSessionMiddleware
 from app.middlewares.throttling import ThrottlingMiddleware
+from app.middlewares.userupdate import UpdateUserMiddleware
 
 class InterceptHandler(logging.Handler):
     """
@@ -97,6 +98,9 @@ def setup_middlewares(dp: Dispatcher, session_factory):
     )
     dp.message.middleware(
         ThrottlingMiddleware(1.2)
+    )
+    dp.message.middleware(
+        UpdateUserMiddleware(session_factory)
     )
 
 def setup_dispatcher(dp: Dispatcher, session_factory):

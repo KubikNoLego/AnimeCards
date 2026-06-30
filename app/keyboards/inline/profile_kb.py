@@ -13,13 +13,11 @@ async def user_panel(user_id: int):
 
     return builder.as_markup()
 
-async def profile_keyboard(vip: bool):
+async def profile_keyboard():
     builder = InlineKeyboardBuilder()
 
     builder.button(text="📦 Инвентарь", callback_data=Pagination(p=1).pack())
-    
-    if not vip:
-        builder.button(text="💰 Купить VIP", callback_data="premium_shop")
+    builder.button(text="🔗 Реферальная ссылка", callback_data="referral_link")
 
     builder.adjust(1)
 

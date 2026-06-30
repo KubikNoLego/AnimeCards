@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Banner, BannerCard, BannerPity, Card, CardType, Rarity, User, UserCards
 from app.database.requests import DB
+from app.services.ReferralService import ReferralService
 from app.services.BuffsService import BuffService
 from app.utils.constants import COOLDOWN, DAILY_VERSE_BOOST, DAILY_VERSE_YEN_BOOST, MSK_TIMEZONE, SEASON_ROLL_COST, SHINY_CHANCE
 
@@ -92,33 +93,45 @@ class GachaService:
     async def add_card_to_user(cls, session: AsyncSession, user: User,
                             card: Card, shiny: bool) -> UserCards:
 
-        usercard = await session.scalar(select(UserCards).where(
-            UserCards.user_id == user.id,
-            UserCards.card_id == card.id))
-        
-        
+        usercard = await session.scalar(
+            select(UserCards).where(
+                UserCards.user_id == user.id,
+                UserCards.card_id == card.id))
+
+        used_duplicator = (
+            card.card_type == CardType.SEASONAL
+            and user.duplicators > 0)
+
+        if used_duplicator:
+            user.duplicators -= 1
+
         if usercard is None:
 
-            usercard = UserCards(user_id = user.id, card_id = card.id,
-                                shiny=shiny 
-                                if card.card_type != CardType.SEASONAL 
-                                else False)
-            
+            usercard = UserCards(
+                user_id=user.id,
+                card_id=card.id,
+                shiny=shiny if card.card_type != CardType.SEASONAL else False,
+                level=2 if used_duplicator else 1,
+            )
+
             session.add(usercard)
             await session.flush()
+            await ReferralService.check_referral_reward(session, user)
+
             logger.debug(f"Добавлена карта ({card.id}) пользователю ({user.id})")
 
             return usercard
 
         if card.card_type == CardType.SEASONAL:
 
-            usercard.level += 1 if user.duplicators <= 0 else 2
-            logger.debug(f"Добавлена карта ({card.id}) пользователю ({user.id} уровень {usercard.level})")
-            
-            if (usercard.level >= 3 and 
-            card.has_shiny and 
-            usercard.shiny == False):
+            usercard.level += 2 if used_duplicator else 1
 
+            logger.debug(f"Добавлена карта ({card.id}) пользователю ({user.id}), уровень {usercard.level}")
+
+            if (usercard.level >= 3
+                and card.has_shiny
+                and not usercard.shiny):
+                
                 usercard.shiny = True
                 logger.debug(f"Карта ({card.id}) пользователя ({user.id}) стала shiny")
 

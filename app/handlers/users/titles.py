@@ -15,21 +15,23 @@ from app.keyboards.inline.datas import TitlePagination as TP
 router = Router()
 
 
-@router.message(F.text == "⚜️ Титулы", Private())
-async def _(message: Message, session: AsyncSession):
-    user = await DB(session).user.get_user(message.from_user.id)
+@router.callback_query(F.data == "titles_shop")
+async def _(callback: CallbackQuery, session: AsyncSession):
+    user = await DB(session).user.get_user(callback.from_user.id)
     if not user:
         return
     
     bonuses = (TitleService.format_buffs(user.profile.title)
                     .replace('\n', '<br>'))
     keyboard = get_title_keyboard()
-    await message.answer_rich(InputRichMessage(
+    await callback.message.answer_rich(InputRichMessage(
         html= MText.get("titles_message").format(
         title=user.profile.title.name, rarity=user.profile.title.rarity.name, 
         buffs=bonuses,
         price=TITLE_SPIN_PRICE)),
         reply_markup=keyboard)
+    
+    await callback.message.delete()
 
 @router.callback_query(F.data == "open_title")
 async def open_title_callback(callback: CallbackQuery, session: AsyncSession):

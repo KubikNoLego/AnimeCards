@@ -5,7 +5,7 @@ import os
 from aiogram import Bot
 from aiogram.exceptions import TelegramForbiddenError
 from loguru import logger
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Card, Clan, PromoUsers, User, UserCards, VipSubscription
@@ -28,24 +28,22 @@ async def update_verse(session: AsyncSession) -> bool:
 
 
 async def add_free_opens(session: AsyncSession) -> bool:
-    now = datetime.now(MSK_TIMEZONE)
-    result = await session.execute(
-        select(User)
-        .join(User.vip)
-        .where(VipSubscription.end_date > now)
+
+    stmt = (
+        update(User)
+        .where(
+            User.id.in_(
+                select(VipSubscription.user_id)
+                .where(VipSubscription.end_date > func.now())
+            )
+        )
+        .values(
+            free_standard_opens=User.free_standard_opens + 1
+        )
     )
-    vip_users = result.scalars().all()
 
-    updated_count = 0
-    for user in vip_users:
-        user.free_standard_opens += 1
-        updated_count += 1
-
-    if updated_count > 0:
-        await session.commit()
-        logger.info(
-            f"Добавлено бесплатное открытие {updated_count} VIP пользователям")
-    return updated_count > 0
+    await session.execute(stmt)
+    await session.commit()
 
 async def remove_expired_vip_subscriptions(session: AsyncSession, bot: Bot = None) -> int:
     """
@@ -71,7 +69,7 @@ async def remove_expired_vip_subscriptions(session: AsyncSession, bot: Bot = Non
     notified_count = 0
 
     for subscription in expired_subscriptions:
-        user = await session.get(User, subscription.user_id)
+        user = subscription.user
 
         if user:
             await session.delete(subscription)
@@ -112,52 +110,8 @@ async def clan_rebalance(session: AsyncSession) -> None:
 
     await session.commit()
 
-
-async def update_info_users(bot: Bot, session: AsyncSession) -> bool:
-    users = await session.scalars(select(User))
-    users_list = users.all()
-    
-    updated_count = 0
-    failed_count = 0
-    
-    async def send_notification(user: User):
-        if datetime.now(MSK_TIMEZONE) - user.last_open >= timedelta(hours=8):
-            await bot.send_message(user.id, "💤 Вы давно не открывали карту!\n\n<b>Может сейчас вам повезёт?</b>")
-        return
-
-    for user in users_list:
-        try:
-            # Получаем актуальную информацию о пользователе из Telegram
-            chat_member = await bot.get_chat(user.id)
-            
-            # Обновляем username и name только если они изменились
-            new_username = chat_member.username
-            new_name = chat_member.full_name
-            
-            if user.username != new_username or user.name != new_name:
-                user.username = new_username
-                user.name = new_name
-                updated_count += 1
-            await send_notification(user)
-        except Exception as e:
-            # Проверяем, не заблокировал ли пользователь бота
-            if "Forbidden" in str(e) or "blocked" in str(e).lower():
-                logger.warning(f"Пользователь {user.id} заблокировал бота")
-            else:
-                logger.error(f"Ошибка при обновлении пользователя {user.id}: {e}")
-
-            failed_count += 1
-            await session.rollback()
-    
-    await session.commit()
-    logger.info(f"Обновлено {updated_count} пользователей, {failed_count} ошибок")
-    
-    return updated_count > 0
-
-
 async def create_backup() -> bool:
     """Создаёт бэкап базы данных PostgreSQL."""
-    import subprocess
     from app.config import config
 
     backup_dir = "backups"
@@ -234,7 +188,6 @@ async def get_stats(session: AsyncSession) -> str:
         )).scalar()
         
         # Активные пользователи (открывали карты за последние 24 часа)
-        from datetime import timedelta
         day_ago = current_time - timedelta(hours=24)
         active_users = (await session.execute(
             select(func.count(User.id))
@@ -282,26 +235,42 @@ async def get_stats(session: AsyncSession) -> str:
         return "<i>📊 Статистика бота</i>\n\n<i>Ошибка при загрузке данных...</i>"
     
 
-async def edit_stats(session: AsyncSession, bot: Bot, chat_id: int | str,
-                    message_id: int):
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
+
+async def edit_stats(bot: Bot, message_id: int, chat_id: int, 
+                    session: AsyncSession):
     try:
         display_text = await get_stats(session)
-        
+
         await bot.edit_message_text(
-            text=display_text,
             chat_id=chat_id,
             message_id=message_id,
-            parse_mode="HTML"
+            text=display_text,
         )
-    
-    except TelegramForbiddenError:
-        logger.error("Бот не находится в телеграмм")
+        return True
 
-    except Exception as e:
-        # Игнорируем ошибки, если сообщение не изменилось
-        if "message is not modified" not in str(e).lower():
-            # Проверяем, не было ли удалено сообщение
-            if "message to edit not found" in str(e).lower() or "message can't be edited" in str(e).lower():
-                logger.warning(f"Сообщение {message_id} в чате {chat_id} больше недоступно для редактирования")
-                return
-            logger.exception(f"Ошибка обновления статистики в чате {chat_id}, сообщение {message_id}: {e}")
+    except TelegramForbiddenError:
+        logger.warning("Бот больше не имеет доступа к чату.")
+        return False
+
+    except TelegramBadRequest as e:
+        error = str(e).lower()
+
+        if "message is not modified" in error:
+            return True
+
+        if (
+            "message to edit not found" in error
+            or "message can't be edited" in error
+        ):
+            logger.warning(
+                f"Сообщение {message_id} больше недоступно."
+            )
+            return False
+
+        logger.exception("Ошибка Telegram при обновлении статистики.")
+        return False
+
+    except Exception:
+        logger.exception("Неожиданная ошибка при обновлении статистики.")
+        return False

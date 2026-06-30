@@ -17,4 +17,5 @@ def get_title_keyboard() -> InlineKeyboardMarkup:
 
 def spin_again():
     return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
-        text="🔁 Открыть ещё раз", callback_data="open_title")]])
+        text="🔁 Открыть ещё раз", callback_data="open_title")],
+        [InlineKeyboardButton(text="🔙 Назад", callback_data="titles_shop")]])

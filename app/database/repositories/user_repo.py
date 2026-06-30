@@ -24,7 +24,7 @@ class UserRepo:
             return None
 
     async def create_or_update_user(self, id: int, username: str | None,
-                                    name: str,describe: str):
+                                    name: str):
         from app.utils import MSK_TIMEZONE
 
         now = datetime.now(MSK_TIMEZONE)
@@ -56,8 +56,7 @@ class UserRepo:
             if not profile_exists:
                 profile_stmt = insert(Profile).values(
                     user_id=id,
-                    title_id=16,  # Устанавливаем титул 16 по умолчанию
-                    describe=describe or '',
+                    title_id=16,
                     joined=now).on_conflict_do_nothing()
 
                 await self.session.execute(profile_stmt)

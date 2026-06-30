@@ -454,8 +454,6 @@ def main(step: int):
             export_table(session, "verses", "verses.json")
             export_table(session, "clan_members", "clan_members.json")
             export_table(session, "clans", "clans.json")
-            export_table(session, "referrals", "refferals.json")
-            export_table(session, "vip_subscriptions", "vips.json")
             export_table(session, 'titles', 'titles.json')
             export_table(session, 'users', 'users.json')
             export_table(session, 'profiles', 'profiles.json')
@@ -481,4 +479,4 @@ def main(step: int):
             create_banners(session)
 
 if __name__ == "__main__":
-    main(2)
+    main(1)

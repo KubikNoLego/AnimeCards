@@ -16,9 +16,6 @@ def shop_keyboard(purchased: set[ShopItems], vip: VipSubscription | None):
             text=f"✅ {name}" if item in purchased else f"{name} • {price} ¥",
             callback_data=ShopItemCallback(item=item.value))
 
-    if not vip:
-        builder.button(text="🌟", callback_data="premium_shop")
-
     builder.adjust(1)
 
     return builder.as_markup()
@@ -34,4 +31,15 @@ def premium_keyboard():
                     callback_data=VipPurchase(months=1200).pack())
 
     builder.adjust(1)
+    return builder.as_markup()
+
+def shop():
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text = "🗓️ Ежедневный магазин",
+                callback_data = "daily_shop")
+    builder.button(text = "⚜️ Титулы", callback_data="titles_shop")
+    builder.button(text = "💎 VIP", callback_data = "premium_shop")
+    builder.adjust(1)
+
     return builder.as_markup()

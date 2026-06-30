@@ -38,9 +38,11 @@ class Referrals(Base):
     id: Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
     referral_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("users.id"))
-    referrer_reward: Mapped[int] = mapped_column(Integer, default=0)
-    referral: Mapped["User"] = relationship("User", foreign_keys=[referral_id], lazy="selectin")
+    reward: Mapped[int] = mapped_column(Integer, default=0)
+    claimed: Mapped[bool] = mapped_column(Boolean, default=False)
 
+
+    referral: Mapped["User"] = relationship("User", foreign_keys=[referral_id], lazy="selectin")
     referrer: Mapped["User"] = relationship("User",back_populates="referrals",foreign_keys=[user_id],lazy="selectin")
 
 class UserCards(Base):
@@ -95,6 +97,11 @@ class User(Base):
     daily_shop_purchases: Mapped[list["DailyShopPurchase"]] = relationship("DailyShopPurchase", back_populates="user", lazy="selectin")
     titles: Mapped[list["UserTitle"]] = relationship("UserTitle", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
 
+    @property
+    def clan(self):
+        if self.clan_member:
+            return self.clan_member.clan
+        else: return None
 
     @property
     def today_shop_purchases(self):
@@ -240,6 +247,7 @@ class Profile(Base):
 
     title_id: Mapped[int | None] = mapped_column(ForeignKey("titles.id"), default=16)
     title: Mapped["Title"] = relationship("Title", back_populates="owners", lazy="selectin")
+
     joined: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     owner: Mapped["User"] = relationship("User", back_populates="profile", lazy="selectin")

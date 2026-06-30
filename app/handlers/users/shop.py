@@ -1,35 +1,37 @@
 from aiogram import Router,F
-from aiogram.types import Message,CallbackQuery, FSInputFile, InputRichMessage
+from aiogram.types import Message,CallbackQuery, InputRichMessage
 from sqlalchemy.ext.asyncio import AsyncSession
-from loguru import logger
-from datetime import datetime, timedelta
 
 from app.filters import Private
 from app.keyboards import shop_keyboard, ShopItemCallback
-from app.keyboards.inline.shop_kb import premium_keyboard
+from app.keyboards.inline.shop_kb import premium_keyboard, shop
 from app.messages import MText
 from app.database import DB
 from app.services.ShopService import ShopService
-from app.utils.card_formater import format_buyed_card
-from app.utils.constants import SHOP_ITEMS_PRICES
 
 
 router = Router()
 
 
-@router.message(F.text == "🛒 Магазин",Private())
-async def _(message:Message,session:AsyncSession):
+@router.message(F.text == "🛒 Магазин", Private())
+async def _(message: Message, session: AsyncSession):
+    await message.answer(MText.get("common_shop"), reply_markup=shop())
+
+@router.callback_query(F.data == "daily_shop")
+async def _(callback: CallbackQuery, session:AsyncSession):
     db = DB(session)
-    user = await db.user.get_user(message.from_user.id)
+    user = await db.user.get_user(callback.from_user.id)
     if not user:
         return
 
     items = user.today_shop_purchases
     keyboard = shop_keyboard(items, user.vip)
 
-    await message.answer_rich(InputRichMessage(
+    await callback.message.answer_rich(InputRichMessage(
                             html=ShopService.shop_message(user)),
                             reply_markup=keyboard)
+    
+    await callback.message.delete()
 
 
 @router.callback_query(ShopItemCallback.filter())

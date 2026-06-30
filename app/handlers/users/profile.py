@@ -3,15 +3,13 @@ from html import escape
 
 from aiogram import Router, F
 from aiogram.filters import Command, CommandObject
-from aiogram.types import CallbackQuery, Message
-from aiogram.fsm.context import FSMContext
+from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.services.ProfileService import ProfileService
 from app.keyboards import profile_keyboard
 from app.messages import MText
-from app.states import ChangeDescribe
 from app.filters import ProfileFilter
 from app.database import DB, User
 
@@ -79,7 +77,7 @@ async def _(message: Message, session: AsyncSession):
     text, photo = (await ProfileService.generate_profile(session,user.id),
                 await ProfileService.user_photo_link(message.bot,user.id))
     
-    keyboard = await profile_keyboard(user.vip)
+    keyboard = await profile_keyboard()
 
     if photo:
         return await message.reply_photo(
