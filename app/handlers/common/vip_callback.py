@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.models import UserTitle
 from app.keyboards.inline.datas import VipPurchase
 from app.utils.constants import MSK_TIMEZONE, VIP_PRICE
 from app.messages import MText
@@ -67,6 +68,11 @@ async def successful_payment(message: Message, session: AsyncSession):
             start_date=now,
             end_date=now + timedelta(days=days),
         )
+        user_title = UserTitle(user_id=user.id,
+                            title_id=21,
+                            obtained_at=now)
+        user.profile.title_id = 21
+        session.add(user_title)
 
     await session.commit()
 

@@ -12,7 +12,7 @@ from loguru import logger
 from app.keyboards.inline.datas import ClanKickData
 from app.services.ProfileService import ProfileService
 from app.services.clan_service import create_clan_service, get_member_page, handle_invite, invite_member, kick_member, leave_clan_user
-from app.states.states import ChangeDescribe, ClanLeader,CreateClan
+from app.states.states import ClanLeader,CreateClan
 from app.filters import Private
 from app.keyboards import (
     clan_invite_kb, clan_leader, clan_create,

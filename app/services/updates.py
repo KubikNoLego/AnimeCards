@@ -49,6 +49,7 @@ async def remove_expired_vip_subscriptions(session: AsyncSession, bot: Bot = Non
     """
     Удаляет просроченные VIP подписки и сбрасывает VIP статус пользователей.
     Отправляет уведомления пользователям о завершении подписки.
+    Удаляет VIP титул (ID 21) из разблокированных титулов пользователя.
 
     Args:
         session: Асинхронная сессия базы данных
@@ -84,8 +85,21 @@ async def remove_expired_vip_subscriptions(session: AsyncSession, bot: Bot = Non
                             "Чтобы снова стать VIP пользователем, приобретите новую подписку в магазине."
                     )
                     notified_count += 1
+                    user.profile.title = 16
+
                 except Exception as e:
                     logger.warning(f"Не удалось отправить уведомление пользователю {user.id} об истечении VIP: {e}")
+
+            vip_title = None
+            for title in user.titles:
+                if title.title_id == 21:
+                    vip_title = title
+                    break
+
+            if vip_title:
+                user.profile.title_id = 16
+                await session.delete(vip_title)
+                logger.info(f"Удалён VIP титул (ID 21) у пользователя {user.id}")
 
     if removed_count > 0:
         await session.commit()

@@ -5,8 +5,8 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.messages import MText
-from app.services.profile import create_qr
 from app.database import DB
+from app.services.ProfileService import ProfileService
 
 
 router = Router()
@@ -29,7 +29,7 @@ async def _(callback: CallbackQuery, session: AsyncSession):
             awarded = awarded,
             total=total_reward)
         try:
-            qr_file = await create_qr(referral_link)
+            qr_file = ProfileService.create_qr(referral_link)
             try:
                 await callback.message.answer_photo(qr_file, caption=stats_message,
                                         parse_mode="HTML")
