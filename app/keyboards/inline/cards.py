@@ -21,20 +21,9 @@ def roll_standard_banner_kb():
 
     return builder.as_markup()
 
-def roll_season_banner_kb(banner: Banner):
+def roll_season_banner_amount_kb():
     builder = InlineKeyboardBuilder()
-    cards = banner.cards
-    [builder.button(text=f"{bannercard.card.name}",
-                callback_data=RollSeasonBanner(card_id=bannercard.card.id).pack()) 
-                for bannercard in cards]
-
-    return builder.as_markup()
-
-def roll_season_banner_amount_kb(card: int):
-    builder = InlineKeyboardBuilder()
-    builder.button(text="Крутить 1x", callback_data=RollSeasonBannerA(
-                                                    card_id=card, amount= 1))
-    builder.button(text="Крутить 10x", callback_data=RollSeasonBannerA(
-                                                    card_id=card, amount=10))
+    builder.button(text="Крутить 1x", callback_data=RollSeasonBannerA(amount= 1))
+    builder.button(text="Крутить 10x", callback_data=RollSeasonBannerA(amount=10))
     
     return builder.as_markup()

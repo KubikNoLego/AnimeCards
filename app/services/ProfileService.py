@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from html import escape
 import os
 import random
 import tempfile
@@ -85,7 +86,7 @@ class ProfileService:
 🕒 В игре: {days} {word}"""
 
         return profile_text.format(
-            name = user.name + (" ⟦ 👑 ⟧" if user.vip else ''),
+            name = escape(user.name) + (" ⟦ 👑 ⟧" if user.vip else ''),
             user_id = user.id,
             title = user.profile.title.name,
             clan_tag = f"[{have_clan.clan.tag}] " if have_clan else "",
@@ -108,7 +109,6 @@ class ProfileService:
         return int(await session.scalar(select(func.count(Card.id))
                                     .where(Card.droppable == True)))
     
-    @classmethod
     def create_qr(link:str) -> FSInputFile:
         """Создаёт QR для реферальной ссылки"""
         qr = qrcode.QRCode(
@@ -126,6 +126,6 @@ class ProfileService:
         except Exception as e:
             if os.path.exists(temp_file.name):
                 os.unlink(temp_file.name)
-            logger.exception("Ошибкв при создании QR")
+            logger.exception("Ошибка при создании QR")
             return
 

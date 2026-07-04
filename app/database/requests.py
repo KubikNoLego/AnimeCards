@@ -11,6 +11,8 @@ from app.database.repositories.trade_repo import TradeRepo
 from app.database.repositories.referral_repo import ReferralRepo
 from app.database.repositories.clan_repo import ClanRepo
 from app.database.repositories.pvp_repo import PVPRepo
+from app.database.repositories.season_repo import SeasonRepo
+from app.database.repositories.verse_repo import VerseRepo
 from app.utils.constants import SHOP_ITEMS, DAILY_VERSE_TTL, BOOST_TTL
 
 class DB:
@@ -25,3 +27,5 @@ class DB:
         self.referral = ReferralRepo(session)
         self.clan = ClanRepo(session)
         self.pvp = PVPRepo(session)
+        self.season = SeasonRepo(session)
+        self.verse = VerseRepo(session)

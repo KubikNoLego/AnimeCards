@@ -104,6 +104,7 @@ class ShopService:
         """Обработка открытия таинственного ящика."""
         rewards = []
 
+        # Шанс на лимитированную карту (1%)
         if random.random() < 0.01:
             from app.database.repositories.card_repo import CardRepo
             card_repo = CardRepo(session)
@@ -125,30 +126,34 @@ class ShopService:
                     ))
                     rewards.append(f"🎉 ЛИМИТИРОВАННАЯ КАРТА: {card.name}!")
                 else:
-                    yen_amount = random.randint(100, 300)
-                    user.balance += yen_amount
+                    extra_yen = random.randint(100, 300)
+                    user.balance += extra_yen
                     rewards.append(f"🎉 ЛИМИТИРОВАННАЯ КАРТА: <b>{card.name}</b> (уже есть)")
-                    rewards.append(f"💰 <b>{yen_amount}</b> ¥ <i>(компенсация)</i>")
+                    rewards.append(f"💰 <b>{extra_yen}</b> ¥ <i>(компенсация)</i>")
 
-        if random.random() < 0.7:
-            yen_amount = random.randint(10, 80)
-            user.balance += yen_amount
-            rewards.append(f"💰 <b>{yen_amount}</b> ¥")
+        # Шанс на дополнительные йены (70%)
+        if random.random() < 1:
+            extra_yen = random.randint(10, 80)
+            user.balance += extra_yen
+            rewards.append(f"💰 <b>{extra_yen}</b> ¥")
 
+        # Шанс на бусты удачи (50%)
         if random.random() < 0.5:
             boost_amount = random.randint(1, 3)
             user.luck_boosts += boost_amount
             rewards.append(f"🍀 <b>{boost_amount}</b> бустов удачи")
 
+        # Шанс на бусты йен (30%)
         if random.random() < 0.3:
             boost_amount = random.randint(1, 3)
             user.yen_boosts += boost_amount
             rewards.append(f"💰 <b>{boost_amount}</b> бустов йен")
 
+        # Шанс на бесплатные сезонные крутки (10%)
         if random.random() < 0.1:
             free_season_spins = random.randint(1, 2)
             user.free_season_opens += free_season_spins
             rewards.append(f"🎟️ <b>{free_season_spins}</b> бесплатных <b>сезонных</b> круток")
-        
+
         logger.info(f"Пользователь ({user.id}) получил награды с таинственного ящика\n{rewards}")
         return "📦 Таинственный ящик открыт!\n\n" + "\n".join(rewards)

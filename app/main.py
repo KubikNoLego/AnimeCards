@@ -9,6 +9,7 @@ from app.loader import setup_logger, setup_dispatcher
 from app.bot import create_bot, create_dispatcher
 from app.database import Base, create_sessionmaker, create_engine
 from app.services.schedule import SchedulerManager
+from app.services.updates import update_verse
 
 
 def main() -> None:
@@ -37,8 +38,8 @@ def main() -> None:
         scheduler.set_stats_target(chat_id=config.CHAT_ID,
                                 message_id=config.MESSAGE_ID)
         async with sessionmaker() as session:
-            if not await DB(session).card.get_daily_verse():
-                await scheduler._run_update_verse()
+            if not await DB(session).verse.get_daily_verse():
+                await update_verse(session)
         scheduler.start()
 
         logger.success("Бот успешно запущен")

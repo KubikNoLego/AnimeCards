@@ -65,7 +65,6 @@ class RollSeasonBanner(CallbackData, prefix="roll"):
     card_id: int
 
 class RollSeasonBannerA(CallbackData, prefix="rollA"):
-    card_id: int
     amount: int
 
 class TitlePagination(CallbackData, prefix="tip"):

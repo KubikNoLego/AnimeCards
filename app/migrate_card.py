@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
-from datetime import datetime
+from datetime import date, datetime
 from datetime import datetime, timedelta
 import json
 
 from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import mapped_column, relationship, sessionmaker, Session
 
-from .database.models import Banner, Card, UserCards, Verse, Rarity, Base, CardType, User, Profile, Clan, ClanMember, Title
+
+from .database.models import Banner, Card, UserCards, Verse, Rarity, Base, CardType, User, Profile, Clan, ClanMember, Title, Season, BannerCard
 
 DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:5432/animecards"
 
@@ -206,7 +207,7 @@ def recreate_cards(session):
 
         new_card = Card(name=card['name'], value=card['value'],
             card_type=CardType.STANDARD,verse_id=verse.id,rarity_id=rarity.id,
-            icon=updated_icon,has_shiny=False,droppable=card['can_drop'])
+            icon=updated_icon,droppable=card['can_drop'])
         session.add(new_card)
         session.flush()
         old_to_new[card['id']] = new_card.id
@@ -233,8 +234,6 @@ def recreate_cards(session):
         if not base_card:
             print(f"Missing base for {card['id']}")
             continue
-
-        base_card.has_shiny = True
         # Обновляем путь к shiny иконке
         base_card.shiny_icon = update_icon_path(card["icon"])
 
@@ -359,12 +358,74 @@ def drop_card_type_enum(engine):
 
 
 def create_banners(session):
-    now = datetime.now()
-    standard = Banner(name="Стандартный", active=True, started_at=now, ended_at=now+timedelta(weeks=30000))
-    umazing = Banner(name="UMAZING БАННЕР", active=True,verse_id = 14, started_at=now, ended_at=now+timedelta(days=30))
-    
-    session.add(standard)
-    session.add(umazing)
+    # Проверяем существование баннеров перед их созданием
+    standard_banner = session.scalar(select(Banner).where(Banner.name == "Стандартный"))
+    if not standard_banner:
+        standard = Banner(id=1, name="Стандартный", verse_id=12)
+        session.add(standard)
+        session.flush()  # Чтобы получить сгенерированный id
+
+    umazing_banner = session.scalar(select(Banner).where(Banner.name == "UMAZING БАННЕР"))
+    if not umazing_banner:
+        umazing = Banner(id=2,name="UMAZING БАННЕР", verse_id=14)
+        session.add(umazing)
+        session.flush()
+
+    # Получаем или создаем баннеры
+    standard_banner = session.scalar(select(Banner).where(Banner.name == "Стандартный"))
+    umazing_banner = session.scalar(select(Banner).where(Banner.name == "UMAZING БАННЕР"))
+
+    # Проверяем существование сезона
+    existing_season = session.scalar(select(Season).where(Season.name == "Новый старт!"))
+    if not existing_season:
+        season = Season(name="Новый старт!", banner_id=umazing_banner.id,
+                       started_at=date.today(), ended_at=date.today() + timedelta(days=30))
+        session.add(season)
+
+    # Проверяем существование сезонных карт
+    jungle_pocket = session.scalar(select(Card).where(Card.name == "Джангл Покет"))
+    if not jungle_pocket:
+        jungle_pocket = Card(name="Джангл Покет", value=350,
+                            card_type=CardType.SEASONAL,
+                            verse_id=14,
+                            rarity_id=5,
+                            icon="card_Джангл Покет_SSR.png",
+                            shiny_icon="card_Джангл Покет_SSR(shiny).png",
+                            droppable=True)
+        session.add(jungle_pocket)
+
+    fuji_kiseki = session.scalar(select(Card).where(Card.name == "Фудзи Кисеки"))
+    if not fuji_kiseki:
+        fuji_kiseki = Card(name="Фудзи Кисеки", value=350,
+                          card_type=CardType.SEASONAL,
+                          verse_id=14,
+                          rarity_id=5,
+                          icon="card_Фудзи Кисеки_SSR.png",
+                          shiny_icon="card_Фудзи Кисеки_SSR(shiny).png",
+                          droppable=True)
+        session.add(fuji_kiseki)
+
+    # Проверяем существование связей баннер-карта
+    existing_bannercard1 = session.scalar(
+        select(BannerCard).where(
+            BannerCard.banner_id == umazing_banner.id,
+            BannerCard.card_id == jungle_pocket.id
+        )
+    )
+    if not existing_bannercard1:
+        bannercard1 = BannerCard(banner_id=umazing_banner.id, card_id=jungle_pocket.id)
+        session.add(bannercard1)
+
+    existing_bannercard2 = session.scalar(
+        select(BannerCard).where(
+            BannerCard.banner_id == umazing_banner.id,
+            BannerCard.card_id == fuji_kiseki.id
+        )
+    )
+    if not existing_bannercard2:
+        bannercard2 = BannerCard(banner_id=umazing_banner.id, card_id=fuji_kiseki.id)
+        session.add(bannercard2)
+
     session.commit()
 
 
@@ -475,8 +536,8 @@ def main(step: int):
             recreate_titles(session)
             recreate_users(session)
             recreate_usercards(session)
-            reset_all_sequences(engine)
             create_banners(session)
+            reset_all_sequences(engine)
 
 if __name__ == "__main__":
-    main(1)
+    main(2)

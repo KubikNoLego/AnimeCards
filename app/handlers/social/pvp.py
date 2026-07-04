@@ -31,7 +31,7 @@ router = Router()
 @router.message(F.text == "⚔️ Дуэли", Private())
 async def _(message:Message,session:AsyncSession):
     db = DB(session)
-    daily_verse = await DB(session).card.get_daily_verse()
+    daily_verse = await DB(session).verse.get_daily_verse()
     user = await db.user.get_user(message.from_user.id)
 
     if not user.clan_member:
@@ -708,7 +708,7 @@ async def search_opponent_callback(callback: CallbackQuery, session: AsyncSessio
             await session.commit()
             
             # Получаем daily verse для бонусов
-            daily_verse = await db.card.get_daily_verse()
+            daily_verse = await db.verse.get_daily_verse()
             
             # Форматируем результат
             result_text = format_battle_result(
@@ -783,7 +783,7 @@ async def show_battle_inventory(message, user: User, session: AsyncSession):
         db = DB(session)
         await db.pvp.create_battle_inventory(user)
     
-    daily_verse = db.card.get_daily_verse()
+    daily_verse = db.verse.get_daily_verse()
 
     # Проверяем, есть ли пользователь в очереди
     in_queue = await DB(session).pvp.get_search_queue_entry(user.id) is not None

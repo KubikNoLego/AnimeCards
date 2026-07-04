@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import insert
 from loguru import logger
 
 from app.database.models import Profile, User
+from app.database.models.user import UserSeason
 
 class UserRepo:
     
@@ -74,8 +75,12 @@ class UserRepo:
             return user, False
     
     async def get_user_place_on_top(self,user: User):
+        from app.database.repositories.season_repo import SeasonRepo
+
+        userseason = await SeasonRepo(self.session).get_user_season(user.id)
         """Возвращает место пользователя в топе по `yens` (1 — наилучшее)."""
-        stmt = select(func.count(User.id)).where(User.season_balance > user.season_balance)
+        stmt = select(func.count(User.id)).join(UserSeason).where(
+                            UserSeason.balance > userseason.balance)
         result = await self.session.execute(stmt)
         count_higher = int(result.scalar() or 0)
 
@@ -86,7 +91,7 @@ class UserRepo:
                                         limit: int = 10) -> list[User]:
         """Возвращает топ юзеров по балансу"""
         try:
-            stmt = select(User).order_by(User.season_balance.desc()).limit(limit)
+            stmt = select(UserSeason).order_by(UserSeason.balance.desc()).limit(limit)
             result = await self.session.execute(stmt)
             top_players = result.scalars().all()
             return top_players
@@ -110,7 +115,7 @@ class UserRepo:
                                         limit: int = 10) -> list[User]:
         """Возвращает топ юзеров по количеству побед в PvP"""
         try:
-            stmt = select(User).order_by(User.pvp_wins.desc()).limit(limit)
+            stmt = select(User).order_by(User.wins.desc()).limit(limit)
             result = await self.session.execute(stmt)
             top_players = result.scalars().all()
             return top_players

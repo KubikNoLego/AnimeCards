@@ -53,16 +53,16 @@ class TitleService:
 
     @classmethod
     async def open_title(cls, session: AsyncSession, user_id: int) -> Title:
+        db = DB(session)
+        user = await db.user.get_user(user_id)
+
+        if not user:
+            raise ValueError("❌ Вы не зарегистрированы")
+
+        if user.balance < TITLE_SPIN_PRICE:
+            raise ValueError(f"❌ Недостаточно йен (нужно {TITLE_SPIN_PRICE} ¥)")
+
         try:
-            db = DB(session)
-            user = await db.user.get_user(user_id)
-
-            if not user:
-                raise ValueError("❌ Вы не зарегистрированы")
-
-            if user.balance < TITLE_SPIN_PRICE:
-                raise ValueError(f"❌ Недостаточно йен (нужно {TITLE_SPIN_PRICE} ¥)")
-
             user.balance -= TITLE_SPIN_PRICE
 
             title = await cls.random_title(session, user)

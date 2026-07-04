@@ -17,7 +17,7 @@ from app.utils.constants import MSK_TIMEZONE
 async def update_verse(session: AsyncSession) -> bool:
     """Обновляет ежедневную вселенную в Redis."""
     db = DB(session)
-    new_verse = await db.card.update_daily_verse()
+    new_verse = await db.verse.update_daily_verse()
     if new_verse:
         logger.info(f"Ежедневная вселенная обновлена. ID: {new_verse.id}")
         return True

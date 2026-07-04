@@ -2,6 +2,7 @@ import os
 
 from aiogram import Router,F
 from aiogram.types import CallbackQuery, Message
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.messages import MText
@@ -38,6 +39,7 @@ async def _(callback: CallbackQuery, session: AsyncSession):
                     os.unlink(qr_file.path)
         except Exception as e:
             await callback.message.answer(MText.get("qr_error"))
+            logger.exception(f"Ошибка в referral_link: {e}")
     else:
         await callback.message.answer(MText.get("qr_error"))
 

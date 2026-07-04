@@ -9,27 +9,33 @@ from app.database.models import Banner, BannerCard, BannerPity, Card, CardType, 
 from app.database.requests import DB
 from app.services.ReferralService import ReferralService
 from app.services.BuffsService import BuffService
-from app.utils.constants import COOLDOWN, DAILY_VERSE_BOOST, DAILY_VERSE_YEN_BOOST, MSK_TIMEZONE, SEASON_ROLL_COST, SHINY_CHANCE
+from app.utils.constants import COOLDOWN, DAILY_VERSE_YEN_BOOST, MSK_TIMEZONE, SEASON_ROLL_COST, SHINY_CHANCE
 
 class GachaService:
 
     @classmethod
-    async def add_yens(cls, user: User, card: Card, shiny: bool, 
-                        session: AsyncSession):
+    async def add_yens(cls, user: User, card: Card, shiny: bool,
+                        session: AsyncSession, is_duplicate: bool = False):
         price = card.price(shiny)
         buffs = await BuffService.calculate_buffs(user)
-        daily = await DB(session).card.get_daily_verse()
-        
+        daily = await DB(session).verse.get_daily_verse()
+
         buffs.yen += DAILY_VERSE_YEN_BOOST if daily.id == card.verse_id else 0
+
+        # Добавляем 30% бонус за дубликаты
+        if is_duplicate:
+            buffs.yen += 0.3
 
         added = max(round(price * buffs.yen), price)
 
         user.balance += added
-        user.season_balance += price
+
+        userseason = await DB(session).season.get_user_season(user.id)
+        userseason.balance += added
+
         await session.commit()
 
         logger.debug(f"Пользователь ({user.id}) получил {added} йен на баланс")
-        logger.debug(f"Пользователь ({user.id}) получил {price} йен в сезонный баланс")
 
         if added > price and added-price > 0:
             return f"➕ Вы дополнительно получили <b>{added-price} ¥</b>"
@@ -91,7 +97,7 @@ class GachaService:
 
     @classmethod
     async def add_card_to_user(cls, session: AsyncSession, user: User,
-                            card: Card, shiny: bool) -> UserCards:
+                            card: Card, shiny: bool) -> tuple[UserCards, bool]:
 
         usercard = await session.scalar(
             select(UserCards).where(
@@ -104,6 +110,8 @@ class GachaService:
 
         if used_duplicator:
             user.duplicators -= 1
+
+        is_duplicate = usercard is not None
 
         if usercard is None:
 
@@ -120,7 +128,7 @@ class GachaService:
 
             logger.debug(f"Добавлена карта ({card.id}) пользователю ({user.id})")
 
-            return usercard
+            return usercard, is_duplicate
 
         if card.card_type == CardType.SEASONAL:
 
@@ -131,7 +139,7 @@ class GachaService:
             if (usercard.level >= 3
                 and card.has_shiny
                 and not usercard.shiny):
-                
+
                 usercard.shiny = True
                 logger.debug(f"Карта ({card.id}) пользователя ({user.id}) стала shiny")
 
@@ -140,41 +148,52 @@ class GachaService:
                 usercard.shiny = True
                 logger.debug(f"Карта ({card.id}) пользователя ({user.id}) стала shiny")
 
-        return usercard
+        return usercard, is_duplicate
 
 
+    #Переделать
     @classmethod
     async def open_card(cls, user_id: int, session: AsyncSession,
-                    banner_id: int, featured_card: int | None) -> tuple[Card, bool]:
+                    banner_id: int) -> tuple[Card, bool]:
 
         user = await DB(session).user.get_user(user_id)
+        buffs = await BuffService.calculate_buffs(user)
 
         match banner_id:
 
             case 1:
-                buffs = await BuffService.calculate_buffs(user)
-                card, shiny = await cls._roll_standard_banner(session, user, buffs)
+                now = datetime.now(MSK_TIMEZONE)
+                time_since_last_open = now - user.last_open
 
-                await cls.add_card_to_user(session, user, card, shiny)
-
-                if user.free_standard_opens > 0:
-                    user.free_standard_opens -= 1
+                if now.weekday() < 5:
+                    cooldown = timedelta(hours=2)
                 else:
-                    user.last_open = datetime.now(MSK_TIMEZONE)
+                    cooldown = timedelta(hours=3)
+
+                if time_since_last_open >= cooldown - timedelta(minutes=buffs.cooldown):
+                    user.last_open = now
+
+                elif user.free_standard_opens > 0:
+                    user.free_standard_opens -= 1
 
                 if user.luck_boosts > 0:
                     user.luck_boosts -= 1
                 if user.yen_boosts > 0:
                     user.yen_boosts -= 1
 
+                card, shiny = await cls._roll_standard_banner(session, user, buffs)
+
+                usercard, is_duplicate = await cls.add_card_to_user(session, user, card, shiny)
+
+                yens_message = await cls.add_yens(user, card, shiny, session, is_duplicate)
+
                 await session.commit()
 
                 logger.info(f"Пользователь {user.id} получил карту {card.id}{' (Shiny)' if shiny else ''}")
 
-                return card,shiny
+                return card, shiny, yens_message
 
             case _:
-                buffs = await BuffService.calculate_buffs(user)
                 
                 if user.free_season_opens > 0:
                     user.free_season_opens -= 1
@@ -182,7 +201,7 @@ class GachaService:
                     user.balance -= SEASON_ROLL_COST
 
                 card, shiny = await cls._roll_season_banner(session, user,
-                                                        buffs, featured_card)
+                                                        buffs)
                 
                 await cls.add_card_to_user(session, user, card, shiny)
 
@@ -197,6 +216,7 @@ class GachaService:
 
                 return card, shiny
 
+    #Переделать
     @classmethod
     async def open_cards(cls, user_id: int, session: AsyncSession, 
                         featured_card: int,
@@ -213,7 +233,7 @@ class GachaService:
             if user.yen_boosts > 0:
                 user.yen_boosts -= 1
             card, shiny = await cls._roll_season_banner(session, user,
-                buffs, featured_card)
+                buffs)
             
             if user.free_season_opens > 0:
                     user.free_season_opens -= 1
@@ -258,14 +278,14 @@ class GachaService:
 
         banner_pity = await cls._get_pity(session, banner.id, user.id)
 
-        if banner_pity.ssr_pity >= 100:
-            banner_pity.ssr_pity = 0
+        if banner_pity.ssr >= 100:
+            banner_pity.ssr = 0
             return await cls._force_rarity(session, 5)
-        if banner_pity.sr_pity >= 50:
-            banner_pity.sr_pity = 0
+        if banner_pity.sr >= 50:
+            banner_pity.sr = 0
             return await cls._force_rarity(session, 4)
-        if banner_pity.s_pity >= 30:
-            banner_pity.s_pity = 0
+        if banner_pity.s >= 30:
+            banner_pity.s = 0
             return await cls._force_rarity(session, 3)
 
         rarities = (await session.scalars(select(Rarity))).all()
@@ -277,8 +297,8 @@ class GachaService:
 
             weight = rarity.drop_rate * (1 + bonus)
 
-            if rarity.id == 5 and banner_pity.ssr_pity >= 70:
-                soft_bonus = 1 + ((banner_pity.ssr_pity - 70) * 0.15)
+            if rarity.id == 5 and banner_pity.ssr >= 70:
+                soft_bonus = 1 + ((banner_pity.ssr - 70) * 0.15)
                 weight *= soft_bonus
 
             weights.append(weight)
@@ -287,16 +307,16 @@ class GachaService:
                                 weights=weights,
                                 k=1)[0]
         
-        banner_pity.ssr_pity += 1
-        banner_pity.sr_pity += 1
-        banner_pity.s_pity += 1
+        banner_pity.ssr += 1
+        banner_pity.sr += 1
+        banner_pity.s += 1
 
         if rarity.id == 5:
-            banner_pity.ssr_pity = 0
+            banner_pity.ssr = 0
         elif rarity.id == 4:
-            banner_pity.sr_pity = 0
+            banner_pity.sr = 0
         elif rarity.id == 3:
-            banner_pity.s_pity = 0
+            banner_pity.s = 0
         
         logger.debug(f"Получена редкость {rarity.name} ({rarity.id}) для пользователя ({user.id})")
 
@@ -314,26 +334,13 @@ class GachaService:
         cards = (await session.scalars(select(Card)
                         .where(Card.rarity_id == rarity.id,
                                 Card.card_type == CardType.STANDARD,
+                                Card.verse_id == Banner.verse_id,
                                 Card.droppable == True))).all()
 
         if not cards:
             raise ValueError(f"Нет карт для редкости {rarity.name}")
 
-        boosted_daily_verse = await DB(session).card.get_daily_verse()
-
-        weights = []
-
-        for card in cards:
-            
-            weight = 1.0
-
-            if card.verse_id == boosted_daily_verse.id:
-
-                weight *= DAILY_VERSE_BOOST
-            
-            weights.append(weight)
-
-        card = random.choices(cards, weights, k=1)[0]
+        card = random.choice(cards)
 
         shiny = False
 
@@ -344,32 +351,39 @@ class GachaService:
 
         return card, shiny
 
+    #Переделать
     @classmethod
     async def _roll_season_banner(cls, session: AsyncSession, user: User,
-                    buffs: BuffService.UserBuffs, featured_card: int) -> tuple[Card, bool]:
-        banner = await session.scalar(select(Banner).where(
-                                    Banner.active == True, Banner.id != 1))
+                    buffs: BuffService.UserBuffs) -> tuple[Card, bool]:
         
+        season = await DB(session).season.get_active_season()
+        banner = season.banner
+
         rarity = await cls._roll_rarity(session, user, banner, buffs)
         
         
-        cards = (await session.scalars(select(Card).where(
-                    Card.droppable == True,
-                    Card.card_type == CardType.STANDARD,
-                    Card.rarity_id == rarity.id))).all()
-        
-        if rarity.id != 5:
-            banner_cards = (
-                await session.scalars(select(Card).join(BannerCard).where(
-                    BannerCard.banner_id == banner.id, 
-                    Card.rarity_id == rarity.id,
-                    Card.droppable == True))).all()
-            cards.extend(banner_cards)
+        if banner.verse_id:
+            cards = (await session.scalars(select(Card).where(
+                        Card.droppable == True,
+                        Card.card_type == CardType.STANDARD,
+                        Card.verse_id == banner.verse_id,
+                        Card.rarity_id == rarity.id))).all()
+        else:
+            cards = []
 
-        else: 
-            featured_card = await session.scalar(select(Card)
-                                            .where(Card.id == featured_card))
-            cards.append(featured_card)
+        if not cards:
+            cards = (await session.scalars(select(Card).where(
+                        Card.droppable == True,
+                        Card.card_type == CardType.STANDARD,
+                        Card.rarity_id == rarity.id))).all()
+
+        banner_cards = (
+            await session.scalars(select(Card).join(BannerCard).where(
+                BannerCard.banner_id == banner.id,
+                Card.rarity_id == rarity.id,
+                Card.droppable == True))).all()
+        cards.extend(banner_cards)
+
 
         if not cards:
             raise ValueError(f"Нет карт для редкости {rarity.name}")
@@ -379,12 +393,9 @@ class GachaService:
         for card in cards:
             
             weight = 1.0
-
-            if card.verse_id == banner.verse_id:
-                weight *= 5
             
             if card.card_type == CardType.SEASONAL:
-                weight *= 40
+                weight *= 20
 
             weights.append(weight)
 
