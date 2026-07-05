@@ -58,7 +58,7 @@ class Card(Base):
 💰 Ценность: <b>{value}</b> ¥
 🗂️ Тип: <i>{type}</i>
 """
-        return (text.format(name=self.name, verse = self.verse.name,
+        return (text.format(name=self.name, verse = self.verse.pretty_name,
                     rarity = self.rarity.name, value = price, 
                 type = self.card_type.value) + 
                     ("" if not shiny else "✨ Shiny"))
@@ -91,6 +91,11 @@ class Verse(Base):
 
     cards: Mapped[list["Card"]] = relationship("Card",
                                     back_populates="verse")
+
+    @property
+    def pretty_name(self) -> str:
+
+        return f"„ {self.name} “"
 
 class UserCards(Base):
     __tablename__ = 'usercards'

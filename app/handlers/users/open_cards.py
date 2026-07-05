@@ -78,7 +78,7 @@ async def _(callback_query: CallbackQuery, session: AsyncSession):
                                                 time=(time
                                                     if time != "0 сек"
                                                     else "✅ Доступно" ),
-                                                daily_verse=daily_verse.name), 
+                                                daily_verse=daily_verse.pretty_name), 
                                                 reply_markup=
                                         roll_standard_banner_kb())
     await callback_query.message.delete()
